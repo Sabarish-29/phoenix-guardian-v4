@@ -1,0 +1,104 @@
+# Agent configuration patch for Pilot Hospital 001
+# Conservative rollout - most agents in pilot mode
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: phoenix-agents
+data:
+  agents.yaml: |
+    version: "1.0.0"
+    tenant_id: pilot_hospital_001
+    
+    # Agent status configuration
+    # Values: enabled, disabled, pilot
+    # pilot = enabled with extra logging
+    
+    clinical_agents:
+      scribe:
+        status: pilot
+        config:
+          model: gpt-4-medical
+          extra_logging: true
+          max_tokens: 4096
+          temperature: 0.1
+          pilot_users:
+            - dr.smith@rmchealth.org
+            - dr.johnson@rmchealth.org
+            
+      navigator:
+        status: pilot
+        config:
+          search_algorithm: semantic
+          extra_logging: true
+          max_results: 10
+          
+      safety:
+        status: enabled
+        critical: true
+        config:
+          drug_interaction_db: firstdatabank
+          allergy_check: true
+          contraindication_check: true
+          dosage_validation: true
+          
+      coding:
+        status: pilot
+        config:
+          icd_version: ICD-10-CM
+          cpt_version: 2026
+          extra_logging: true
+          auto_suggest: true
+          
+      prior_auth:
+        status: disabled
+        reason: "Phase 2 feature"
+        
+      quality:
+        status: pilot
+        config:
+          metrics:
+            - readmission_risk
+            - length_of_stay
+            - mortality_risk
+          extra_logging: true
+          
+      orders:
+        status: pilot
+        config:
+          order_types:
+            - lab
+            - imaging
+            - medication
+          extra_logging: true
+          
+    security_agents:
+      sentinelq:
+        status: enabled
+        critical: true
+        cannot_disable: true
+        config:
+          prompt_injection_detection: true
+          jailbreak_detection: true
+          data_exfiltration_detection: true
+          anomaly_threshold: 0.85
+          
+      deception:
+        status: enabled
+        critical: true
+        cannot_disable: true
+        config:
+          honeytoken_types:
+            - patient_record
+            - api_key
+            - credential
+          deployment_density: medium
+          alert_on_access: true
+          
+      threat_intel:
+        status: pilot
+        config:
+          fingerprint_sharing: true
+          threat_feed_sync: true
+          extra_logging: true
+          sync_interval_minutes: 15

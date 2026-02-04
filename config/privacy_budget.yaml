@@ -1,0 +1,267 @@
+# Phoenix Guardian - Privacy Budget Configuration
+# Week 25-26: Federated Learning Privacy Management
+
+version: "1.0"
+description: "Privacy budget allocation and tracking configuration"
+
+# =============================================================================
+# Global Privacy Parameters
+# =============================================================================
+privacy_parameters:
+  # Core differential privacy parameters
+  epsilon:
+    target: 0.5
+    description: "Privacy loss parameter - lower is more private"
+  
+  delta:
+    target: 1.0e-5
+    description: "Probability of privacy failure"
+  
+  # These are hard limits - never exceeded
+  hard_limits:
+    max_epsilon: 10.0
+    max_delta: 1.0e-4
+
+# =============================================================================
+# Budget Allocation per Hospital
+# =============================================================================
+hospital_budget:
+  # Monthly allocation
+  monthly:
+    epsilon: 50.0
+    queries: 100
+    description: "Each hospital gets 100 queries per month, ε=0.5 each"
+  
+  # Per-query budget
+  per_query:
+    epsilon: 0.5
+    delta: 1.0e-5
+    description: "Each query consumes ε=0.5, δ=1e-5"
+  
+  # Reset schedule
+  reset:
+    type: "monthly"
+    day_of_month: 1
+    hour_utc: 0
+    timezone: "UTC"
+
+# =============================================================================
+# Budget Consumption by Operation
+# =============================================================================
+operation_costs:
+  # Signature generation
+  generate_signature:
+    epsilon: 0.5
+    description: "Creating a new threat signature"
+    breakdown:
+      features: 0.1
+      confidence: 0.1
+      count: 0.2
+      metadata: 0.1
+  
+  # Signature query
+  query_signature:
+    epsilon: 0.1
+    description: "Querying the global model"
+  
+  # Model update
+  receive_update:
+    epsilon: 0.0
+    description: "Receiving model updates (no privacy cost)"
+  
+  # Batch operations
+  batch_generate:
+    epsilon_per_item: 0.5
+    max_batch_size: 100
+    description: "Batch signature generation"
+
+# =============================================================================
+# Composition Theorem Settings
+# =============================================================================
+composition:
+  # Use advanced composition for tighter bounds
+  theorem: "advanced"
+  
+  # Advanced composition parameters
+  advanced:
+    # δ' for composition
+    composition_delta: 1.0e-7
+    
+    # Maximum compositions to track
+    max_compositions: 1000
+  
+  # Subsampling amplification
+  subsampling:
+    enabled: true
+    rate: 0.01
+    description: "Privacy amplification via subsampling"
+
+# =============================================================================
+# Budget Tracking
+# =============================================================================
+tracking:
+  # Storage backend
+  storage:
+    type: "database"
+    table: "privacy_budget_log"
+    
+    # Connection settings
+    connection:
+      host: "${DB_HOST}"
+      port: 5432
+      database: "phoenix_guardian"
+      pool_size: 5
+  
+  # What to track
+  fields:
+    - "hospital_id_hash"  # Hashed hospital identifier
+    - "operation_type"
+    - "epsilon_consumed"
+    - "delta_consumed"
+    - "timestamp"
+    - "query_hash"  # For deduplication
+  
+  # Retention
+  retention:
+    duration_days: 365
+    archive: true
+    archive_location: "s3://privacy-logs/"
+
+# =============================================================================
+# Budget Enforcement
+# =============================================================================
+enforcement:
+  # Mode: strict, warn, or disabled
+  mode: "strict"
+  
+  # Actions when budget is exhausted
+  exhausted:
+    action: "block"
+    message: "Privacy budget exhausted for this month"
+    
+    # Optional: allow emergency override
+    emergency_override:
+      enabled: false
+      required_approval: "admin"
+      max_additional_epsilon: 10.0
+  
+  # Actions when budget is low
+  low_budget:
+    threshold: 0.2  # 20% remaining
+    action: "warn"
+    notify:
+      - type: "email"
+        recipients: ["privacy-team@hospital.org"]
+      - type: "slack"
+        channel: "#privacy-alerts"
+
+# =============================================================================
+# Budget Reporting
+# =============================================================================
+reporting:
+  # Automated reports
+  automated:
+    enabled: true
+    frequency: "daily"
+    time_utc: "06:00"
+    recipients:
+      - "compliance@hospital.org"
+      - "security@hospital.org"
+  
+  # Report contents
+  contents:
+    - section: "summary"
+      include:
+        - "total_epsilon_consumed"
+        - "total_queries"
+        - "remaining_budget"
+    
+    - section: "by_operation"
+      include:
+        - "operation_counts"
+        - "epsilon_by_operation"
+    
+    - section: "trends"
+      include:
+        - "daily_consumption"
+        - "weekly_average"
+        - "projected_exhaustion"
+  
+  # Export formats
+  formats:
+    - "pdf"
+    - "json"
+    - "csv"
+
+# =============================================================================
+# Per-Operation Budgets
+# =============================================================================
+operation_budgets:
+  # Signature generation gets most of the budget
+  signature_generation:
+    allocation: 0.70  # 70% of total budget
+    priority: "high"
+  
+  # Querying gets some budget
+  model_querying:
+    allocation: 0.20  # 20% of total budget
+    priority: "medium"
+  
+  # Reserved for emergencies
+  emergency_reserve:
+    allocation: 0.10  # 10% of total budget
+    priority: "low"
+    requires_approval: true
+
+# =============================================================================
+# Multi-Tenant Budgets
+# =============================================================================
+multi_tenant:
+  # Each tenant (hospital) has isolated budget
+  isolation: "strict"
+  
+  # Default tenant settings
+  defaults:
+    monthly_epsilon: 50.0
+    monthly_queries: 100
+  
+  # Tenant-specific overrides (by hashed ID)
+  overrides: {}
+    # Example:
+    # "abc123...":
+    #   monthly_epsilon: 100.0
+    #   monthly_queries: 200
+    #   reason: "Large hospital with higher volume"
+
+# =============================================================================
+# Budget Alerts
+# =============================================================================
+alerts:
+  # Alert levels
+  levels:
+    - name: "warning"
+      threshold: 0.30  # 30% remaining
+      action: "notify"
+    
+    - name: "critical"
+      threshold: 0.10  # 10% remaining
+      action: "notify_urgent"
+    
+    - name: "exhausted"
+      threshold: 0.00  # 0% remaining
+      action: "block_and_notify"
+  
+  # Notification channels
+  channels:
+    email:
+      enabled: true
+      smtp_host: "${SMTP_HOST}"
+      from: "privacy-alerts@phoenix-guardian.org"
+    
+    slack:
+      enabled: true
+      webhook: "${SLACK_PRIVACY_WEBHOOK}"
+    
+    pagerduty:
+      enabled: false
+      routing_key: "${PAGERDUTY_KEY}"

@@ -1,0 +1,314 @@
+# Phoenix Guardian - OpenTelemetry Collector Configuration
+# Sprint 69-70: Advanced Observability
+#
+# Collects traces, metrics, and logs from all Phoenix Guardian services
+# and exports to Datadog, CloudWatch, and local storage
+
+receivers:
+  # OTLP receiver for traces and metrics from applications
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  # Prometheus scraping for existing metrics
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'phoenix-api'
+          scrape_interval: 15s
+          kubernetes_sd_configs:
+            - role: pod
+          relabel_configs:
+            - source_labels: [__meta_kubernetes_pod_label_app]
+              regex: phoenix-api
+              action: keep
+            - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+              regex: "true"
+              action: keep
+            - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+              target_label: __metrics_path__
+              regex: (.+)
+            - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+              target_label: __address__
+              regex: ([^:]+)(?::\d+)?;(\d+)
+              replacement: $1:$2
+
+        - job_name: 'phoenix-beacon'
+          scrape_interval: 15s
+          kubernetes_sd_configs:
+            - role: pod
+          relabel_configs:
+            - source_labels: [__meta_kubernetes_pod_label_app]
+              regex: phoenix-beacon
+              action: keep
+
+  # Host metrics (CPU, memory, disk)
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      cpu:
+        metrics:
+          system.cpu.utilization:
+            enabled: true
+      memory:
+        metrics:
+          system.memory.utilization:
+            enabled: true
+      disk:
+      filesystem:
+      network:
+
+  # Kubernetes metrics
+  k8s_cluster:
+    collection_interval: 30s
+    node_conditions_to_report:
+      - Ready
+      - MemoryPressure
+    allocatable_types_to_report:
+      - cpu
+      - memory
+
+  # AWS CloudWatch metrics import
+  awscloudwatch:
+    region: ${AWS_REGION}
+    poll_interval: 5m
+    metrics:
+      named:
+        - namespace: AWS/RDS
+          metric_name: CPUUtilization
+          dimensions:
+            - name: DBClusterIdentifier
+              value: phoenix-guardian-production
+        - namespace: AWS/ElastiCache
+          metric_name: CacheHitRate
+        - namespace: AWS/EKS
+          metric_name: pod_cpu_utilization
+
+processors:
+  # Batch processing for efficiency
+  batch:
+    send_batch_size: 1000
+    send_batch_max_size: 1500
+    timeout: 10s
+
+  # Memory limiter to prevent OOM
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 1500
+    spike_limit_mib: 500
+
+  # Resource detection for cloud metadata
+  resourcedetection:
+    detectors: [env, ec2, eks]
+    timeout: 5s
+    override: false
+
+  # Add Phoenix-specific attributes
+  attributes:
+    actions:
+      - key: phoenix.environment
+        value: ${ENVIRONMENT}
+        action: upsert
+      - key: phoenix.version
+        value: ${SERVICE_VERSION}
+        action: upsert
+      - key: cloud.region
+        value: ${AWS_REGION}
+        action: upsert
+
+  # Filter out health check spans
+  filter:
+    traces:
+      span:
+        - 'attributes["http.target"] == "/health"'
+        - 'attributes["http.target"] == "/ready"'
+        - 'attributes["http.target"] == "/metrics"'
+
+  # Tail-based sampling for traces
+  tail_sampling:
+    decision_wait: 10s
+    num_traces: 100000
+    expected_new_traces_per_sec: 1000
+    policies:
+      # Always sample errors
+      - name: errors
+        type: status_code
+        status_code:
+          status_codes: [ERROR]
+      # Always sample slow traces
+      - name: slow-traces
+        type: latency
+        latency:
+          threshold_ms: 5000
+      # Sample ML inference traces
+      - name: ml-inference
+        type: string_attribute
+        string_attribute:
+          key: phoenix.operation
+          values: [ml_inference]
+      # Sample federated learning
+      - name: federated-learning
+        type: string_attribute
+        string_attribute:
+          key: phoenix.operation
+          values: [federated_training]
+      # Probabilistic sampling for rest
+      - name: probabilistic
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: 10
+
+  # Transform metrics for compatibility
+  transform:
+    metric_statements:
+      - context: datapoint
+        statements:
+          # Convert SOAP generation time to histogram buckets
+          - set(attributes["le"], "1000") where metric.name == "phoenix.soap.generation_duration" and value < 1000
+          - set(attributes["le"], "2000") where metric.name == "phoenix.soap.generation_duration" and value < 2000
+          - set(attributes["le"], "5000") where metric.name == "phoenix.soap.generation_duration" and value < 5000
+
+  # Group by trace for better export
+  groupbytrace:
+    wait_duration: 10s
+    num_traces: 10000
+
+  # Cumulative to delta for CloudWatch compatibility
+  cumulativetodelta:
+    include:
+      match_type: regexp
+      metrics:
+        - ".*_total$"
+
+exporters:
+  # Datadog APM
+  datadog:
+    api:
+      site: datadoghq.com
+      key: ${DD_API_KEY}
+    traces:
+      span_name_remappings:
+        "phoenix.*": "$1"  # Remove prefix
+      span_name_as_resource_name: true
+    metrics:
+      histograms:
+        mode: distributions
+        send_count_sum_metrics: true
+
+  # AWS CloudWatch
+  awscloudwatchlogs:
+    log_group_name: "/phoenix-guardian/${ENVIRONMENT}/traces"
+    log_stream_name: "otel-collector"
+    region: ${AWS_REGION}
+    endpoint: "https://logs.${AWS_REGION}.amazonaws.com"
+
+  awsemf:
+    region: ${AWS_REGION}
+    namespace: PhoenixGuardian
+    log_group_name: "/phoenix-guardian/${ENVIRONMENT}/metrics"
+    dimension_rollup_option: NoDimensionRollup
+    resource_to_telemetry_conversion:
+      enabled: true
+
+  # AWS X-Ray for traces
+  awsxray:
+    region: ${AWS_REGION}
+    indexed_attributes:
+      - phoenix.hospital_id
+      - phoenix.soap.note_id
+      - phoenix.ml.model_id
+
+  # Prometheus remote write (for Grafana Cloud)
+  prometheusremotewrite:
+    endpoint: ${PROMETHEUS_REMOTE_WRITE_URL}
+    headers:
+      Authorization: Bearer ${PROMETHEUS_TOKEN}
+    tls:
+      insecure: false
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+
+  # Local file export for debugging
+  file:
+    path: /var/log/otel/traces.json
+    rotation:
+      max_megabytes: 100
+      max_days: 7
+      max_backups: 3
+
+  # Logging for debugging
+  logging:
+    loglevel: info
+    sampling_initial: 5
+    sampling_thereafter: 200
+
+extensions:
+  # Health check
+  health_check:
+    endpoint: 0.0.0.0:13133
+    path: /health
+
+  # Performance profiling
+  pprof:
+    endpoint: 0.0.0.0:1777
+
+  # zPages for debugging
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+  # Bearer token auth
+  bearertokenauth:
+    token: ${OTEL_AUTH_TOKEN}
+
+service:
+  extensions: [health_check, pprof, zpages]
+  
+  pipelines:
+    # Traces pipeline
+    traces:
+      receivers: [otlp]
+      processors:
+        - memory_limiter
+        - resourcedetection
+        - attributes
+        - filter
+        - tail_sampling
+        - groupbytrace
+        - batch
+      exporters: [datadog, awsxray, logging]
+
+    # Metrics pipeline
+    metrics:
+      receivers: [otlp, prometheus, hostmetrics, k8s_cluster]
+      processors:
+        - memory_limiter
+        - resourcedetection
+        - attributes
+        - cumulativetodelta
+        - batch
+      exporters: [datadog, awsemf, prometheusremotewrite, logging]
+
+    # Logs pipeline (for future structured logging)
+    logs:
+      receivers: [otlp]
+      processors:
+        - memory_limiter
+        - resourcedetection
+        - attributes
+        - batch
+      exporters: [awscloudwatchlogs, logging]
+
+  telemetry:
+    logs:
+      level: info
+      initial_fields:
+        service: otel-collector
+    metrics:
+      level: detailed
+      address: 0.0.0.0:8888

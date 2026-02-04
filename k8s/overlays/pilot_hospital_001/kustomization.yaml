@@ -1,0 +1,105 @@
+# Kustomize overlay for Pilot Hospital 001 - Regional Medical Center
+# Platform: Epic FHIR
+# Location: California
+# Deployment: Conservative pilot
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: pilot-hospital-001
+  labels:
+    hospital: regional-medical-center
+    environment: production
+    pilot-phase: week-18
+
+# Base resources
+resources:
+  - ../../base
+
+# Namespace for this tenant
+namespace: phoenix-pilot-001
+
+# Common labels for all resources
+commonLabels:
+  tenant-id: pilot_hospital_001
+  hospital-name: regional-medical-center
+  ehr-platform: epic
+  compliance-region: california
+  pilot-start: "2026-03-01"
+
+# Common annotations
+commonAnnotations:
+  phoenix-guardian.health/tenant-version: "1.0.0"
+  phoenix-guardian.health/config-hash: "a1b2c3d4"
+  phoenix-guardian.health/deployment-date: "2026-03-01"
+
+# Name prefix for all resources
+namePrefix: rmc-
+
+# Patches to apply
+patches:
+  # Agent configuration patch
+  - path: patches/agent-config.yaml
+    target:
+      kind: ConfigMap
+      name: phoenix-agents
+  
+  # Resource limits patch (conservative)
+  - path: patches/resource-limits.yaml
+    target:
+      kind: Deployment
+  
+  # Network policy patch
+  - path: patches/network-policy.yaml
+    target:
+      kind: NetworkPolicy
+  
+  # Ingress patch
+  - path: patches/ingress.yaml
+    target:
+      kind: Ingress
+      name: phoenix-ingress
+
+# ConfigMap generator for tenant-specific config
+configMapGenerator:
+  - name: tenant-config
+    files:
+      - config.yaml
+    options:
+      disableNameSuffixHash: true
+  
+  - name: ehr-config
+    literals:
+      - EHR_PLATFORM=epic
+      - EHR_BASE_URL=https://fhir.rmchealth.org/api/FHIR/R4
+      - EHR_API_VERSION=R4
+      - EHR_RATE_LIMIT=60
+      - EHR_TIMEOUT_SECONDS=30
+    options:
+      disableNameSuffixHash: true
+
+# Secret generator references (actual secrets from sealed-secrets)
+secretGenerator:
+  - name: ehr-credentials
+    type: Opaque
+    options:
+      disableNameSuffixHash: true
+    literals:
+      - EHR_CLIENT_ID=PLACEHOLDER_USE_SEALED_SECRET
+      - EHR_PRIVATE_KEY=PLACEHOLDER_USE_SEALED_SECRET
+
+# Image overrides (use specific versions)
+images:
+  - name: phoenix-guardian
+    newName: ghcr.io/phoenix-guardian/phoenix
+    newTag: v1.0.0-pilot
+
+# Replicas (conservative for pilot)
+replicas:
+  - name: phoenix-api
+    count: 2
+  - name: phoenix-worker
+    count: 1
+  - name: phoenix-agents
+    count: 1

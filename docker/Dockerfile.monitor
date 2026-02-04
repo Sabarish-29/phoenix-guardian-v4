@@ -1,0 +1,161 @@
+# Phoenix Guardian - Monitoring Stack
+# Prometheus + Grafana with pre-configured dashboards
+# Version: 1.0.0
+
+FROM prom/prometheus:v2.48.0 AS prometheus-config
+
+# ==============================================================================
+# Main monitoring image based on Grafana
+# ==============================================================================
+FROM grafana/grafana:10.2.3
+
+LABEL maintainer="Phoenix Guardian Team <security@phoenix-guardian.io>" \
+      version="1.0.0" \
+      description="Phoenix Guardian - Monitoring Stack (Prometheus + Grafana)" \
+      org.opencontainers.image.source="https://github.com/phoenix-guardian/phoenix-guardian"
+
+USER root
+
+# Install additional tools
+RUN apk add --no-cache \
+    curl \
+    bash \
+    ca-certificates
+
+# Create directories for configuration
+RUN mkdir -p /etc/prometheus \
+    /etc/grafana/provisioning/dashboards \
+    /etc/grafana/provisioning/datasources \
+    /var/lib/grafana/dashboards
+
+# Copy Prometheus binary from prometheus image
+COPY --from=prometheus-config /bin/prometheus /usr/local/bin/prometheus
+COPY --from=prometheus-config /bin/promtool /usr/local/bin/promtool
+
+# Prometheus configuration
+RUN cat > /etc/prometheus/prometheus.yml << 'EOF'
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'phoenix-guardian'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'phoenix-guardian-app'
+    static_configs:
+      - targets: ['phoenix-guardian-app:8000']
+    metrics_path: /metrics
+
+  - job_name: 'phoenix-guardian-worker'
+    static_configs:
+      - targets: ['phoenix-guardian-worker:9100']
+
+  - job_name: 'phoenix-guardian-beacon'
+    static_configs:
+      - targets: ['phoenix-guardian-beacon:8080']
+    metrics_path: /beacon/metrics
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+EOF
+
+# Grafana datasource provisioning
+RUN cat > /etc/grafana/provisioning/datasources/prometheus.yml << 'EOF'
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://localhost:9090
+    isDefault: true
+    editable: false
+EOF
+
+# Grafana dashboard provisioning
+RUN cat > /etc/grafana/provisioning/dashboards/default.yml << 'EOF'
+apiVersion: 1
+providers:
+  - name: 'Phoenix Guardian'
+    orgId: 1
+    folder: 'Phoenix Guardian'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards
+EOF
+
+# Create Phoenix Guardian dashboard
+RUN cat > /var/lib/grafana/dashboards/phoenix-guardian.json << 'EOF'
+{
+  "dashboard": {
+    "id": null,
+    "title": "Phoenix Guardian Security Dashboard",
+    "tags": ["phoenix-guardian", "security"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Attack Detections (24h)",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4},
+        "targets": [{"expr": "sum(increase(phoenix_attacks_detected_total[24h]))"}]
+      },
+      {
+        "id": 2,
+        "title": "Honeytoken Triggers",
+        "type": "stat",
+        "gridPos": {"x": 6, "y": 0, "w": 6, "h": 4},
+        "targets": [{"expr": "sum(increase(phoenix_honeytoken_triggers_total[24h]))"}]
+      },
+      {
+        "id": 3,
+        "title": "Request Latency (p95)",
+        "type": "gauge",
+        "gridPos": {"x": 12, "y": 0, "w": 6, "h": 4},
+        "targets": [{"expr": "histogram_quantile(0.95, rate(phoenix_request_duration_seconds_bucket[5m]))"}]
+      },
+      {
+        "id": 4,
+        "title": "Active Sessions",
+        "type": "stat",
+        "gridPos": {"x": 18, "y": 0, "w": 6, "h": 4},
+        "targets": [{"expr": "phoenix_active_sessions"}]
+      }
+    ],
+    "refresh": "10s",
+    "schemaVersion": 38
+  }
+}
+EOF
+
+# Set permissions
+RUN chown -R grafana:root /etc/prometheus /var/lib/grafana
+
+USER grafana
+
+EXPOSE 3000 9090
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:3000/api/health || exit 1
+
+# Start both Prometheus and Grafana
+CMD ["sh", "-c", "prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus --web.listen-address=:9090 & exec grafana-server --homepath=/usr/share/grafana --config=/etc/grafana/grafana.ini"]

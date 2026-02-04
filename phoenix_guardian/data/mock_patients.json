@@ -1,0 +1,205 @@
+{
+  "patients": [
+    {
+      "mrn": "MRN001234",
+      "demographics": {
+        "name": "John Smith",
+        "age": 65,
+        "gender": "Male",
+        "dob": "1959-03-15"
+      },
+      "conditions": [
+        "Hypertension",
+        "Type 2 Diabetes Mellitus",
+        "Hyperlipidemia",
+        "Chronic Kidney Disease Stage 3"
+      ],
+      "medications": [
+        {
+          "name": "Lisinopril",
+          "dose": "10mg",
+          "frequency": "Once daily",
+          "route": "PO"
+        },
+        {
+          "name": "Metformin",
+          "dose": "1000mg",
+          "frequency": "Twice daily",
+          "route": "PO"
+        },
+        {
+          "name": "Atorvastatin",
+          "dose": "40mg",
+          "frequency": "Once daily at bedtime",
+          "route": "PO"
+        }
+      ],
+      "allergies": [
+        {
+          "allergen": "Penicillin",
+          "reaction": "Rash",
+          "severity": "Moderate"
+        }
+      ],
+      "vitals": {
+        "blood_pressure": "135/85",
+        "heart_rate": 78,
+        "temperature": 98.4,
+        "respiratory_rate": 16,
+        "oxygen_saturation": 97,
+        "recorded_at": "2025-01-28T10:30:00Z"
+      },
+      "labs": [
+        {
+          "test": "HbA1c",
+          "value": "7.2%",
+          "reference_range": "<7.0%",
+          "date": "2025-01-15"
+        },
+        {
+          "test": "Creatinine",
+          "value": "1.4 mg/dL",
+          "reference_range": "0.7-1.3 mg/dL",
+          "date": "2025-01-15"
+        }
+      ],
+      "last_encounter": {
+        "date": "2025-01-10",
+        "type": "Office Visit",
+        "provider": "Dr. Sarah Johnson",
+        "chief_complaint": "Routine diabetes follow-up"
+      }
+    },
+    {
+      "mrn": "MRN005678",
+      "demographics": {
+        "name": "Maria Garcia",
+        "age": 45,
+        "gender": "Female",
+        "dob": "1979-07-22"
+      },
+      "conditions": [
+        "Asthma",
+        "Seasonal Allergies",
+        "Migraine Headaches"
+      ],
+      "medications": [
+        {
+          "name": "Albuterol",
+          "dose": "90mcg",
+          "frequency": "As needed",
+          "route": "Inhaled"
+        },
+        {
+          "name": "Fluticasone",
+          "dose": "50mcg",
+          "frequency": "Two sprays each nostril daily",
+          "route": "Nasal"
+        },
+        {
+          "name": "Sumatriptan",
+          "dose": "100mg",
+          "frequency": "As needed for migraine",
+          "route": "PO"
+        }
+      ],
+      "allergies": [
+        {
+          "allergen": "Sulfa drugs",
+          "reaction": "Hives",
+          "severity": "Moderate"
+        }
+      ],
+      "vitals": {
+        "blood_pressure": "118/72",
+        "heart_rate": 72,
+        "temperature": 98.2,
+        "respiratory_rate": 14,
+        "oxygen_saturation": 99,
+        "recorded_at": "2025-01-29T14:15:00Z"
+      },
+      "labs": [],
+      "last_encounter": {
+        "date": "2024-12-05",
+        "type": "Urgent Care",
+        "provider": "Dr. Michael Chen",
+        "chief_complaint": "Asthma exacerbation"
+      }
+    },
+    {
+      "mrn": "MRN009012",
+      "demographics": {
+        "name": "Robert Williams",
+        "age": 32,
+        "gender": "Male",
+        "dob": "1992-11-08"
+      },
+      "conditions": [],
+      "medications": [],
+      "allergies": [
+        {
+          "allergen": "NKDA",
+          "reaction": "No Known Drug Allergies",
+          "severity": "N/A"
+        }
+      ],
+      "vitals": {
+        "blood_pressure": "122/78",
+        "heart_rate": 68,
+        "temperature": 98.6,
+        "respiratory_rate": 14,
+        "oxygen_saturation": 99,
+        "recorded_at": "2025-01-30T09:00:00Z"
+      },
+      "labs": [],
+      "last_encounter": {
+        "date": "2023-06-15",
+        "type": "Annual Physical",
+        "provider": "Dr. Emily Thompson",
+        "chief_complaint": "Annual wellness exam"
+      }
+    },
+    {
+      "mrn": "DEMO001",
+      "demographics": {
+        "name": "Demo Patient",
+        "age": 28,
+        "gender": "Female",
+        "dob": "1996-08-20"
+      },
+      "conditions": [
+        "Anxiety Disorder"
+      ],
+      "medications": [
+        {
+          "name": "Sertraline",
+          "dose": "50mg",
+          "frequency": "Once daily",
+          "route": "PO"
+        }
+      ],
+      "allergies": [
+        {
+          "allergen": "NKDA",
+          "reaction": "No Known Drug Allergies",
+          "severity": "N/A"
+        }
+      ],
+      "vitals": {
+        "blood_pressure": "115/70",
+        "heart_rate": 68,
+        "temperature": 98.4,
+        "respiratory_rate": 14,
+        "oxygen_saturation": 99,
+        "recorded_at": "2025-01-30T15:00:00Z"
+      },
+      "labs": [],
+      "last_encounter": {
+        "date": "2025-01-20",
+        "type": "Office Visit",
+        "provider": "Dr. Demo Provider",
+        "chief_complaint": "Anxiety follow-up"
+      }
+    }
+  ]
+}

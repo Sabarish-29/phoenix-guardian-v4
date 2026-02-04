@@ -1,0 +1,81 @@
+# Resource limits patch for Pilot Hospital 002
+# Standard resources for medium-size hospital
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phoenix-api
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+        - name: phoenix-api
+          resources:
+            requests:
+              cpu: "1000m"
+              memory: "2Gi"
+            limits:
+              cpu: "4000m"
+              memory: "8Gi"
+          env:
+            - name: TENANT_ID
+              value: "pilot_hospital_002"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: PILOT_MODE
+              value: "true"
+            - name: TRACE_SAMPLING_RATE
+              value: "0.5"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phoenix-worker
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+        - name: phoenix-worker
+          resources:
+            requests:
+              cpu: "1000m"
+              memory: "4Gi"
+            limits:
+              cpu: "4000m"
+              memory: "16Gi"
+          env:
+            - name: TENANT_ID
+              value: "pilot_hospital_002"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: ML_BATCH_SIZE
+              value: "8"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phoenix-agents
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+        - name: phoenix-agents
+          resources:
+            requests:
+              cpu: "2000m"
+              memory: "8Gi"
+            limits:
+              cpu: "8000m"
+              memory: "32Gi"
+          env:
+            - name: TENANT_ID
+              value: "pilot_hospital_002"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: AGENT_PILOT_MODE
+              value: "true"

@@ -1,0 +1,156 @@
+# Tenant configuration for Pilot Hospital 002 - City General Hospital
+# Cerner FHIR R4 integration
+
+tenant:
+  id: pilot_hospital_002
+  name: City General Hospital
+  short_name: CGH
+  timezone: America/Chicago
+  
+hospital:
+  beds: 500
+  annual_visits: 225000
+  trauma_center: level_2
+  departments:
+    - emergency
+    - surgery
+    - internal_medicine
+    - pediatrics
+    - obstetrics
+    - neurology
+    - orthopedics
+  
+ehr:
+  platform: cerner
+  base_url: https://fhir-myrecord.cerner.com/r4/citygeneral
+  auth_url: https://authorization.cerner.com/tenants/citygeneral/protocols/oauth2/profiles/smart-v1/token
+  api_version: R4
+  auth_type: oauth2_client_credentials
+  scopes:
+    - system/Patient.read
+    - system/Encounter.read
+    - system/DocumentReference.write
+    - system/Observation.read
+  sandbox_url: https://fhir-ehr-code.cerner.com/r4/ec2458f2-1e24-41c8-b71b-0e701af7583d
+  rate_limit_per_minute: 90
+  timeout_seconds: 30
+  features:
+    - patient_read
+    - encounter_read
+    - document_create
+    - observation_read
+    - condition_read
+    - medication_read
+    
+network:
+  allowed_ips:
+    - 192.168.0.0/16     # Hospital internal
+    - 10.50.0.0/16       # Admin network
+    - 172.20.0.0/16      # Clinical workstations
+  vpn_required: false    # Direct connection allowed
+  allowed_origins:
+    - https://ehr.citygen.health
+    - https://portal.citygen.health
+  egress_allowed:
+    - cerner-fhir
+    - cerner-auth
+    - pqc-kms
+    - logging
+    - pagerduty
+    
+alerts:
+  primary_email: security-ops@citygen.health
+  secondary_email: it-director@citygen.health
+  slack_webhook_enabled: true
+  slack_channel: "#phoenix-guardian"
+  pagerduty_enabled: true
+  pagerduty_priority: P1  # Higher priority for larger hospital
+  escalation_minutes: 10
+  syslog_enabled: true
+  syslog_host: splunk.citygen.health
+  syslog_port: 9514
+  syslog_protocol: tls
+  
+compliance:
+  level: hipaa
+  state: TX
+  applicable_laws:
+    - HIPAA
+    - THIPA  # Texas Health Information Privacy Act
+  data_use_agreement_signed: true
+  dua_signed_date: "2026-02-01"
+  hipaa_officer_email: hipaa-officer@citygen.health
+  audit_log_retention_days: 2555  # 7 years
+  backup_retention_days: 120
+  incident_response_plan_version: "3.0.0"
+  breach_notification_hours: 60  # Texas requirement
+  
+pilot:
+  enabled: true
+  start_date: "2026-03-15"
+  end_date: "2026-06-15"
+  max_patients: 5000
+  max_encounters_per_day: 500
+  pilot_contact_email: innovation@citygen.health
+  pilot_phase: 1
+  success_criteria:
+    scribe_accuracy_threshold: 0.93
+    safety_detection_rate: 0.99
+    system_uptime: 0.999
+    user_satisfaction_score: 4.2
+    
+agents:
+  # Clinical agents - standard deployment
+  scribe:
+    status: enabled
+    config:
+      departments:
+        - emergency
+        - surgery
+        - internal_medicine
+  navigator:
+    status: enabled
+  safety:
+    status: enabled
+    critical: true
+  coding:
+    status: enabled
+  prior_auth:
+    status: pilot  # Testing in Phase 1
+    pilot_departments:
+      - orthopedics
+  quality:
+    status: enabled
+  orders:
+    status: enabled
+    
+  # Security agents
+  sentinelq:
+    status: enabled
+    critical: true
+  deception:
+    status: enabled
+    critical: true
+  threat_intel:
+    status: enabled
+    
+features:
+  pqc_encryption: true
+  enhanced_audit: true
+  ml_monitoring: true
+  realtime_alerts: true
+  predictive_analytics: true
+  auto_remediation: false
+  
+resources:
+  cpu_request: "1000m"
+  cpu_limit: "4000m"
+  memory_request: "2Gi"
+  memory_limit: "8Gi"
+  gpu_required: false
+  
+monitoring:
+  prometheus_enabled: true
+  grafana_dashboard: phoenix-pilot-002
+  log_level: info
+  trace_sampling_rate: 0.5  # 50% sampling in production

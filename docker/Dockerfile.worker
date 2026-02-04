@@ -1,0 +1,102 @@
+# Phoenix Guardian - Background Worker Container
+# Handles ML training, A/B testing, async tasks
+# Version: 1.0.0
+
+# ==============================================================================
+# Stage 1: Builder - Install dependencies
+# ==============================================================================
+FROM python:3.11-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /build
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and install requirements
+COPY requirements.txt .
+RUN pip install --user --no-cache-dir -r requirements.txt
+
+# Install Celery and worker dependencies
+RUN pip install --user --no-cache-dir \
+    celery[redis]==5.3.6 \
+    flower==2.0.1 \
+    redis==5.0.1 \
+    kombu==5.3.4
+
+# ==============================================================================
+# Stage 2: Runtime
+# ==============================================================================
+FROM python:3.11-slim
+
+LABEL maintainer="Phoenix Guardian Team <security@phoenix-guardian.io>" \
+      version="1.0.0" \
+      description="Phoenix Guardian - Background Worker" \
+      org.opencontainers.image.source="https://github.com/phoenix-guardian/phoenix-guardian"
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONFAULTHANDLER=1 \
+    APP_HOME=/app \
+    APP_USER=phoenix \
+    APP_UID=1000 \
+    APP_GID=1000 \
+    # Celery configuration
+    CELERY_BROKER_URL=redis://redis:6379/0 \
+    CELERY_RESULT_BACKEND=redis://redis:6379/0 \
+    CELERY_WORKER_CONCURRENCY=4 \
+    CELERY_WORKER_PREFETCH_MULTIPLIER=4 \
+    # Python path
+    PATH="/home/phoenix/.local/bin:$PATH" \
+    PYTHONPATH="/app"
+
+WORKDIR $APP_HOME
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Create non-root user
+RUN groupadd --gid $APP_GID $APP_USER \
+    && useradd --uid $APP_UID --gid $APP_GID --shell /bin/bash --create-home $APP_USER
+
+# Copy Python packages from builder
+COPY --from=builder /root/.local /home/phoenix/.local
+
+# Copy application code
+COPY --chown=$APP_USER:$APP_USER phoenix_guardian/ ./phoenix_guardian/
+
+# Create working directories
+RUN mkdir -p /app/logs /app/data /app/tmp \
+    && chown -R $APP_USER:$APP_USER /app
+
+# Switch to non-root user
+USER $APP_USER
+
+# Health check - verify worker is processing
+HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
+    CMD celery -A phoenix_guardian.workers.celery_app inspect ping -d celery@$HOSTNAME || exit 1
+
+# Celery worker command
+CMD ["celery", \
+     "-A", "phoenix_guardian.workers.celery_app", \
+     "worker", \
+     "--loglevel=info", \
+     "--concurrency=4", \
+     "--prefetch-multiplier=4", \
+     "--max-tasks-per-child=1000", \
+     "--task-events", \
+     "--without-heartbeat", \
+     "--without-gossip", \
+     "--without-mingle"]

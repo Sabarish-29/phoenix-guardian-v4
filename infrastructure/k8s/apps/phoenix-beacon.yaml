@@ -1,0 +1,306 @@
+# =============================================================================
+# PHOENIX BEACON - ML INFERENCE SERVICE
+# =============================================================================
+# GPU-accelerated ML inference for threat detection and readmission prediction
+# Scheduled on g4dn.xlarge nodes with NVIDIA T4 GPUs
+# =============================================================================
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: phoenix-ml
+  namespace: production
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/phoenix-production-phoenix-ml
+  labels:
+    app.kubernetes.io/name: phoenix-beacon
+    app.kubernetes.io/part-of: phoenix-guardian
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: phoenix-beacon-config
+  namespace: production
+  labels:
+    app.kubernetes.io/name: phoenix-beacon
+    app.kubernetes.io/part-of: phoenix-guardian
+data:
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+  
+  # ML settings
+  MODEL_CACHE_DIR: "/models"
+  INFERENCE_BATCH_SIZE: "32"
+  MAX_CONCURRENT_REQUESTS: "16"
+  
+  # GPU settings
+  CUDA_VISIBLE_DEVICES: "0"
+  
+  # Feature flags
+  ENABLE_THREAT_DETECTION: "true"
+  ENABLE_READMISSION_PREDICTION: "true"
+  
+  # Observability
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.monitoring:4317"
+  OTEL_SERVICE_NAME: "phoenix-beacon"
+  
+  # Model paths
+  THREAT_MODEL_PATH: "s3://phoenix-production-ml-models/threat-detection/latest/"
+  READMISSION_MODEL_PATH: "s3://phoenix-production-ml-models/readmission/latest/"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phoenix-beacon
+  namespace: production
+  labels:
+    app.kubernetes.io/name: phoenix-beacon
+    app.kubernetes.io/part-of: phoenix-guardian
+spec:
+  replicas: 2
+  revisionHistoryLimit: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: phoenix-beacon
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: phoenix-beacon
+        app.kubernetes.io/part-of: phoenix-guardian
+      annotations:
+        checksum/config: "CHECKSUM_PLACEHOLDER"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: phoenix-ml
+      
+      # Schedule on ML (GPU) node group
+      nodeSelector:
+        role: ml
+        gpu: nvidia-t4
+      
+      # Tolerate GPU taint
+      tolerations:
+      - key: "nvidia.com/gpu"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+      
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: phoenix-beacon
+            topologyKey: kubernetes.io/hostname
+      
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      
+      # Init container to download models
+      initContainers:
+      - name: download-models
+        image: amazon/aws-cli:2.15.0
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Downloading ML models from S3..."
+          aws s3 sync s3://phoenix-production-ml-models/threat-detection/latest/ /models/threat-detection/
+          aws s3 sync s3://phoenix-production-ml-models/readmission/latest/ /models/readmission/
+          echo "Models downloaded successfully"
+        volumeMounts:
+        - name: models
+          mountPath: /models
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+      
+      containers:
+      - name: phoenix-beacon
+        image: IMAGE_PLACEHOLDER
+        imagePullPolicy: Always
+        
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        - name: grpc
+          containerPort: 8081
+          protocol: TCP
+        
+        envFrom:
+        - configMapRef:
+            name: phoenix-beacon-config
+        
+        env:
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: phoenix-db-credentials
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: phoenix-db-credentials
+              key: password
+        
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        
+        resources:
+          requests:
+            cpu: "2"
+            memory: "8Gi"
+            nvidia.com/gpu: "1"
+          limits:
+            cpu: "4"
+            memory: "14Gi"
+            nvidia.com/gpu: "1"
+        
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        startupProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+        
+        volumeMounts:
+        - name: models
+          mountPath: /models
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+        - name: dshm
+          mountPath: /dev/shm
+      
+      volumes:
+      - name: models
+        emptyDir:
+          sizeLimit: 10Gi
+      - name: tmp
+        emptyDir: {}
+      # Shared memory for PyTorch DataLoader
+      - name: dshm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 2Gi
+      
+      terminationGracePeriodSeconds: 60
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: phoenix-beacon
+  namespace: production
+  labels:
+    app.kubernetes.io/name: phoenix-beacon
+    app.kubernetes.io/part-of: phoenix-guardian
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: phoenix-beacon
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
+    protocol: TCP
+  - name: grpc
+    port: 8081
+    targetPort: grpc
+    protocol: TCP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: phoenix-beacon
+  namespace: production
+  labels:
+    app.kubernetes.io/name: phoenix-beacon
+    app.kubernetes.io/part-of: phoenix-guardian
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: phoenix-beacon
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  # Custom metric for GPU utilization
+  - type: Pods
+    pods:
+      metric:
+        name: gpu_utilization
+      target:
+        type: AverageValue
+        averageValue: "70"
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 600
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 300
+    scaleUp:
+      stabilizationWindowSeconds: 120
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: phoenix-beacon
+  namespace: production
+  labels:
+    app.kubernetes.io/name: phoenix-beacon
+    app.kubernetes.io/part-of: phoenix-guardian
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: phoenix-beacon

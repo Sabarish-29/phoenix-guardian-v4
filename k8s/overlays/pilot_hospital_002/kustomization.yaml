@@ -1,0 +1,106 @@
+# Kustomize overlay for Pilot Hospital 002 - City General Hospital
+# Platform: Cerner FHIR
+# Location: Texas
+# Deployment: Standard deployment
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: pilot-hospital-002
+  labels:
+    hospital: city-general-hospital
+    environment: production
+    pilot-phase: week-18
+
+# Base resources
+resources:
+  - ../../base
+
+# Namespace for this tenant
+namespace: phoenix-pilot-002
+
+# Common labels for all resources
+commonLabels:
+  tenant-id: pilot_hospital_002
+  hospital-name: city-general-hospital
+  ehr-platform: cerner
+  compliance-region: texas
+  pilot-start: "2026-03-15"
+
+# Common annotations
+commonAnnotations:
+  phoenix-guardian.health/tenant-version: "1.0.0"
+  phoenix-guardian.health/config-hash: "e5f6g7h8"
+  phoenix-guardian.health/deployment-date: "2026-03-15"
+
+# Name prefix for all resources
+namePrefix: cgh-
+
+# Patches to apply
+patches:
+  # Agent configuration patch
+  - path: patches/agent-config.yaml
+    target:
+      kind: ConfigMap
+      name: phoenix-agents
+  
+  # Resource limits patch (standard)
+  - path: patches/resource-limits.yaml
+    target:
+      kind: Deployment
+  
+  # Network policy patch
+  - path: patches/network-policy.yaml
+    target:
+      kind: NetworkPolicy
+  
+  # Ingress patch
+  - path: patches/ingress.yaml
+    target:
+      kind: Ingress
+      name: phoenix-ingress
+
+# ConfigMap generator for tenant-specific config
+configMapGenerator:
+  - name: tenant-config
+    files:
+      - config.yaml
+    options:
+      disableNameSuffixHash: true
+  
+  - name: ehr-config
+    literals:
+      - EHR_PLATFORM=cerner
+      - EHR_BASE_URL=https://fhir-myrecord.cerner.com/r4/citygeneral
+      - EHR_AUTH_URL=https://authorization.cerner.com/tenants/citygeneral/protocols/oauth2/profiles/smart-v1/token
+      - EHR_API_VERSION=R4
+      - EHR_RATE_LIMIT=90
+      - EHR_TIMEOUT_SECONDS=30
+    options:
+      disableNameSuffixHash: true
+
+# Secret generator references
+secretGenerator:
+  - name: ehr-credentials
+    type: Opaque
+    options:
+      disableNameSuffixHash: true
+    literals:
+      - EHR_CLIENT_ID=PLACEHOLDER_USE_SEALED_SECRET
+      - EHR_CLIENT_SECRET=PLACEHOLDER_USE_SEALED_SECRET
+
+# Image overrides
+images:
+  - name: phoenix-guardian
+    newName: ghcr.io/phoenix-guardian/phoenix
+    newTag: v1.0.0-pilot
+
+# Replicas (standard deployment)
+replicas:
+  - name: phoenix-api
+    count: 3
+  - name: phoenix-worker
+    count: 2
+  - name: phoenix-agents
+    count: 2

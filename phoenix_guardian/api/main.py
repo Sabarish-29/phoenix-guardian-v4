@@ -1,0 +1,187 @@
+"""FastAPI main application.
+
+Central API server for Phoenix Guardian medical AI documentation system.
+"""
+
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+# Load environment variables from .env file
+from dotenv import load_dotenv
+env_path = Path(__file__).parent.parent.parent / ".env"
+load_dotenv(env_path)
+
+from fastapi import FastAPI, Request, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from phoenix_guardian.agents.navigator_agent import PatientNotFoundError
+from phoenix_guardian.agents.safety_agent import SecurityException
+from phoenix_guardian.api.routes import auth, encounters, health, patients
+from phoenix_guardian.api.utils.orchestrator import OrchestrationError
+from phoenix_guardian.database.connection import db
+
+# Create FastAPI app
+app = FastAPI(
+    title="Phoenix Guardian API",
+    description="Medical AI Documentation System - REST API",
+    version="1.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+)
+
+
+# Startup and shutdown events
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database connection on startup."""
+    db.connect()
+    print(f"Database connected: {db.config.host}:{db.config.port}/{db.config.name}")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Close database connection on shutdown."""
+    db.disconnect()
+    print("Database disconnected")
+
+
+# CORS middleware (configure for production)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",  # React dev server
+        "http://localhost:5173",  # Vite dev server
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# Request timing middleware
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    """Add processing time to response headers."""
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    response.headers["X-Process-Time"] = str(process_time)
+    return response
+
+
+# Global exception handlers
+@app.exception_handler(PatientNotFoundError)
+async def patient_not_found_handler(
+    request: Request,  # pylint: disable=unused-argument
+    exc: PatientNotFoundError,
+) -> JSONResponse:
+    """Handle patient not found errors."""
+    return JSONResponse(
+        status_code=status.HTTP_404_NOT_FOUND,
+        content={
+            "error": "PatientNotFoundError",
+            "message": str(exc),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+
+
+@app.exception_handler(OrchestrationError)
+async def orchestration_error_handler(
+    request: Request,  # pylint: disable=unused-argument
+    exc: OrchestrationError,
+) -> JSONResponse:
+    """Handle orchestration errors."""
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "error": "OrchestrationError",
+            "message": str(exc),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+
+
+@app.exception_handler(SecurityException)
+async def security_exception_handler(
+    request: Request,  # pylint: disable=unused-argument
+    exc: SecurityException,
+) -> JSONResponse:
+    """Handle security validation failures."""
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={
+            "error": "SecurityException",
+            "message": str(exc),
+            "threat_type": str(exc.threat_type),
+            "threat_level": str(exc.threat_level),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+
+
+@app.exception_handler(ValueError)
+async def value_error_handler(
+    request: Request,  # pylint: disable=unused-argument
+    exc: ValueError,
+) -> JSONResponse:
+    """Handle validation errors."""
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={
+            "error": "ValidationError",
+            "message": str(exc),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+
+
+# Include routers
+app.include_router(
+    health.router,
+    prefix="/api/v1",
+    tags=["health"],
+)
+
+app.include_router(
+    auth.router,
+    prefix="/api/v1/auth",
+    tags=["authentication"],
+)
+
+app.include_router(
+    patients.router,
+    prefix="/api/v1/patients",
+    tags=["patients"],
+)
+
+app.include_router(
+    encounters.router,
+    prefix="/api/v1/encounters",
+    tags=["encounters"],
+)
+
+
+# Root endpoint
+@app.get("/")
+async def root() -> dict:
+    """API root endpoint.
+
+    Returns:
+        API information and status
+    """
+    return {
+        "name": "Phoenix Guardian API",
+        "version": "1.0.0",
+        "status": "operational",
+        "docs": "/api/docs",
+        "health": "/api/v1/health",
+    }
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)

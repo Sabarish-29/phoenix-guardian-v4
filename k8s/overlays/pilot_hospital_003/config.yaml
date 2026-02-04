@@ -1,0 +1,204 @@
+# Tenant configuration for Pilot Hospital 003 - University Medical Center
+# Academic medical center with aggressive feature rollout
+
+tenant:
+  id: pilot_hospital_003
+  name: University Medical Center
+  short_name: UMC
+  timezone: America/New_York
+  academic_affiliation: New York University
+  research_enabled: true
+  
+hospital:
+  beds: 1200
+  annual_visits: 500000
+  trauma_center: level_1
+  teaching_hospital: true
+  research_hospital: true
+  departments:
+    - emergency
+    - surgery
+    - internal_medicine
+    - pediatrics
+    - obstetrics
+    - neurology
+    - neurosurgery
+    - cardiology
+    - cardiac_surgery
+    - oncology
+    - radiation_oncology
+    - orthopedics
+    - transplant
+    - burn_unit
+    - nicu
+    - psychiatry
+  
+ehr:
+  platform: epic
+  base_url: https://fhir.umcny.edu/api/FHIR/R4
+  api_version: R4
+  auth_type: jwt_assertion
+  bulk_data_enabled: true
+  sandbox_url: https://fhir-sandbox.umcny.edu/api/FHIR/R4
+  rate_limit_per_minute: 120
+  timeout_seconds: 45
+  features:
+    - patient_read
+    - patient_search
+    - encounter_read
+    - encounter_search
+    - document_create
+    - document_read
+    - observation_read
+    - condition_read
+    - medication_read
+    - procedure_read
+    - bulk_export
+    - research_queries
+    
+network:
+  allowed_ips:
+    - 10.0.0.0/8          # Hospital internal
+    - 172.16.0.0/12       # Research networks
+    - 192.168.100.0/24    # Admin network
+  vpn_required: true
+  vpn_gateway: vpn.umcny.edu
+  private_link_enabled: true
+  private_link_services:
+    - epic-fhir
+    - azure-openai
+  egress_allowed:
+    - epic-fhir
+    - pqc-kms
+    - logging
+    - research-data-lake
+    - azure-ml
+    
+alerts:
+  primary_email: soc@umcny.edu
+  secondary_email: ciso@umcny.edu
+  tertiary_email: it-security@umcny.edu
+  slack_webhook_enabled: true
+  slack_channel: "#phoenix-guardian-alerts"
+  slack_channel_critical: "#security-critical"
+  pagerduty_enabled: true
+  pagerduty_priority: P1
+  escalation_minutes: 5  # Faster escalation
+  syslog_enabled: true
+  syslog_host: siem.umcny.edu
+  syslog_port: 6514
+  syslog_protocol: tls
+  threat_intel_sharing: true
+  
+compliance:
+  level: hipaa_enhanced
+  state: NY
+  applicable_laws:
+    - HIPAA
+    - SHIELD  # NY SHIELD Act
+    - NYDFS   # NY DFS Cybersecurity Regulation
+  data_use_agreement_signed: true
+  dua_signed_date: "2026-02-15"
+  hipaa_officer_email: privacy-officer@umcny.edu
+  audit_log_retention_days: 2555  # 7 years
+  backup_retention_days: 180
+  incident_response_plan_version: "4.0.0"
+  breach_notification_hours: 24  # NY faster requirement
+  research_irb_approval: true
+  irb_approval_number: "IRB-2026-0142"
+  
+pilot:
+  enabled: true
+  start_date: "2026-04-01"
+  end_date: "2026-07-01"
+  max_patients: 25000
+  max_encounters_per_day: 2000
+  pilot_contact_email: innovation-lab@umcny.edu
+  pilot_phase: 1
+  research_pilot: true
+  success_criteria:
+    scribe_accuracy_threshold: 0.97
+    safety_detection_rate: 0.995
+    system_uptime: 0.9995
+    user_satisfaction_score: 4.5
+    research_query_latency_ms: 500
+    
+agents:
+  # Clinical agents - all enabled with advanced features
+  scribe:
+    status: enabled
+    config:
+      model: gpt-4-medical-advanced
+      specialty_models: true
+  navigator:
+    status: enabled
+    config:
+      research_mode: true
+  safety:
+    status: enabled
+    critical: true
+    config:
+      enhanced_mode: true
+  coding:
+    status: enabled
+    config:
+      auto_code: true
+  prior_auth:
+    status: enabled
+  quality:
+    status: enabled
+    config:
+      research_metrics: true
+  orders:
+    status: enabled
+    config:
+      cpoe_integration: true
+    
+  # Security agents - enhanced
+  sentinelq:
+    status: enabled
+    critical: true
+    config:
+      research_protection: true
+      advanced_detection: true
+  deception:
+    status: enabled
+    critical: true
+    config:
+      research_honeytokens: true
+      high_density: true
+  threat_intel:
+    status: enabled
+    config:
+      real_time_sharing: true
+      ml_enhanced: true
+    
+features:
+  pqc_encryption: true
+  enhanced_audit: true
+  ml_monitoring: true
+  realtime_alerts: true
+  predictive_analytics: true
+  auto_remediation: true  # Aggressive
+  research_mode: true
+  bulk_data_export: true
+  gpu_inference: true
+  
+resources:
+  cpu_request: "2000m"
+  cpu_limit: "8000m"
+  memory_request: "4Gi"
+  memory_limit: "16Gi"
+  gpu_required: true
+  gpu_type: nvidia-a100
+  gpu_count: 2
+  
+monitoring:
+  prometheus_enabled: true
+  grafana_dashboard: phoenix-pilot-003
+  log_level: info
+  trace_sampling_rate: 0.25  # Lower sampling for high volume
+  custom_metrics:
+    - research_queries_per_second
+    - ml_inference_latency
+    - bulk_export_throughput

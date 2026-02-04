@@ -1,0 +1,100 @@
+# Network policy patch for Pilot Hospital 002
+# Standard network isolation
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: phoenix-network-policy
+  labels:
+    tenant-id: pilot_hospital_002
+spec:
+  podSelector:
+    matchLabels:
+      app: phoenix-guardian
+      tenant-id: pilot_hospital_002
+  policyTypes:
+    - Ingress
+    - Egress
+  
+  ingress:
+    # Allow from hospital networks
+    - from:
+        - ipBlock:
+            cidr: 192.168.0.0/16
+        - ipBlock:
+            cidr: 10.50.0.0/16
+        - ipBlock:
+            cidr: 172.20.0.0/16
+      ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 8443
+    
+    # Allow internal pod communication
+    - from:
+        - podSelector:
+            matchLabels:
+              tenant-id: pilot_hospital_002
+      ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 9090
+        - protocol: TCP
+          port: 6379
+  
+  egress:
+    # Cerner FHIR endpoints
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 443
+    
+    # PostgreSQL
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
+    
+    # Redis
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    
+    # PQC KMS
+    - to:
+        - ipBlock:
+            cidr: 10.200.0.0/16
+      ports:
+        - protocol: TCP
+          port: 8200
+    
+    # Logging (Splunk)
+    - to:
+        - ipBlock:
+            cidr: 10.60.0.0/24
+      ports:
+        - protocol: TCP
+          port: 9514
+    
+    # DNS
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

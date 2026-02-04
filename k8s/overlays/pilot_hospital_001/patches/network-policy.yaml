@@ -1,0 +1,123 @@
+# Network policy patch for Pilot Hospital 001
+# Strict network isolation with IP whitelisting
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: phoenix-network-policy
+  labels:
+    tenant-id: pilot_hospital_001
+spec:
+  podSelector:
+    matchLabels:
+      app: phoenix-guardian
+      tenant-id: pilot_hospital_001
+  policyTypes:
+    - Ingress
+    - Egress
+  
+  ingress:
+    # Allow from hospital internal network
+    - from:
+        - ipBlock:
+            cidr: 10.0.0.0/8
+        - ipBlock:
+            cidr: 172.16.50.0/24
+      ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 8443
+    
+    # Allow from VPN gateway
+    - from:
+        - ipBlock:
+            cidr: 10.100.0.0/16  # VPN pool
+      ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 8443
+    
+    # Allow internal pod-to-pod communication
+    - from:
+        - podSelector:
+            matchLabels:
+              tenant-id: pilot_hospital_001
+      ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 9090  # Metrics
+        - protocol: TCP
+          port: 6379  # Redis
+  
+  egress:
+    # Allow to Epic FHIR endpoint
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0  # Epic external IP (would be specific in prod)
+      ports:
+        - protocol: TCP
+          port: 443
+    
+    # Allow to PostgreSQL
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
+    
+    # Allow to Redis
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    
+    # Allow to PQC KMS
+    - to:
+        - ipBlock:
+            cidr: 10.200.0.0/16  # Internal KMS
+      ports:
+        - protocol: TCP
+          port: 8200  # Vault
+    
+    # Allow to logging infrastructure
+    - to:
+        - podSelector:
+            matchLabels:
+              app: fluentd
+      ports:
+        - protocol: TCP
+          port: 24224
+    
+    # Allow DNS
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
+---
+# Deny all default policy (applied first)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-default
+spec:
+  podSelector:
+    matchLabels:
+      tenant-id: pilot_hospital_001
+  policyTypes:
+    - Ingress
+    - Egress

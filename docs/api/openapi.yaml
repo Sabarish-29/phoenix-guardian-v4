@@ -1,0 +1,1799 @@
+openapi: 3.1.0
+info:
+  title: Phoenix Guardian API
+  description: |
+    Phoenix Guardian is an AI-powered healthcare security platform that provides
+    real-time threat detection, secure transcription, and SOAP note generation
+    for medical encounters.
+    
+    ## Authentication
+    
+    All API endpoints require authentication using JWT Bearer tokens.
+    Tokens are obtained from the `/auth/token` endpoint and must include
+    the tenant ID in the claims.
+    
+    ## Multi-Tenancy
+    
+    Phoenix Guardian is a multi-tenant platform. Each request must include
+    the tenant context via the JWT token or X-Tenant-ID header.
+    
+    ## Rate Limiting
+    
+    - Standard: 1000 requests/minute per tenant
+    - Transcription: 100 requests/minute per tenant
+    - AI Operations: 50 requests/minute per tenant
+    
+    ## Versioning
+    
+    The API is versioned via the URL path (e.g., `/api/v1/`).
+    
+  version: 3.0.0
+  contact:
+    name: Phoenix Guardian API Support
+    email: api-support@phoenix-guardian.health
+    url: https://docs.phoenix-guardian.health
+  license:
+    name: Proprietary
+    url: https://phoenix-guardian.health/license
+    
+servers:
+  - url: https://api.phoenix-guardian.health/api/v1
+    description: Production
+  - url: https://staging-api.phoenix-guardian.health/api/v1
+    description: Staging
+  - url: http://localhost:8080/api/v1
+    description: Local Development
+
+tags:
+  - name: Authentication
+    description: Authentication and authorization endpoints
+  - name: Encounters
+    description: Patient encounter management
+  - name: Transcription
+    description: Audio transcription services
+  - name: SOAP Notes
+    description: SOAP note generation
+  - name: Threats
+    description: Threat detection and management
+  - name: Patients
+    description: Patient management
+  - name: Dashboard
+    description: Dashboard and metrics
+  - name: Admin
+    description: Administrative operations
+  - name: Federation
+    description: Federated learning operations
+  - name: Languages
+    description: Multi-language support
+
+security:
+  - BearerAuth: []
+
+paths:
+  # ==========================================================================
+  # Authentication
+  # ==========================================================================
+  /auth/token:
+    post:
+      summary: Obtain access token
+      description: Authenticate user and obtain JWT access token
+      tags:
+        - Authentication
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+          
+  /auth/refresh:
+    post:
+      summary: Refresh access token
+      description: Exchange refresh token for new access token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+              required:
+                - refresh_token
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+          
+  /auth/logout:
+    post:
+      summary: Logout and invalidate tokens
+      tags:
+        - Authentication
+      responses:
+        '204':
+          description: Logout successful
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ==========================================================================
+  # Encounters
+  # ==========================================================================
+  /encounters:
+    get:
+      summary: List encounters
+      description: Retrieve paginated list of encounters for the tenant
+      tags:
+        - Encounters
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, completed, cancelled]
+        - name: physician_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of encounters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncounterList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+          
+    post:
+      summary: Create new encounter
+      description: Start a new patient encounter
+      tags:
+        - Encounters
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEncounter'
+      responses:
+        '201':
+          description: Encounter created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Encounter'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+          
+  /encounters/{encounterId}:
+    get:
+      summary: Get encounter details
+      tags:
+        - Encounters
+      parameters:
+        - $ref: '#/components/parameters/EncounterId'
+      responses:
+        '200':
+          description: Encounter details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Encounter'
+        '404':
+          $ref: '#/components/responses/NotFound'
+          
+    patch:
+      summary: Update encounter
+      tags:
+        - Encounters
+      parameters:
+        - $ref: '#/components/parameters/EncounterId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEncounter'
+      responses:
+        '200':
+          description: Encounter updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Encounter'
+        '404':
+          $ref: '#/components/responses/NotFound'
+          
+    delete:
+      summary: Cancel encounter
+      tags:
+        - Encounters
+      parameters:
+        - $ref: '#/components/parameters/EncounterId'
+      responses:
+        '204':
+          description: Encounter cancelled
+        '404':
+          $ref: '#/components/responses/NotFound'
+          
+  /encounters/{encounterId}/complete:
+    post:
+      summary: Complete encounter
+      description: Mark encounter as complete and finalize SOAP note
+      tags:
+        - Encounters
+      parameters:
+        - $ref: '#/components/parameters/EncounterId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+                  description: Final notes for encounter
+      responses:
+        '200':
+          description: Encounter completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Encounter'
+
+  # ==========================================================================
+  # Transcription
+  # ==========================================================================
+  /transcription/submit:
+    post:
+      summary: Submit audio for transcription
+      description: |
+        Submit audio file for AI transcription. Supports streaming
+        and batch processing modes.
+      tags:
+        - Transcription
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                audio:
+                  type: string
+                  format: binary
+                  description: Audio file (WAV, MP3, M4A, FLAC)
+                encounter_id:
+                  type: string
+                  format: uuid
+                language:
+                  type: string
+                  enum: [en, es, zh, ar, hi, pt, fr, auto]
+                  default: auto
+                streaming:
+                  type: boolean
+                  default: false
+              required:
+                - audio
+                - encounter_id
+      responses:
+        '202':
+          description: Transcription accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranscriptionJob'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '413':
+          description: Audio file too large (max 100MB)
+          
+  /transcription/{jobId}:
+    get:
+      summary: Get transcription status
+      tags:
+        - Transcription
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Transcription status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranscriptionJob'
+        '404':
+          $ref: '#/components/responses/NotFound'
+          
+  /transcription/{encounterId}/status:
+    get:
+      summary: Get transcription status by encounter
+      tags:
+        - Transcription
+      parameters:
+        - $ref: '#/components/parameters/EncounterId'
+      responses:
+        '200':
+          description: Transcription status for encounter
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  encounter_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum: [pending, processing, completed, failed]
+                  progress_percent:
+                    type: number
+                  estimated_completion:
+                    type: string
+                    format: date-time
+                    
+  /transcription/stream:
+    post:
+      summary: Stream audio for real-time transcription
+      description: WebSocket upgrade endpoint for streaming transcription
+      tags:
+        - Transcription
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                encounter_id:
+                  type: string
+                  format: uuid
+                language:
+                  type: string
+                  default: auto
+                sample_rate:
+                  type: integer
+                  default: 16000
+      responses:
+        '101':
+          description: Switching to WebSocket protocol
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # ==========================================================================
+  # SOAP Notes
+  # ==========================================================================
+  /soap/generate:
+    post:
+      summary: Generate SOAP note
+      description: |
+        Generate SOAP note from transcription using AI.
+        Can specify language for multi-language support.
+      tags:
+        - SOAP Notes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateSOAPRequest'
+      responses:
+        '202':
+          description: SOAP note generation started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SOAPJob'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+          
+  /soap/{encounterId}:
+    get:
+      summary: Get SOAP note
+      tags:
+        - SOAP Notes
+      parameters:
+        - $ref: '#/components/parameters/EncounterId'
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, html, pdf, hl7, fhir]
+            default: json
+        - name: language
+          in: query
+          schema:
+            type: string
+            enum: [en, es, zh, ar, hi, pt, fr]
+      responses:
+        '200':
+          description: SOAP note
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SOAPNote'
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+          
+    patch:
+      summary: Update SOAP note
+      description: Physician edits to generated SOAP note
+      tags:
+        - SOAP Notes
+      parameters:
+        - $ref: '#/components/parameters/EncounterId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSOAPNote'
+      responses:
+        '200':
+          description: SOAP note updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SOAPNote'
+                
+  /soap/{encounterId}/sign:
+    post:
+      summary: Sign SOAP note
+      description: Physician signature finalizes the SOAP note
+      tags:
+        - SOAP Notes
+      parameters:
+        - $ref: '#/components/parameters/EncounterId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                signature:
+                  type: string
+                  description: Base64 encoded signature image
+                attestation:
+                  type: boolean
+                  description: Physician attestation
+              required:
+                - attestation
+      responses:
+        '200':
+          description: SOAP note signed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SOAPNote'
+
+  # ==========================================================================
+  # Threats
+  # ==========================================================================
+  /threats/recent:
+    get:
+      summary: Get recent threats
+      description: Retrieve recent threat alerts for the tenant
+      tags:
+        - Threats
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 100
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: List of threats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  threats:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Threat'
+                  total:
+                    type: integer
+                    
+  /threats/{threatId}:
+    get:
+      summary: Get threat details
+      tags:
+        - Threats
+      parameters:
+        - name: threatId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Threat details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Threat'
+        '404':
+          $ref: '#/components/responses/NotFound'
+          
+  /threats/{threatId}/acknowledge:
+    post:
+      summary: Acknowledge threat
+      tags:
+        - Threats
+      parameters:
+        - name: threatId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+                assigned_to:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Threat acknowledged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Threat'
+                
+  /threats/{threatId}/resolve:
+    post:
+      summary: Resolve threat
+      tags:
+        - Threats
+      parameters:
+        - name: threatId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                resolution:
+                  type: string
+                  enum: [confirmed_attack, false_positive, mitigated, no_action_needed]
+                notes:
+                  type: string
+              required:
+                - resolution
+      responses:
+        '200':
+          description: Threat resolved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Threat'
+
+  # ==========================================================================
+  # Patients
+  # ==========================================================================
+  /patients:
+    get:
+      summary: List patients
+      tags:
+        - Patients
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by name or MRN
+      responses:
+        '200':
+          description: List of patients
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientList'
+                
+    post:
+      summary: Create patient
+      tags:
+        - Patients
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePatient'
+      responses:
+        '201':
+          description: Patient created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+                
+  /patients/search:
+    get:
+      summary: Search patients
+      tags:
+        - Patients
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Patient'
+                  total:
+                    type: integer
+                    
+  /patients/{patientId}:
+    get:
+      summary: Get patient details
+      tags:
+        - Patients
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Patient details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+        '404':
+          $ref: '#/components/responses/NotFound'
+          
+  /patients/{patientId}/encounters:
+    get:
+      summary: Get patient encounters
+      tags:
+        - Patients
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+      responses:
+        '200':
+          description: Patient's encounters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EncounterList'
+
+  # ==========================================================================
+  # Dashboard
+  # ==========================================================================
+  /dashboard/metrics:
+    get:
+      summary: Get dashboard metrics
+      tags:
+        - Dashboard
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [hour, day, week, month]
+            default: day
+      responses:
+        '200':
+          description: Dashboard metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardMetrics'
+                
+  /dashboard/realtime:
+    get:
+      summary: WebSocket for real-time updates
+      description: Upgrade to WebSocket for real-time dashboard updates
+      tags:
+        - Dashboard
+      responses:
+        '101':
+          description: Switching to WebSocket
+          
+  /dashboard/threats/summary:
+    get:
+      summary: Get threat summary
+      tags:
+        - Dashboard
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [hour, day, week, month]
+            default: day
+      responses:
+        '200':
+          description: Threat summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  by_severity:
+                    type: object
+                    additionalProperties:
+                      type: integer
+                  by_type:
+                    type: object
+                    additionalProperties:
+                      type: integer
+                  trend:
+                    type: string
+                    enum: [increasing, stable, decreasing]
+
+  # ==========================================================================
+  # Admin
+  # ==========================================================================
+  /admin/dashboard:
+    get:
+      summary: Admin dashboard
+      tags:
+        - Admin
+      responses:
+        '200':
+          description: Admin dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDashboard'
+                
+  /admin/users:
+    get:
+      summary: List users
+      tags:
+        - Admin
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [admin, physician, nurse, clerk]
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserList'
+                
+  /admin/audit/logs:
+    get:
+      summary: Get audit logs
+      tags:
+        - Admin
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 7
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Audit logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+                  total:
+                    type: integer
+                    
+  /admin/compliance/soc2:
+    get:
+      summary: Get SOC 2 compliance status
+      tags:
+        - Admin
+      responses:
+        '200':
+          description: SOC 2 compliance data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SOC2Compliance'
+                
+  /admin/tenants:
+    get:
+      summary: List tenants (super admin only)
+      tags:
+        - Admin
+      responses:
+        '200':
+          description: List of tenants
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tenants:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tenant'
+
+  # ==========================================================================
+  # Federation
+  # ==========================================================================
+  /federation/status:
+    get:
+      summary: Get federation status
+      tags:
+        - Federation
+      responses:
+        '200':
+          description: Federation status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FederationStatus'
+                
+  /federation/signatures:
+    get:
+      summary: List attack signatures
+      description: Get federated attack signatures for threat detection
+      tags:
+        - Federation
+      parameters:
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Attack signatures
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  signatures:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AttackSignature'
+                  last_updated:
+                    type: string
+                    format: date-time
+                    
+  /federation/contribute:
+    post:
+      summary: Contribute threat data
+      description: Submit anonymized threat data for federated learning
+      tags:
+        - Federation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                threat_type:
+                  type: string
+                features:
+                  type: object
+                  description: Anonymized threat features
+      responses:
+        '202':
+          description: Contribution accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contribution_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+
+  # ==========================================================================
+  # Languages
+  # ==========================================================================
+  /languages:
+    get:
+      summary: List supported languages
+      tags:
+        - Languages
+      responses:
+        '200':
+          description: Supported languages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  languages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Language'
+                      
+  /languages/{code}/dictionary:
+    get:
+      summary: Get medical dictionary for language
+      tags:
+        - Languages
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [en, es, zh, ar, hi, pt, fr]
+      responses:
+        '200':
+          description: Medical dictionary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  language:
+                    type: string
+                  terms:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MedicalTerm'
+
+  # ==========================================================================
+  # Health
+  # ==========================================================================
+  /health:
+    get:
+      summary: Health check
+      security: []
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded, unhealthy]
+                  version:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+                    
+  /health/live:
+    get:
+      summary: Liveness probe
+      security: []
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is alive
+          
+  /health/ready:
+    get:
+      summary: Readiness probe
+      security: []
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is ready
+        '503':
+          description: Service is not ready
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      
+  parameters:
+    EncounterId:
+      name: encounterId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+        
+    PageSizeParam:
+      name: page_size
+      in: query
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+        
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+            
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+            
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+            
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+            
+    RateLimited:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds to wait before retrying
+          
+  schemas:
+    # Auth
+    TokenRequest:
+      type: object
+      properties:
+        grant_type:
+          type: string
+          enum: [password, client_credentials, refresh_token]
+        tenant_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        password:
+          type: string
+        client_id:
+          type: string
+        client_secret:
+          type: string
+      required:
+        - grant_type
+        - tenant_id
+        
+    TokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          default: Bearer
+        expires_in:
+          type: integer
+          description: Token lifetime in seconds
+        scope:
+          type: string
+          
+    # Encounters
+    Encounter:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        patient_id:
+          type: string
+          format: uuid
+        patient_mrn:
+          type: string
+        physician_id:
+          type: string
+          format: uuid
+        encounter_type:
+          type: string
+          enum: [office_visit, follow_up, consultation, urgent_care, telehealth]
+        status:
+          type: string
+          enum: [active, completed, cancelled]
+        chief_complaint:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        transcription_status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        soap_note_status:
+          type: string
+          enum: [pending, generated, reviewed, signed]
+        language:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          
+    CreateEncounter:
+      type: object
+      properties:
+        patient_mrn:
+          type: string
+        physician_id:
+          type: string
+          format: uuid
+        encounter_type:
+          type: string
+          enum: [office_visit, follow_up, consultation, urgent_care, telehealth]
+        chief_complaint:
+          type: string
+        language:
+          type: string
+          default: en
+        start_time:
+          type: string
+          format: date-time
+      required:
+        - patient_mrn
+        - encounter_type
+        
+    UpdateEncounter:
+      type: object
+      properties:
+        chief_complaint:
+          type: string
+        language:
+          type: string
+        notes:
+          type: string
+          
+    EncounterList:
+      type: object
+      properties:
+        encounters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Encounter'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+          
+    # Transcription
+    TranscriptionJob:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        encounter_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        progress_percent:
+          type: number
+        language_detected:
+          type: string
+        duration_seconds:
+          type: number
+        transcription:
+          type: string
+        confidence:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        error:
+          type: string
+          
+    # SOAP Notes
+    GenerateSOAPRequest:
+      type: object
+      properties:
+        encounter_id:
+          type: string
+          format: uuid
+        transcription_complete:
+          type: boolean
+          default: true
+        include_codes:
+          type: boolean
+          default: true
+        language:
+          type: string
+          default: en
+      required:
+        - encounter_id
+        
+    SOAPJob:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        encounter_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        created_at:
+          type: string
+          format: date-time
+          
+    SOAPNote:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        encounter_id:
+          type: string
+          format: uuid
+        subjective:
+          type: string
+        objective:
+          type: string
+        assessment:
+          type: string
+        plan:
+          type: string
+        icd_codes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ICDCode'
+        cpt_codes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CPTCode'
+        language:
+          type: string
+        status:
+          type: string
+          enum: [draft, reviewed, signed]
+        signed_by:
+          type: string
+          format: uuid
+        signed_at:
+          type: string
+          format: date-time
+        version:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          
+    UpdateSOAPNote:
+      type: object
+      properties:
+        subjective:
+          type: string
+        objective:
+          type: string
+        assessment:
+          type: string
+        plan:
+          type: string
+        icd_codes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ICDCode'
+        cpt_codes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CPTCode'
+            
+    ICDCode:
+      type: object
+      properties:
+        code:
+          type: string
+        description:
+          type: string
+        confidence:
+          type: number
+          
+    CPTCode:
+      type: object
+      properties:
+        code:
+          type: string
+        description:
+          type: string
+        confidence:
+          type: number
+          
+    # Threats
+    Threat:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [prompt_injection, jailbreak, data_exfiltration, adversarial_audio, honeytoken_access, unauthorized_access]
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [detected, acknowledged, investigating, resolved]
+        source:
+          type: object
+          properties:
+            ip_address:
+              type: string
+            user_id:
+              type: string
+            encounter_id:
+              type: string
+        description:
+          type: string
+        details:
+          type: object
+        detected_at:
+          type: string
+          format: date-time
+        acknowledged_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+        resolution:
+          type: string
+          
+    # Patients
+    Patient:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        mrn:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        date_of_birth:
+          type: string
+          format: date
+        gender:
+          type: string
+          enum: [male, female, other, unknown]
+        preferred_language:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        created_at:
+          type: string
+          format: date-time
+          
+    CreatePatient:
+      type: object
+      properties:
+        mrn:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        date_of_birth:
+          type: string
+          format: date
+        gender:
+          type: string
+          enum: [male, female, other, unknown]
+        preferred_language:
+          type: string
+          default: en
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+      required:
+        - first_name
+        - last_name
+        - date_of_birth
+        
+    PatientList:
+      type: object
+      properties:
+        patients:
+          type: array
+          items:
+            $ref: '#/components/schemas/Patient'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+          
+    # Dashboard
+    DashboardMetrics:
+      type: object
+      properties:
+        encounters:
+          type: object
+          properties:
+            total:
+              type: integer
+            active:
+              type: integer
+            completed_today:
+              type: integer
+        transcriptions:
+          type: object
+          properties:
+            total:
+              type: integer
+            average_duration_seconds:
+              type: number
+            average_latency_seconds:
+              type: number
+        threats:
+          type: object
+          properties:
+            total:
+              type: integer
+            critical:
+              type: integer
+            unacknowledged:
+              type: integer
+        performance:
+          type: object
+          properties:
+            api_latency_p95_ms:
+              type: number
+            transcription_latency_p95_s:
+              type: number
+            soap_generation_p95_s:
+              type: number
+            
+    # Admin
+    AdminDashboard:
+      type: object
+      properties:
+        tenant_count:
+          type: integer
+        user_count:
+          type: integer
+        encounter_count_30d:
+          type: integer
+        threat_count_30d:
+          type: integer
+        system_health:
+          type: string
+          enum: [healthy, degraded, critical]
+          
+    UserList:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              email:
+                type: string
+              role:
+                type: string
+              last_login:
+                type: string
+                format: date-time
+        total:
+          type: integer
+          
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        user_id:
+          type: string
+          format: uuid
+        action:
+          type: string
+        resource_type:
+          type: string
+        resource_id:
+          type: string
+        ip_address:
+          type: string
+        details:
+          type: object
+          
+    SOC2Compliance:
+      type: object
+      properties:
+        overall_score:
+          type: number
+        categories:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              score:
+                type: number
+              controls_passed:
+                type: integer
+              controls_total:
+                type: integer
+        last_audit:
+          type: string
+          format: date-time
+        next_audit:
+          type: string
+          format: date-time
+          
+    Tenant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, suspended, trial]
+        created_at:
+          type: string
+          format: date-time
+          
+    # Federation
+    FederationStatus:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        consortium_members:
+          type: integer
+        last_aggregation:
+          type: string
+          format: date-time
+        signatures_count:
+          type: integer
+        contribution_count:
+          type: integer
+          
+    AttackSignature:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        attack_type:
+          type: string
+        pattern:
+          type: object
+        confidence:
+          type: number
+        contributors_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+          
+    # Languages
+    Language:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        native_name:
+          type: string
+        rtl:
+          type: boolean
+        transcription_supported:
+          type: boolean
+        translation_supported:
+          type: boolean
+          
+    MedicalTerm:
+      type: object
+      properties:
+        term:
+          type: string
+        translation:
+          type: string
+        category:
+          type: string
+        phonetic:
+          type: string
+          
+    # Common
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+        details:
+          type: object

@@ -1,0 +1,263 @@
+# =============================================================================
+# PHOENIX GUARDIAN - ARGOCD APPLICATION
+# =============================================================================
+# GitOps configuration for production deployment
+# ArgoCD monitors this repo and auto-syncs changes to the cluster
+# =============================================================================
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: phoenix-production
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: phoenix-guardian
+    app.kubernetes.io/part-of: phoenix-guardian
+    environment: production
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/manifest-generate-paths: infrastructure/k8s/apps
+    notifications.argoproj.io/subscribe.on-sync-succeeded.slack: phoenix-deployments
+    notifications.argoproj.io/subscribe.on-sync-failed.slack: phoenix-alerts
+spec:
+  project: default
+  
+  # ==========================================================================
+  # SOURCE CONFIGURATION
+  # ==========================================================================
+  source:
+    repoURL: https://github.com/yourorg/phoenix-guardian
+    targetRevision: main
+    path: infrastructure/k8s/apps
+    
+    # Directory-based application
+    directory:
+      recurse: false
+      include: '*.yaml'
+      exclude: '*-staging.yaml'
+  
+  # ==========================================================================
+  # DESTINATION CONFIGURATION
+  # ==========================================================================
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: production
+  
+  # ==========================================================================
+  # SYNC POLICY
+  # ==========================================================================
+  syncPolicy:
+    # Automated sync with self-healing
+    automated:
+      prune: true           # Delete resources not in git
+      selfHeal: true        # Auto-sync on drift detection
+      allowEmpty: false     # Don't allow empty apps
+    
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+      - RespectIgnoreDifferences=true
+      - ApplyOutOfSyncOnly=true
+      - ServerSideApply=true
+    
+    # Retry on sync failure
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+    
+    # Managed namespace metadata
+    managedNamespaceMetadata:
+      labels:
+        app.kubernetes.io/managed-by: argocd
+        environment: production
+  
+  # ==========================================================================
+  # REVISION HISTORY
+  # ==========================================================================
+  revisionHistoryLimit: 10
+  
+  # ==========================================================================
+  # IGNORE DIFFERENCES
+  # ==========================================================================
+  # Ignore fields that are managed by other controllers
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas  # Managed by HPA
+    
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+      jsonPointers:
+        - /status
+    
+    - group: ""
+      kind: Service
+      jsonPointers:
+        - /spec/clusterIP
+        - /spec/clusterIPs
+    
+    - group: ""
+      kind: ConfigMap
+      jsonPointers:
+        - /metadata/annotations/kubectl.kubernetes.io~1last-applied-configuration
+  
+  # ==========================================================================
+  # HEALTH CHECKS
+  # ==========================================================================
+  # Custom health checks for resources
+  info:
+    - name: url
+      value: https://api.phoenix-guardian.com
+    - name: oncall
+      value: devops-team
+---
+# =============================================================================
+# STAGING APPLICATION
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: phoenix-staging
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: phoenix-guardian
+    app.kubernetes.io/part-of: phoenix-guardian
+    environment: staging
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  
+  source:
+    repoURL: https://github.com/yourorg/phoenix-guardian
+    targetRevision: develop
+    path: infrastructure/k8s/apps
+    
+    directory:
+      recurse: false
+      include: '*.yaml'
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: staging
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - ApplyOutOfSyncOnly=true
+    
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 1m
+  
+  revisionHistoryLimit: 5
+  
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+---
+# =============================================================================
+# ARGOCD PROJECT
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: phoenix-guardian
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Phoenix Guardian Healthcare AI Platform
+  
+  # Source repositories
+  sourceRepos:
+    - https://github.com/yourorg/phoenix-guardian
+    - https://github.com/yourorg/phoenix-guardian-config
+  
+  # Destination clusters and namespaces
+  destinations:
+    - namespace: production
+      server: https://kubernetes.default.svc
+    - namespace: staging
+      server: https://kubernetes.default.svc
+    - namespace: monitoring
+      server: https://kubernetes.default.svc
+  
+  # Allowed cluster resources
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: 'networking.k8s.io'
+      kind: NetworkPolicy
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRole
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRoleBinding
+  
+  # Allowed namespace resources
+  namespaceResourceWhitelist:
+    - group: ''
+      kind: '*'
+    - group: 'apps'
+      kind: '*'
+    - group: 'autoscaling'
+      kind: '*'
+    - group: 'batch'
+      kind: '*'
+    - group: 'networking.k8s.io'
+      kind: '*'
+    - group: 'policy'
+      kind: '*'
+  
+  # Roles
+  roles:
+    - name: admin
+      description: Full access to Phoenix Guardian
+      policies:
+        - p, proj:phoenix-guardian:admin, applications, *, phoenix-guardian/*, allow
+      groups:
+        - phoenix-admins
+    
+    - name: developer
+      description: View and sync applications
+      policies:
+        - p, proj:phoenix-guardian:developer, applications, get, phoenix-guardian/*, allow
+        - p, proj:phoenix-guardian:developer, applications, sync, phoenix-guardian/phoenix-staging, allow
+      groups:
+        - phoenix-developers
+    
+    - name: readonly
+      description: Read-only access
+      policies:
+        - p, proj:phoenix-guardian:readonly, applications, get, phoenix-guardian/*, allow
+      groups:
+        - phoenix-viewers
+  
+  # Sync windows (only deploy during business hours for staging)
+  syncWindows:
+    - kind: allow
+      schedule: '0 6-22 * * 1-5'
+      duration: 16h
+      applications:
+        - 'phoenix-staging'
+      namespaces:
+        - 'staging'
+      clusters:
+        - '*'

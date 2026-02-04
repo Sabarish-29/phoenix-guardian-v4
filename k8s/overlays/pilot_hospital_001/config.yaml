@@ -1,0 +1,141 @@
+# Tenant configuration for Pilot Hospital 001 - Regional Medical Center
+# This file is used by Kustomize to configure the deployment
+
+tenant:
+  id: pilot_hospital_001
+  name: Regional Medical Center
+  short_name: RMC
+  timezone: America/Los_Angeles
+  
+hospital:
+  beds: 350
+  annual_visits: 150000
+  departments:
+    - emergency
+    - surgery
+    - internal_medicine
+    - cardiology
+    - oncology
+  
+ehr:
+  platform: epic
+  base_url: https://fhir.rmchealth.org/api/FHIR/R4
+  api_version: R4
+  sandbox_url: https://fhir-sandbox.rmchealth.org/api/FHIR/R4
+  rate_limit_per_minute: 60
+  timeout_seconds: 30
+  features:
+    - patient_read
+    - encounter_read
+    - document_create
+    - order_read
+    
+network:
+  allowed_ips:
+    - 10.0.0.0/8        # Hospital internal
+    - 172.16.50.0/24    # Admin network
+  vpn_required: true
+  vpn_gateway: vpn.rmchealth.org
+  egress_allowed:
+    - epic-fhir
+    - pqc-kms
+    - logging
+    
+alerts:
+  primary_email: it-security@rmchealth.org
+  secondary_email: ciso@rmchealth.org
+  slack_webhook_enabled: true
+  slack_channel: "#phoenix-alerts"
+  pagerduty_enabled: true
+  pagerduty_priority: P2
+  escalation_minutes: 15
+  syslog_enabled: true
+  syslog_host: siem.rmchealth.org
+  syslog_port: 514
+  
+compliance:
+  level: hipaa
+  state: CA
+  applicable_laws:
+    - HIPAA
+    - CCPA
+    - CMIA
+  data_use_agreement_signed: true
+  dua_signed_date: "2026-01-15"
+  hipaa_officer_email: privacy@rmchealth.org
+  audit_log_retention_days: 2555  # 7 years
+  backup_retention_days: 90
+  incident_response_plan_version: "2.1.0"
+  
+pilot:
+  enabled: true
+  start_date: "2026-03-01"
+  end_date: "2026-05-31"
+  max_patients: 1000
+  max_encounters_per_day: 100
+  pilot_contact_email: pilot-coordinator@rmchealth.org
+  success_criteria:
+    - scribe_accuracy_threshold: 0.95
+    - safety_detection_rate: 0.99
+    - user_satisfaction_score: 4.0
+    
+agents:
+  # Clinical agents - conservative rollout
+  scribe:
+    status: pilot
+    extra_logging: true
+    pilot_users:
+      - dr.smith@rmchealth.org
+      - dr.johnson@rmchealth.org
+  navigator:
+    status: pilot
+    extra_logging: true
+  safety:
+    status: enabled
+    critical: true
+    cannot_disable: true
+  coding:
+    status: pilot
+    extra_logging: true
+  prior_auth:
+    status: disabled  # Phase 2
+  quality:
+    status: pilot
+    extra_logging: true
+  orders:
+    status: pilot
+    extra_logging: true
+    
+  # Security agents - always enabled
+  sentinelq:
+    status: enabled
+    critical: true
+    cannot_disable: true
+  deception:
+    status: enabled
+    critical: true
+    cannot_disable: true
+  threat_intel:
+    status: pilot
+    extra_logging: true
+    
+features:
+  pqc_encryption: true
+  enhanced_audit: true
+  ml_monitoring: true
+  realtime_alerts: true
+  predictive_analytics: false  # Phase 2
+  auto_remediation: false      # Phase 3
+  
+resources:
+  cpu_request: "500m"
+  cpu_limit: "2000m"
+  memory_request: "1Gi"
+  memory_limit: "4Gi"
+  gpu_required: false
+  
+monitoring:
+  prometheus_enabled: true
+  grafana_dashboard: phoenix-pilot-001
+  log_level: debug  # Extra logging for pilot
+  trace_sampling_rate: 1.0  # 100% during pilot

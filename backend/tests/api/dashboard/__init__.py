@@ -1,0 +1,3 @@
+"""
+Dashboard API tests initialization
+"""

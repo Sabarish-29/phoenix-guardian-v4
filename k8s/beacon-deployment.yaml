@@ -1,0 +1,197 @@
+# Phoenix Guardian - Beacon Deployment
+# Lightweight honeytoken beacon servers for edge deployment
+# Version: 1.0.0
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phoenix-guardian-beacon
+  namespace: phoenix-guardian
+  labels:
+    app.kubernetes.io/name: phoenix-guardian
+    app.kubernetes.io/component: beacon
+    app.kubernetes.io/tier: edge
+    app.kubernetes.io/version: "1.0.0"
+  annotations:
+    kubernetes.io/change-cause: "Initial deployment"
+spec:
+  replicas: 5
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: phoenix-guardian
+      app.kubernetes.io/component: beacon
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: phoenix-guardian
+        app.kubernetes.io/component: beacon
+        app.kubernetes.io/tier: edge
+        app.kubernetes.io/version: "1.0.0"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/beacon/metrics"
+    spec:
+      serviceAccountName: phoenix-guardian
+      automountServiceAccountToken: false
+      
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      
+      # Spread beacons across all zones and nodes
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: phoenix-guardian
+              app.kubernetes.io/component: beacon
+        - maxSkew: 2
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: phoenix-guardian
+              app.kubernetes.io/component: beacon
+      
+      containers:
+        - name: beacon
+          image: phoenix-guardian/beacon:latest
+          imagePullPolicy: Always
+          
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          
+          env:
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: redis-credentials
+                  key: url
+            - name: BEACON_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: beacon-secrets
+                  key: beacon_secret
+            - name: LOG_LEVEL
+              value: "WARNING"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          
+          # Beacon is lightweight
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          
+          readinessProbe:
+            httpGet:
+              path: /beacon/health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            successThreshold: 1
+            failureThreshold: 3
+          
+          livenessProbe:
+            httpGet:
+              path: /beacon/health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 2
+            failureThreshold: 3
+          
+          startupProbe:
+            httpGet:
+              path: /beacon/health
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 2
+            failureThreshold: 15
+          
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 10Mi
+      
+      imagePullSecrets:
+        - name: registry-credentials
+      
+      terminationGracePeriodSeconds: 10
+
+---
+# Service for Beacon
+apiVersion: v1
+kind: Service
+metadata:
+  name: phoenix-guardian-beacon
+  namespace: phoenix-guardian
+  labels:
+    app.kubernetes.io/name: phoenix-guardian
+    app.kubernetes.io/component: beacon
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: phoenix-guardian
+    app.kubernetes.io/component: beacon
+
+---
+# Pod Disruption Budget
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: phoenix-guardian-beacon-pdb
+  namespace: phoenix-guardian
+  labels:
+    app.kubernetes.io/name: phoenix-guardian
+    app.kubernetes.io/component: beacon
+spec:
+  minAvailable: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: phoenix-guardian
+      app.kubernetes.io/component: beacon

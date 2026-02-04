@@ -1,0 +1,323 @@
+# =============================================================================
+# PHOENIX GUARDIAN API - KUBERNETES DEPLOYMENT
+# =============================================================================
+# FastAPI application serving the Phoenix Guardian API
+# Includes: Deployment, Service, HPA, PDB, ServiceAccount
+# =============================================================================
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: phoenix-api
+  namespace: production
+  annotations:
+    # IRSA - Links to AWS IAM role for accessing Secrets Manager, S3, etc.
+    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/phoenix-production-phoenix-api
+  labels:
+    app.kubernetes.io/name: phoenix-api
+    app.kubernetes.io/part-of: phoenix-guardian
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: phoenix-api-config
+  namespace: production
+  labels:
+    app.kubernetes.io/name: phoenix-api
+    app.kubernetes.io/part-of: phoenix-guardian
+data:
+  # Application configuration (non-sensitive)
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+  
+  # Server settings
+  API_HOST: "0.0.0.0"
+  API_PORT: "8000"
+  WORKERS: "4"
+  
+  # Feature flags
+  ENABLE_THREAT_DETECTION: "true"
+  ENABLE_FEDERATED_LEARNING: "true"
+  ENABLE_AUDIT_LOGGING: "true"
+  
+  # Observability
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.monitoring:4317"
+  OTEL_SERVICE_NAME: "phoenix-api"
+  OTEL_TRACES_SAMPLER: "parentbased_traceidratio"
+  OTEL_TRACES_SAMPLER_ARG: "0.1"
+  
+  # Database settings (hosts only, credentials from secrets)
+  DB_HOST: "phoenix-production-postgres.REGION.rds.amazonaws.com"
+  DB_PORT: "5432"
+  DB_NAME: "phoenix"
+  DB_POOL_SIZE: "20"
+  DB_MAX_OVERFLOW: "10"
+  
+  # Redis settings
+  REDIS_HOST: "phoenix-production-redis.REGION.cache.amazonaws.com"
+  REDIS_PORT: "6379"
+  REDIS_SSL: "true"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phoenix-api
+  namespace: production
+  labels:
+    app.kubernetes.io/name: phoenix-api
+    app.kubernetes.io/part-of: phoenix-guardian
+    app.kubernetes.io/version: "1.0.0"
+  annotations:
+    # Rollout annotations
+    kubernetes.io/change-cause: "Initial deployment"
+spec:
+  replicas: 6
+  revisionHistoryLimit: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: phoenix-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: phoenix-api
+        app.kubernetes.io/part-of: phoenix-guardian
+      annotations:
+        # Force pod restart on config changes
+        checksum/config: "CHECKSUM_PLACEHOLDER"
+        # Prometheus scraping
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: phoenix-api
+      
+      # Schedule on API node group
+      nodeSelector:
+        role: api
+      
+      # Anti-affinity for high availability
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: phoenix-api
+              topologyKey: topology.kubernetes.io/zone
+          - weight: 50
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: phoenix-api
+              topologyKey: kubernetes.io/hostname
+      
+      # Security context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      
+      # Init container to wait for dependencies
+      initContainers:
+      - name: wait-for-db
+        image: busybox:1.36
+        command: ['sh', '-c', 'until nc -z $DB_HOST $DB_PORT; do echo "Waiting for DB..."; sleep 2; done']
+        envFrom:
+        - configMapRef:
+            name: phoenix-api-config
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+      
+      containers:
+      - name: phoenix-api
+        image: IMAGE_PLACEHOLDER
+        imagePullPolicy: Always
+        
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        
+        envFrom:
+        - configMapRef:
+            name: phoenix-api-config
+        
+        env:
+        # Database credentials from AWS Secrets Manager (via external-secrets or CSI driver)
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: phoenix-db-credentials
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: phoenix-db-credentials
+              key: password
+        - name: REDIS_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: phoenix-redis-credentials
+              key: auth_token
+        
+        # Security context
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        
+        # Resource limits
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+          limits:
+            cpu: "2"
+            memory: "4Gi"
+        
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        
+        startupProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 30
+        
+        # Volume mounts
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: cache
+          mountPath: /app/.cache
+      
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: cache
+        emptyDir: {}
+      
+      # Graceful termination
+      terminationGracePeriodSeconds: 60
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: phoenix-api
+  namespace: production
+  labels:
+    app.kubernetes.io/name: phoenix-api
+    app.kubernetes.io/part-of: phoenix-guardian
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:REGION:ACCOUNT_ID:certificate/CERT_ID"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: phoenix-api
+  ports:
+  - name: https
+    port: 443
+    targetPort: http
+    protocol: TCP
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: phoenix-api
+  namespace: production
+  labels:
+    app.kubernetes.io/name: phoenix-api
+    app.kubernetes.io/part-of: phoenix-guardian
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: phoenix-api
+  minReplicas: 6
+  maxReplicas: 24
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+      - type: Pods
+        value: 4
+        periodSeconds: 15
+      selectPolicy: Max
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: phoenix-api
+  namespace: production
+  labels:
+    app.kubernetes.io/name: phoenix-api
+    app.kubernetes.io/part-of: phoenix-guardian
+spec:
+  minAvailable: 4
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: phoenix-api

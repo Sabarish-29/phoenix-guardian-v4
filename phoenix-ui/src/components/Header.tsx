@@ -1,0 +1,114 @@
+/**
+ * Application header/navigation component.
+ */
+
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../stores/authStore';
+
+export const Header: React.FC = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated, user, logout, getFullName, canCreateEncounters, canViewAuditLogs } = useAuthStore();
+  
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+  
+  if (!isAuthenticated) {
+    return (
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <Link to="/" className="flex items-center space-x-2">
+              <span className="text-2xl">🏥</span>
+              <span className="font-bold text-xl text-primary-700">Phoenix Guardian</span>
+            </Link>
+            <Link to="/login" className="btn-primary">
+              Sign In
+            </Link>
+          </div>
+        </div>
+      </header>
+    );
+  }
+  
+  return (
+    <header className="bg-white shadow-sm border-b border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <Link to="/dashboard" className="flex items-center space-x-2">
+            <span className="text-2xl">🏥</span>
+            <span className="font-bold text-xl text-primary-700">Phoenix Guardian</span>
+          </Link>
+          
+          {/* Navigation */}
+          <nav className="hidden md:flex items-center space-x-6">
+            <Link
+              to="/dashboard"
+              className="text-gray-600 hover:text-primary-600 font-medium transition-colors"
+            >
+              Dashboard
+            </Link>
+            
+            {canCreateEncounters() && (
+              <Link
+                to="/encounters/new"
+                className="text-gray-600 hover:text-primary-600 font-medium transition-colors"
+              >
+                New Encounter
+              </Link>
+            )}
+            
+            <Link
+              to="/encounters"
+              className="text-gray-600 hover:text-primary-600 font-medium transition-colors"
+            >
+              Encounters
+            </Link>
+            
+            {canViewAuditLogs() && (
+              <Link
+                to="/audit"
+                className="text-gray-600 hover:text-primary-600 font-medium transition-colors"
+              >
+                Audit Logs
+              </Link>
+            )}
+          </nav>
+          
+          {/* User menu */}
+          <div className="flex items-center space-x-4">
+            <div className="text-right hidden sm:block">
+              <p className="text-sm font-medium text-gray-900">{getFullName()}</p>
+              <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+            </div>
+            
+            <button
+              onClick={handleLogout}
+              className="text-gray-500 hover:text-gray-700 p-2 rounded-md hover:bg-gray-100 transition-colors"
+              title="Sign out"
+            >
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+export default Header;

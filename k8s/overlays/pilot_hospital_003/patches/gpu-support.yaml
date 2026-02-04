@@ -1,0 +1,77 @@
+# GPU support patch for Pilot Hospital 003
+# NVIDIA A100 GPUs for ML acceleration
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phoenix-agents
+spec:
+  template:
+    spec:
+      # Node selector for GPU nodes
+      nodeSelector:
+        accelerator: nvidia-a100
+      
+      # Tolerations for GPU nodes
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+      
+      containers:
+        - name: phoenix-agents
+          resources:
+            requests:
+              cpu: "4000m"
+              memory: "16Gi"
+              nvidia.com/gpu: "2"
+            limits:
+              cpu: "16000m"
+              memory: "64Gi"
+              nvidia.com/gpu: "2"
+          
+          env:
+            - name: CUDA_VISIBLE_DEVICES
+              value: "0,1"
+            - name: GPU_MEMORY_FRACTION
+              value: "0.9"
+            - name: ML_FRAMEWORK
+              value: "pytorch"
+            - name: TORCH_CUDA_ARCH_LIST
+              value: "8.0"  # A100 compute capability
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: "all"
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: "compute,utility"
+          
+          volumeMounts:
+            - name: nvidia-driver
+              mountPath: /usr/local/nvidia
+              readOnly: true
+            - name: model-cache
+              mountPath: /models
+      
+      volumes:
+        - name: nvidia-driver
+          hostPath:
+            path: /usr/local/nvidia
+            type: Directory
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: phoenix-model-cache
+
+---
+# PVC for model cache
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: phoenix-model-cache
+  labels:
+    tenant-id: pilot_hospital_003
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: fast-ssd
+  resources:
+    requests:
+      storage: 100Gi

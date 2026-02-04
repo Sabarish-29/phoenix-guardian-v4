@@ -1,0 +1,459 @@
+# Phoenix Guardian - Docker Compose Configuration
+# Full local development stack with all services
+# Version: 1.0.0
+#
+# Usage:
+#   docker-compose up -d              # Start all services
+#   docker-compose up -d --build      # Rebuild and start
+#   docker-compose logs -f app        # Follow app logs
+#   docker-compose down -v            # Stop and remove volumes
+
+version: '3.9'
+
+# ==============================================================================
+# Networks
+# ==============================================================================
+networks:
+  frontend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+  backend:
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.28.1.0/24
+
+# ==============================================================================
+# Volumes
+# ==============================================================================
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  grafana-data:
+    driver: local
+  prometheus-data:
+    driver: local
+
+# ==============================================================================
+# Services
+# ==============================================================================
+services:
+  # ============================================================================
+  # Phoenix Guardian Application
+  # ============================================================================
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.app
+    image: phoenix-guardian/app:latest
+    container_name: phoenix-guardian-app
+    hostname: phoenix-guardian-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    networks:
+      - frontend
+      - backend
+    environment:
+      - DATABASE_URL=postgresql://phoenix:${DB_PASSWORD:-phoenix_secure_2026}@postgres:5432/phoenix_guardian
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secure_2026}@redis:6379/0
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+      - SECRET_KEY=${SECRET_KEY:-development_secret_key_change_in_production}
+      - ENVIRONMENT=development
+      - LOG_LEVEL=INFO
+      - WORKERS=4
+      - SENTRY_DSN=${SENTRY_DSN:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+  # ============================================================================
+  # Background Worker
+  # ============================================================================
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.worker
+    image: phoenix-guardian/worker:latest
+    container_name: phoenix-guardian-worker
+    hostname: phoenix-guardian-worker
+    restart: unless-stopped
+    networks:
+      - backend
+    environment:
+      - DATABASE_URL=postgresql://phoenix:${DB_PASSWORD:-phoenix_secure_2026}@postgres:5432/phoenix_guardian
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-redis_secure_2026}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-redis_secure_2026}@redis:6379/1
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+      - LOG_LEVEL=INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "celery", "-A", "phoenix_guardian.workers.celery_app", "inspect", "ping"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+  # ============================================================================
+  # Honeytoken Beacon Server
+  # ============================================================================
+  beacon:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.beacon
+    image: phoenix-guardian/beacon:latest
+    container_name: phoenix-guardian-beacon
+    hostname: phoenix-guardian-beacon
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      - frontend
+      - backend
+    environment:
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secure_2026}@redis:6379/2
+      - BEACON_SECRET=${BEACON_SECRET:-beacon_secret_key_2026}
+      - LOG_LEVEL=WARNING
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/beacon/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  # ============================================================================
+  # PostgreSQL Database
+  # ============================================================================
+  postgres:
+    image: postgres:16.1-alpine
+    container_name: phoenix-guardian-postgres
+    hostname: postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    networks:
+      - backend
+    environment:
+      - POSTGRES_USER=phoenix
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-phoenix_secure_2026}
+      - POSTGRES_DB=phoenix_guardian
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U phoenix -d phoenix_guardian"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_preload_libraries=pg_stat_statements"
+      - "-c"
+      - "pg_stat_statements.max=10000"
+      - "-c"
+      - "pg_stat_statements.track=all"
+      - "-c"
+      - "max_connections=200"
+      - "-c"
+      - "shared_buffers=512MB"
+      - "-c"
+      - "effective_cache_size=1536MB"
+      - "-c"
+      - "maintenance_work_mem=128MB"
+      - "-c"
+      - "checkpoint_completion_target=0.9"
+      - "-c"
+      - "wal_buffers=16MB"
+      - "-c"
+      - "default_statistics_target=100"
+      - "-c"
+      - "random_page_cost=1.1"
+      - "-c"
+      - "effective_io_concurrency=200"
+      - "-c"
+      - "work_mem=6553kB"
+      - "-c"
+      - "min_wal_size=1GB"
+      - "-c"
+      - "max_wal_size=4GB"
+      - "-c"
+      - "max_worker_processes=4"
+      - "-c"
+      - "max_parallel_workers_per_gather=2"
+      - "-c"
+      - "max_parallel_workers=4"
+      - "-c"
+      - "max_parallel_maintenance_workers=2"
+      - "-c"
+      - "log_statement=all"
+      - "-c"
+      - "log_min_duration_statement=1000"
+
+  # ============================================================================
+  # Redis Cache
+  # ============================================================================
+  redis:
+    image: redis:7.2-alpine
+    container_name: phoenix-guardian-redis
+    hostname: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - backend
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--pass", "${REDIS_PASSWORD:-redis_secure_2026}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    command:
+      - "redis-server"
+      - "--requirepass"
+      - "${REDIS_PASSWORD:-redis_secure_2026}"
+      - "--appendonly"
+      - "yes"
+      - "--appendfsync"
+      - "everysec"
+      - "--maxmemory"
+      - "512mb"
+      - "--maxmemory-policy"
+      - "allkeys-lru"
+      - "--tcp-keepalive"
+      - "300"
+      - "--timeout"
+      - "0"
+      - "--tcp-backlog"
+      - "511"
+      - "--databases"
+      - "16"
+
+  # ============================================================================
+  # Nginx Reverse Proxy
+  # ============================================================================
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: phoenix-guardian-nginx
+    hostname: nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - frontend
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+      - beacon
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 32M
+
+  # ============================================================================
+  # Monitoring Stack
+  # ============================================================================
+  monitor:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.monitor
+    image: phoenix-guardian/monitor:latest
+    container_name: phoenix-guardian-monitor
+    hostname: monitor
+    restart: unless-stopped
+    ports:
+      - "3000:3000"   # Grafana
+      - "9090:9090"   # Prometheus
+    networks:
+      - frontend
+      - backend
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - prometheus-data:/prometheus
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-grafana_secure_2026}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # ============================================================================
+  # Celery Flower (Worker Monitoring)
+  # ============================================================================
+  flower:
+    image: mher/flower:2.0.1
+    container_name: phoenix-guardian-flower
+    hostname: flower
+    restart: unless-stopped
+    ports:
+      - "5555:5555"
+    networks:
+      - frontend
+      - backend
+    environment:
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-redis_secure_2026}@redis:6379/0
+      - FLOWER_PORT=5555
+      - FLOWER_BASIC_AUTH=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-flower_secure_2026}
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5555/healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+  # ============================================================================
+  # Redis Exporter (for Prometheus)
+  # ============================================================================
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.55.0
+    container_name: phoenix-guardian-redis-exporter
+    hostname: redis-exporter
+    restart: unless-stopped
+    networks:
+      - backend
+    environment:
+      - REDIS_ADDR=redis:6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_secure_2026}
+    depends_on:
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 64M
+
+  # ============================================================================
+  # Postgres Exporter (for Prometheus)
+  # ============================================================================
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: phoenix-guardian-postgres-exporter
+    hostname: postgres-exporter
+    restart: unless-stopped
+    networks:
+      - backend
+    environment:
+      - DATA_SOURCE_NAME=postgresql://phoenix:${DB_PASSWORD:-phoenix_secure_2026}@postgres:5432/phoenix_guardian?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 64M

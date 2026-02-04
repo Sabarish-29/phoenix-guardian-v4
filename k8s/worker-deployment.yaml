@@ -1,0 +1,181 @@
+# Phoenix Guardian - Worker Deployment
+# Background workers for ML training, A/B testing, async tasks
+# Version: 1.0.0
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phoenix-guardian-worker
+  namespace: phoenix-guardian
+  labels:
+    app.kubernetes.io/name: phoenix-guardian
+    app.kubernetes.io/component: worker
+    app.kubernetes.io/tier: backend
+    app.kubernetes.io/version: "1.0.0"
+  annotations:
+    kubernetes.io/change-cause: "Initial deployment"
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: phoenix-guardian
+      app.kubernetes.io/component: worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: phoenix-guardian
+        app.kubernetes.io/component: worker
+        app.kubernetes.io/tier: backend
+        app.kubernetes.io/version: "1.0.0"
+    spec:
+      serviceAccountName: phoenix-guardian
+      automountServiceAccountToken: false
+      
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      
+      # Spread workers across nodes
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: phoenix-guardian
+                    app.kubernetes.io/component: worker
+                topologyKey: kubernetes.io/hostname
+      
+      # Wait for dependencies
+      initContainers:
+        - name: wait-for-redis
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z redis-service 6379; do echo waiting for redis; sleep 2; done']
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      
+      containers:
+        - name: worker
+          image: phoenix-guardian/worker:latest
+          imagePullPolicy: Always
+          
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: pg-credentials
+                  key: url
+            - name: CELERY_BROKER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: redis-credentials
+                  key: url
+            - name: CELERY_RESULT_BACKEND
+              valueFrom:
+                secretKeyRef:
+                  name: redis-credentials
+                  key: url
+            - name: CLAUDE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: anthropic-credentials
+                  key: api_key
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: CELERY_WORKER_CONCURRENCY
+              value: "4"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 2000m
+              memory: 4Gi
+          
+          # Workers use exec probe since no HTTP endpoint
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - celery -A phoenix_guardian.workers.celery_app inspect ping -d celery@$HOSTNAME
+            initialDelaySeconds: 60
+            periodSeconds: 60
+            timeoutSeconds: 30
+            failureThreshold: 3
+          
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - celery -A phoenix_guardian.workers.celery_app inspect ping -d celery@$HOSTNAME
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: worker-data
+              mountPath: /app/data
+      
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: worker-data
+          emptyDir: {}
+      
+      imagePullSecrets:
+        - name: registry-credentials
+      
+      terminationGracePeriodSeconds: 120  # Allow tasks to complete
+
+---
+# Service for Worker (optional, for monitoring)
+apiVersion: v1
+kind: Service
+metadata:
+  name: phoenix-guardian-worker
+  namespace: phoenix-guardian
+  labels:
+    app.kubernetes.io/name: phoenix-guardian
+    app.kubernetes.io/component: worker
+spec:
+  type: ClusterIP
+  clusterIP: None  # Headless service for direct pod access
+  ports:
+    - name: metrics
+      port: 9100
+      targetPort: 9100
+  selector:
+    app.kubernetes.io/name: phoenix-guardian
+    app.kubernetes.io/component: worker

@@ -1,0 +1,78 @@
+# Ingress patch for Pilot Hospital 003
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: phoenix-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/proxy-body-size: "500m"  # Larger for research data
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    # IP whitelist
+    nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8,172.16.0.0/12,192.168.100.0/24"
+    # Rate limiting (high for academic center)
+    nginx.ingress.kubernetes.io/limit-rps: "500"
+    nginx.ingress.kubernetes.io/limit-connections: "200"
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header X-Frame-Options "DENY" always;
+      add_header X-Content-Type-Options "nosniff" always;
+      add_header X-XSS-Protection "1; mode=block" always;
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+      add_header Content-Security-Policy "default-src 'self'" always;
+      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+spec:
+  tls:
+    - hosts:
+        - pilot-003.phoenix-guardian.health
+        - umc.phoenix-guardian.health
+        - research.phoenix-guardian.health
+      secretName: phoenix-tls-pilot-003
+  rules:
+    - host: pilot-003.phoenix-guardian.health
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: phoenix-api
+                port:
+                  number: 8443
+          - path: /health
+            pathType: Exact
+            backend:
+              service:
+                name: phoenix-api
+                port:
+                  number: 8080
+    - host: umc.phoenix-guardian.health
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: phoenix-api
+                port:
+                  number: 8443
+    - host: research.phoenix-guardian.health
+      http:
+        paths:
+          - path: /api/v1/research
+            pathType: Prefix
+            backend:
+              service:
+                name: phoenix-research-api
+                port:
+                  number: 8443
+          - path: /api/v1/bulk
+            pathType: Prefix
+            backend:
+              service:
+                name: phoenix-bulk-api
+                port:
+                  number: 8443

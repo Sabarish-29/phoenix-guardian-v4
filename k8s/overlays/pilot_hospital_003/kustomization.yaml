@@ -1,0 +1,117 @@
+# Kustomize overlay for Pilot Hospital 003 - University Medical Center
+# Platform: Epic FHIR
+# Location: New York
+# Deployment: Academic center, aggressive feature rollout
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: pilot-hospital-003
+  labels:
+    hospital: university-medical-center
+    environment: production
+    pilot-phase: week-18
+
+# Base resources
+resources:
+  - ../../base
+
+# Namespace for this tenant
+namespace: phoenix-pilot-003
+
+# Common labels for all resources
+commonLabels:
+  tenant-id: pilot_hospital_003
+  hospital-name: university-medical-center
+  ehr-platform: epic
+  compliance-region: new-york
+  pilot-start: "2026-04-01"
+  academic-center: "true"
+
+# Common annotations
+commonAnnotations:
+  phoenix-guardian.health/tenant-version: "1.0.0"
+  phoenix-guardian.health/config-hash: "i9j0k1l2"
+  phoenix-guardian.health/deployment-date: "2026-04-01"
+
+# Name prefix for all resources
+namePrefix: umc-
+
+# Patches to apply
+patches:
+  # Agent configuration patch
+  - path: patches/agent-config.yaml
+    target:
+      kind: ConfigMap
+      name: phoenix-agents
+  
+  # Resource limits patch (high capacity)
+  - path: patches/resource-limits.yaml
+    target:
+      kind: Deployment
+  
+  # Network policy patch
+  - path: patches/network-policy.yaml
+    target:
+      kind: NetworkPolicy
+  
+  # Ingress patch
+  - path: patches/ingress.yaml
+    target:
+      kind: Ingress
+      name: phoenix-ingress
+  
+  # GPU support patch
+  - path: patches/gpu-support.yaml
+    target:
+      kind: Deployment
+      name: phoenix-agents
+
+# ConfigMap generator for tenant-specific config
+configMapGenerator:
+  - name: tenant-config
+    files:
+      - config.yaml
+    options:
+      disableNameSuffixHash: true
+  
+  - name: ehr-config
+    literals:
+      - EHR_PLATFORM=epic
+      - EHR_BASE_URL=https://fhir.umcny.edu/api/FHIR/R4
+      - EHR_API_VERSION=R4
+      - EHR_RATE_LIMIT=120
+      - EHR_TIMEOUT_SECONDS=45
+      - EHR_BULK_DATA_ENABLED=true
+    options:
+      disableNameSuffixHash: true
+
+# Secret generator references
+secretGenerator:
+  - name: ehr-credentials
+    type: Opaque
+    options:
+      disableNameSuffixHash: true
+    literals:
+      - EHR_CLIENT_ID=PLACEHOLDER_USE_SEALED_SECRET
+      - EHR_PRIVATE_KEY=PLACEHOLDER_USE_SEALED_SECRET
+      - RESEARCH_API_KEY=PLACEHOLDER_USE_SEALED_SECRET
+
+# Image overrides
+images:
+  - name: phoenix-guardian
+    newName: ghcr.io/phoenix-guardian/phoenix
+    newTag: v1.0.0-pilot
+  - name: phoenix-guardian-gpu
+    newName: ghcr.io/phoenix-guardian/phoenix-gpu
+    newTag: v1.0.0-pilot
+
+# Replicas (high capacity for academic center)
+replicas:
+  - name: phoenix-api
+    count: 5
+  - name: phoenix-worker
+    count: 4
+  - name: phoenix-agents
+    count: 3

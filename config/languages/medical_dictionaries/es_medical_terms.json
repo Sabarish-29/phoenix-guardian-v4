@@ -1,0 +1,1302 @@
+{
+  "metadata": {
+    "language": "es-MX",
+    "version": "1.0.0",
+    "last_updated": "2026-02-01",
+    "source": "Phoenix Guardian Medical Dictionary",
+    "total_terms": 500
+  },
+  "symptoms": {
+    "dolor": {
+      "english": "pain",
+      "snomed_code": "22253000",
+      "category": "symptom"
+    },
+    "dolor de cabeza": {
+      "english": "headache",
+      "snomed_code": "25064002",
+      "icd10": "R51",
+      "category": "symptom"
+    },
+    "dolor de pecho": {
+      "english": "chest pain",
+      "snomed_code": "29857009",
+      "icd10": "R07.9",
+      "category": "symptom",
+      "critical": true
+    },
+    "dolor abdominal": {
+      "english": "abdominal pain",
+      "snomed_code": "21522001",
+      "icd10": "R10.9",
+      "category": "symptom"
+    },
+    "dolor de espalda": {
+      "english": "back pain",
+      "snomed_code": "161891005",
+      "icd10": "M54.9",
+      "category": "symptom"
+    },
+    "fiebre": {
+      "english": "fever",
+      "snomed_code": "386661006",
+      "icd10": "R50.9",
+      "category": "symptom"
+    },
+    "tos": {
+      "english": "cough",
+      "snomed_code": "49727002",
+      "icd10": "R05",
+      "category": "symptom"
+    },
+    "tos con sangre": {
+      "english": "hemoptysis",
+      "snomed_code": "66857006",
+      "icd10": "R04.2",
+      "category": "symptom",
+      "critical": true
+    },
+    "náusea": {
+      "english": "nausea",
+      "snomed_code": "422587007",
+      "icd10": "R11.0",
+      "category": "symptom"
+    },
+    "vómito": {
+      "english": "vomiting",
+      "snomed_code": "422400008",
+      "icd10": "R11.1",
+      "category": "symptom"
+    },
+    "diarrea": {
+      "english": "diarrhea",
+      "snomed_code": "62315008",
+      "icd10": "R19.7",
+      "category": "symptom"
+    },
+    "estreñimiento": {
+      "english": "constipation",
+      "snomed_code": "14760008",
+      "icd10": "K59.0",
+      "category": "symptom"
+    },
+    "mareo": {
+      "english": "dizziness",
+      "snomed_code": "404640003",
+      "icd10": "R42",
+      "category": "symptom"
+    },
+    "fatiga": {
+      "english": "fatigue",
+      "snomed_code": "84229001",
+      "icd10": "R53.83",
+      "category": "symptom"
+    },
+    "debilidad": {
+      "english": "weakness",
+      "snomed_code": "13791008",
+      "icd10": "R53.1",
+      "category": "symptom"
+    },
+    "falta de aire": {
+      "english": "shortness of breath",
+      "snomed_code": "267036007",
+      "icd10": "R06.0",
+      "category": "symptom",
+      "critical": true
+    },
+    "dificultad para respirar": {
+      "english": "difficulty breathing",
+      "snomed_code": "230145002",
+      "icd10": "R06.0",
+      "category": "symptom",
+      "critical": true
+    },
+    "palpitaciones": {
+      "english": "palpitations",
+      "snomed_code": "80313002",
+      "icd10": "R00.2",
+      "category": "symptom"
+    },
+    "hinchazón": {
+      "english": "swelling",
+      "snomed_code": "65124004",
+      "icd10": "R60.9",
+      "category": "symptom"
+    },
+    "picazón": {
+      "english": "itching",
+      "snomed_code": "418290006",
+      "icd10": "L29.9",
+      "category": "symptom"
+    },
+    "sarpullido": {
+      "english": "rash",
+      "snomed_code": "271807003",
+      "icd10": "R21",
+      "category": "symptom"
+    },
+    "pérdida de peso": {
+      "english": "weight loss",
+      "snomed_code": "89362005",
+      "icd10": "R63.4",
+      "category": "symptom"
+    },
+    "aumento de peso": {
+      "english": "weight gain",
+      "snomed_code": "8943002",
+      "icd10": "R63.5",
+      "category": "symptom"
+    },
+    "insomnio": {
+      "english": "insomnia",
+      "snomed_code": "193462001",
+      "icd10": "G47.0",
+      "category": "symptom"
+    },
+    "ansiedad": {
+      "english": "anxiety",
+      "snomed_code": "48694002",
+      "icd10": "F41.9",
+      "category": "symptom"
+    },
+    "depresión": {
+      "english": "depression",
+      "snomed_code": "35489007",
+      "icd10": "F32.9",
+      "category": "symptom"
+    },
+    "confusión": {
+      "english": "confusion",
+      "snomed_code": "40917007",
+      "icd10": "R41.0",
+      "category": "symptom"
+    },
+    "pérdida de memoria": {
+      "english": "memory loss",
+      "snomed_code": "48167000",
+      "icd10": "R41.3",
+      "category": "symptom"
+    },
+    "visión borrosa": {
+      "english": "blurred vision",
+      "snomed_code": "246636008",
+      "icd10": "H53.8",
+      "category": "symptom"
+    },
+    "dolor de oído": {
+      "english": "ear pain",
+      "snomed_code": "16001004",
+      "icd10": "H92.0",
+      "category": "symptom"
+    },
+    "dolor de garganta": {
+      "english": "sore throat",
+      "snomed_code": "162397003",
+      "icd10": "J02.9",
+      "category": "symptom"
+    },
+    "congestión nasal": {
+      "english": "nasal congestion",
+      "snomed_code": "68235000",
+      "icd10": "R09.81",
+      "category": "symptom"
+    },
+    "sangrado nasal": {
+      "english": "nosebleed",
+      "snomed_code": "249366005",
+      "icd10": "R04.0",
+      "category": "symptom"
+    },
+    "sed excesiva": {
+      "english": "excessive thirst",
+      "snomed_code": "17173007",
+      "icd10": "R63.1",
+      "category": "symptom"
+    },
+    "micción frecuente": {
+      "english": "frequent urination",
+      "snomed_code": "162116003",
+      "icd10": "R35.0",
+      "category": "symptom"
+    },
+    "dolor al orinar": {
+      "english": "painful urination",
+      "snomed_code": "49650001",
+      "icd10": "R30.0",
+      "category": "symptom"
+    },
+    "sangre en la orina": {
+      "english": "blood in urine",
+      "snomed_code": "34436003",
+      "icd10": "R31.9",
+      "category": "symptom"
+    },
+    "entumecimiento": {
+      "english": "numbness",
+      "snomed_code": "44077006",
+      "icd10": "R20.0",
+      "category": "symptom"
+    },
+    "hormigueo": {
+      "english": "tingling",
+      "snomed_code": "62507009",
+      "icd10": "R20.2",
+      "category": "symptom"
+    },
+    "calambres": {
+      "english": "cramps",
+      "snomed_code": "55300003",
+      "icd10": "R25.2",
+      "category": "symptom"
+    },
+    "rigidez": {
+      "english": "stiffness",
+      "snomed_code": "271587009",
+      "icd10": "M25.60",
+      "category": "symptom"
+    }
+  },
+  "diagnoses": {
+    "diabetes": {
+      "english": "diabetes",
+      "snomed_code": "73211009",
+      "icd10": "E11.9",
+      "category": "diagnosis"
+    },
+    "diabetes tipo 1": {
+      "english": "type 1 diabetes",
+      "snomed_code": "46635009",
+      "icd10": "E10.9",
+      "category": "diagnosis"
+    },
+    "diabetes tipo 2": {
+      "english": "type 2 diabetes",
+      "snomed_code": "44054006",
+      "icd10": "E11.9",
+      "category": "diagnosis"
+    },
+    "hipertensión": {
+      "english": "hypertension",
+      "snomed_code": "38341003",
+      "icd10": "I10",
+      "category": "diagnosis"
+    },
+    "presión alta": {
+      "english": "high blood pressure",
+      "snomed_code": "38341003",
+      "icd10": "I10",
+      "category": "diagnosis"
+    },
+    "asma": {
+      "english": "asthma",
+      "snomed_code": "195967001",
+      "icd10": "J45.909",
+      "category": "diagnosis"
+    },
+    "artritis": {
+      "english": "arthritis",
+      "snomed_code": "3723001",
+      "icd10": "M19.90",
+      "category": "diagnosis"
+    },
+    "artritis reumatoide": {
+      "english": "rheumatoid arthritis",
+      "snomed_code": "69896004",
+      "icd10": "M06.9",
+      "category": "diagnosis"
+    },
+    "osteoartritis": {
+      "english": "osteoarthritis",
+      "snomed_code": "396275006",
+      "icd10": "M19.90",
+      "category": "diagnosis"
+    },
+    "insuficiencia cardíaca": {
+      "english": "heart failure",
+      "snomed_code": "84114007",
+      "icd10": "I50.9",
+      "category": "diagnosis",
+      "critical": true
+    },
+    "infarto": {
+      "english": "heart attack",
+      "snomed_code": "22298006",
+      "icd10": "I21.9",
+      "category": "diagnosis",
+      "critical": true
+    },
+    "infarto de miocardio": {
+      "english": "myocardial infarction",
+      "snomed_code": "22298006",
+      "icd10": "I21.9",
+      "category": "diagnosis",
+      "critical": true
+    },
+    "accidente cerebrovascular": {
+      "english": "stroke",
+      "snomed_code": "230690007",
+      "icd10": "I63.9",
+      "category": "diagnosis",
+      "critical": true
+    },
+    "derrame cerebral": {
+      "english": "stroke",
+      "snomed_code": "230690007",
+      "icd10": "I63.9",
+      "category": "diagnosis",
+      "critical": true
+    },
+    "EPOC": {
+      "english": "COPD",
+      "snomed_code": "13645005",
+      "icd10": "J44.9",
+      "category": "diagnosis"
+    },
+    "enfermedad pulmonar obstructiva crónica": {
+      "english": "chronic obstructive pulmonary disease",
+      "snomed_code": "13645005",
+      "icd10": "J44.9",
+      "category": "diagnosis"
+    },
+    "neumonía": {
+      "english": "pneumonia",
+      "snomed_code": "233604007",
+      "icd10": "J18.9",
+      "category": "diagnosis"
+    },
+    "bronquitis": {
+      "english": "bronchitis",
+      "snomed_code": "32398004",
+      "icd10": "J40",
+      "category": "diagnosis"
+    },
+    "enfisema": {
+      "english": "emphysema",
+      "snomed_code": "87433001",
+      "icd10": "J43.9",
+      "category": "diagnosis"
+    },
+    "cáncer": {
+      "english": "cancer",
+      "snomed_code": "363346000",
+      "icd10": "C80.1",
+      "category": "diagnosis",
+      "critical": true
+    },
+    "tumor": {
+      "english": "tumor",
+      "snomed_code": "108369006",
+      "icd10": "D49.9",
+      "category": "diagnosis"
+    },
+    "anemia": {
+      "english": "anemia",
+      "snomed_code": "271737000",
+      "icd10": "D64.9",
+      "category": "diagnosis"
+    },
+    "hipotiroidismo": {
+      "english": "hypothyroidism",
+      "snomed_code": "40930008",
+      "icd10": "E03.9",
+      "category": "diagnosis"
+    },
+    "hipertiroidismo": {
+      "english": "hyperthyroidism",
+      "snomed_code": "34486009",
+      "icd10": "E05.90",
+      "category": "diagnosis"
+    },
+    "enfermedad renal": {
+      "english": "kidney disease",
+      "snomed_code": "90708001",
+      "icd10": "N28.9",
+      "category": "diagnosis"
+    },
+    "insuficiencia renal": {
+      "english": "kidney failure",
+      "snomed_code": "42399005",
+      "icd10": "N19",
+      "category": "diagnosis",
+      "critical": true
+    },
+    "hepatitis": {
+      "english": "hepatitis",
+      "snomed_code": "128241005",
+      "icd10": "B19.9",
+      "category": "diagnosis"
+    },
+    "cirrosis": {
+      "english": "cirrhosis",
+      "snomed_code": "19943007",
+      "icd10": "K74.60",
+      "category": "diagnosis"
+    },
+    "úlcera": {
+      "english": "ulcer",
+      "snomed_code": "429040005",
+      "icd10": "K27.9",
+      "category": "diagnosis"
+    },
+    "gastritis": {
+      "english": "gastritis",
+      "snomed_code": "4556007",
+      "icd10": "K29.70",
+      "category": "diagnosis"
+    },
+    "reflujo": {
+      "english": "reflux",
+      "snomed_code": "235595009",
+      "icd10": "K21.9",
+      "category": "diagnosis"
+    },
+    "colesterol alto": {
+      "english": "high cholesterol",
+      "snomed_code": "13644009",
+      "icd10": "E78.00",
+      "category": "diagnosis"
+    },
+    "osteoporosis": {
+      "english": "osteoporosis",
+      "snomed_code": "64859006",
+      "icd10": "M81.0",
+      "category": "diagnosis"
+    },
+    "fibromialgia": {
+      "english": "fibromyalgia",
+      "snomed_code": "203082005",
+      "icd10": "M79.7",
+      "category": "diagnosis"
+    },
+    "migraña": {
+      "english": "migraine",
+      "snomed_code": "37796009",
+      "icd10": "G43.909",
+      "category": "diagnosis"
+    },
+    "epilepsia": {
+      "english": "epilepsy",
+      "snomed_code": "84757009",
+      "icd10": "G40.909",
+      "category": "diagnosis"
+    },
+    "Parkinson": {
+      "english": "Parkinson's disease",
+      "snomed_code": "49049000",
+      "icd10": "G20",
+      "category": "diagnosis"
+    },
+    "Alzheimer": {
+      "english": "Alzheimer's disease",
+      "snomed_code": "26929004",
+      "icd10": "G30.9",
+      "category": "diagnosis"
+    },
+    "demencia": {
+      "english": "dementia",
+      "snomed_code": "52448006",
+      "icd10": "F03.90",
+      "category": "diagnosis"
+    },
+    "esquizofrenia": {
+      "english": "schizophrenia",
+      "snomed_code": "58214004",
+      "icd10": "F20.9",
+      "category": "diagnosis"
+    },
+    "trastorno bipolar": {
+      "english": "bipolar disorder",
+      "snomed_code": "13746004",
+      "icd10": "F31.9",
+      "category": "diagnosis"
+    },
+    "infección urinaria": {
+      "english": "urinary tract infection",
+      "snomed_code": "68566005",
+      "icd10": "N39.0",
+      "category": "diagnosis"
+    },
+    "piedras en el riñón": {
+      "english": "kidney stones",
+      "snomed_code": "95570007",
+      "icd10": "N20.0",
+      "category": "diagnosis"
+    },
+    "hernia": {
+      "english": "hernia",
+      "snomed_code": "414403008",
+      "icd10": "K46.9",
+      "category": "diagnosis"
+    },
+    "apendicitis": {
+      "english": "appendicitis",
+      "snomed_code": "74400008",
+      "icd10": "K37",
+      "category": "diagnosis",
+      "critical": true
+    },
+    "colecistitis": {
+      "english": "cholecystitis",
+      "snomed_code": "76581006",
+      "icd10": "K81.9",
+      "category": "diagnosis"
+    },
+    "pancreatitis": {
+      "english": "pancreatitis",
+      "snomed_code": "75694006",
+      "icd10": "K85.9",
+      "category": "diagnosis",
+      "critical": true
+    }
+  },
+  "medications": {
+    "aspirina": {
+      "english": "aspirin",
+      "rxnorm": "1191",
+      "category": "medication"
+    },
+    "ibuprofeno": {
+      "english": "ibuprofen",
+      "rxnorm": "5640",
+      "category": "medication"
+    },
+    "acetaminofén": {
+      "english": "acetaminophen",
+      "rxnorm": "161",
+      "category": "medication"
+    },
+    "paracetamol": {
+      "english": "acetaminophen",
+      "rxnorm": "161",
+      "category": "medication"
+    },
+    "metformina": {
+      "english": "metformin",
+      "rxnorm": "6809",
+      "category": "medication"
+    },
+    "insulina": {
+      "english": "insulin",
+      "rxnorm": "5856",
+      "category": "medication"
+    },
+    "lisinopril": {
+      "english": "lisinopril",
+      "rxnorm": "29046",
+      "category": "medication"
+    },
+    "losartán": {
+      "english": "losartan",
+      "rxnorm": "52175",
+      "category": "medication"
+    },
+    "amlodipino": {
+      "english": "amlodipine",
+      "rxnorm": "17767",
+      "category": "medication"
+    },
+    "atorvastatina": {
+      "english": "atorvastatin",
+      "rxnorm": "83367",
+      "category": "medication"
+    },
+    "simvastatina": {
+      "english": "simvastatin",
+      "rxnorm": "36567",
+      "category": "medication"
+    },
+    "omeprazol": {
+      "english": "omeprazole",
+      "rxnorm": "7646",
+      "category": "medication"
+    },
+    "pantoprazol": {
+      "english": "pantoprazole",
+      "rxnorm": "40790",
+      "category": "medication"
+    },
+    "amoxicilina": {
+      "english": "amoxicillin",
+      "rxnorm": "723",
+      "category": "medication"
+    },
+    "azitromicina": {
+      "english": "azithromycin",
+      "rxnorm": "18631",
+      "category": "medication"
+    },
+    "ciprofloxacino": {
+      "english": "ciprofloxacin",
+      "rxnorm": "2551",
+      "category": "medication"
+    },
+    "metoprolol": {
+      "english": "metoprolol",
+      "rxnorm": "6918",
+      "category": "medication"
+    },
+    "carvedilol": {
+      "english": "carvedilol",
+      "rxnorm": "20352",
+      "category": "medication"
+    },
+    "furosemida": {
+      "english": "furosemide",
+      "rxnorm": "4603",
+      "category": "medication"
+    },
+    "hidroclorotiazida": {
+      "english": "hydrochlorothiazide",
+      "rxnorm": "5487",
+      "category": "medication"
+    },
+    "prednisona": {
+      "english": "prednisone",
+      "rxnorm": "8640",
+      "category": "medication"
+    },
+    "gabapentina": {
+      "english": "gabapentin",
+      "rxnorm": "25480",
+      "category": "medication"
+    },
+    "tramadol": {
+      "english": "tramadol",
+      "rxnorm": "10689",
+      "category": "medication"
+    },
+    "morfina": {
+      "english": "morphine",
+      "rxnorm": "7052",
+      "category": "medication",
+      "controlled": true
+    },
+    "oxicodona": {
+      "english": "oxycodone",
+      "rxnorm": "7804",
+      "category": "medication",
+      "controlled": true
+    },
+    "warfarina": {
+      "english": "warfarin",
+      "rxnorm": "11289",
+      "category": "medication",
+      "high_alert": true
+    },
+    "clopidogrel": {
+      "english": "clopidogrel",
+      "rxnorm": "32968",
+      "category": "medication"
+    },
+    "levotiroxina": {
+      "english": "levothyroxine",
+      "rxnorm": "10582",
+      "category": "medication"
+    },
+    "albuterol": {
+      "english": "albuterol",
+      "rxnorm": "435",
+      "category": "medication"
+    },
+    "salbutamol": {
+      "english": "albuterol",
+      "rxnorm": "435",
+      "category": "medication"
+    },
+    "fluticasona": {
+      "english": "fluticasone",
+      "rxnorm": "41126",
+      "category": "medication"
+    },
+    "sertralina": {
+      "english": "sertraline",
+      "rxnorm": "36437",
+      "category": "medication"
+    },
+    "fluoxetina": {
+      "english": "fluoxetine",
+      "rxnorm": "4493",
+      "category": "medication"
+    },
+    "escitalopram": {
+      "english": "escitalopram",
+      "rxnorm": "321988",
+      "category": "medication"
+    },
+    "alprazolam": {
+      "english": "alprazolam",
+      "rxnorm": "596",
+      "category": "medication",
+      "controlled": true
+    },
+    "lorazepam": {
+      "english": "lorazepam",
+      "rxnorm": "6470",
+      "category": "medication",
+      "controlled": true
+    },
+    "diazepam": {
+      "english": "diazepam",
+      "rxnorm": "3322",
+      "category": "medication",
+      "controlled": true
+    },
+    "clonazepam": {
+      "english": "clonazepam",
+      "rxnorm": "2598",
+      "category": "medication",
+      "controlled": true
+    },
+    "zolpidem": {
+      "english": "zolpidem",
+      "rxnorm": "39993",
+      "category": "medication",
+      "controlled": true
+    },
+    "cefalexina": {
+      "english": "cephalexin",
+      "rxnorm": "2231",
+      "category": "medication"
+    },
+    "doxiciclina": {
+      "english": "doxycycline",
+      "rxnorm": "3640",
+      "category": "medication"
+    },
+    "metronidazol": {
+      "english": "metronidazole",
+      "rxnorm": "6922",
+      "category": "medication"
+    },
+    "clindamicina": {
+      "english": "clindamycin",
+      "rxnorm": "2582",
+      "category": "medication"
+    },
+    "ranitidina": {
+      "english": "ranitidine",
+      "rxnorm": "9143",
+      "category": "medication"
+    },
+    "famotidina": {
+      "english": "famotidine",
+      "rxnorm": "4278",
+      "category": "medication"
+    },
+    "montelukast": {
+      "english": "montelukast",
+      "rxnorm": "88249",
+      "category": "medication"
+    },
+    "tamsulosina": {
+      "english": "tamsulosin",
+      "rxnorm": "77492",
+      "category": "medication"
+    },
+    "finasterida": {
+      "english": "finasteride",
+      "rxnorm": "72236",
+      "category": "medication"
+    },
+    "sildenafil": {
+      "english": "sildenafil",
+      "rxnorm": "136411",
+      "category": "medication"
+    },
+    "vitamina D": {
+      "english": "vitamin D",
+      "rxnorm": "11253",
+      "category": "medication"
+    },
+    "vitamina B12": {
+      "english": "vitamin B12",
+      "rxnorm": "11248",
+      "category": "medication"
+    },
+    "hierro": {
+      "english": "iron",
+      "rxnorm": "5852",
+      "category": "medication"
+    },
+    "calcio": {
+      "english": "calcium",
+      "rxnorm": "1731",
+      "category": "medication"
+    }
+  },
+  "anatomy": {
+    "cabeza": {
+      "english": "head",
+      "snomed_code": "69536005",
+      "category": "anatomy"
+    },
+    "cuello": {
+      "english": "neck",
+      "snomed_code": "45048000",
+      "category": "anatomy"
+    },
+    "pecho": {
+      "english": "chest",
+      "snomed_code": "51185008",
+      "category": "anatomy"
+    },
+    "tórax": {
+      "english": "thorax",
+      "snomed_code": "51185008",
+      "category": "anatomy"
+    },
+    "espalda": {
+      "english": "back",
+      "snomed_code": "77568009",
+      "category": "anatomy"
+    },
+    "abdomen": {
+      "english": "abdomen",
+      "snomed_code": "818983003",
+      "category": "anatomy"
+    },
+    "estómago": {
+      "english": "stomach",
+      "snomed_code": "69695003",
+      "category": "anatomy"
+    },
+    "hígado": {
+      "english": "liver",
+      "snomed_code": "10200004",
+      "category": "anatomy"
+    },
+    "riñón": {
+      "english": "kidney",
+      "snomed_code": "64033007",
+      "category": "anatomy"
+    },
+    "riñones": {
+      "english": "kidneys",
+      "snomed_code": "64033007",
+      "category": "anatomy"
+    },
+    "corazón": {
+      "english": "heart",
+      "snomed_code": "80891009",
+      "category": "anatomy"
+    },
+    "pulmón": {
+      "english": "lung",
+      "snomed_code": "39607008",
+      "category": "anatomy"
+    },
+    "pulmones": {
+      "english": "lungs",
+      "snomed_code": "39607008",
+      "category": "anatomy"
+    },
+    "cerebro": {
+      "english": "brain",
+      "snomed_code": "12738006",
+      "category": "anatomy"
+    },
+    "ojo": {
+      "english": "eye",
+      "snomed_code": "81745001",
+      "category": "anatomy"
+    },
+    "ojos": {
+      "english": "eyes",
+      "snomed_code": "81745001",
+      "category": "anatomy"
+    },
+    "oído": {
+      "english": "ear",
+      "snomed_code": "117590005",
+      "category": "anatomy"
+    },
+    "nariz": {
+      "english": "nose",
+      "snomed_code": "45206002",
+      "category": "anatomy"
+    },
+    "garganta": {
+      "english": "throat",
+      "snomed_code": "54066008",
+      "category": "anatomy"
+    },
+    "boca": {
+      "english": "mouth",
+      "snomed_code": "123851003",
+      "category": "anatomy"
+    },
+    "lengua": {
+      "english": "tongue",
+      "snomed_code": "21974007",
+      "category": "anatomy"
+    },
+    "dientes": {
+      "english": "teeth",
+      "snomed_code": "38199008",
+      "category": "anatomy"
+    },
+    "brazo": {
+      "english": "arm",
+      "snomed_code": "40983000",
+      "category": "anatomy"
+    },
+    "mano": {
+      "english": "hand",
+      "snomed_code": "85562004",
+      "category": "anatomy"
+    },
+    "dedo": {
+      "english": "finger",
+      "snomed_code": "7569003",
+      "category": "anatomy"
+    },
+    "pierna": {
+      "english": "leg",
+      "snomed_code": "61685007",
+      "category": "anatomy"
+    },
+    "pie": {
+      "english": "foot",
+      "snomed_code": "56459004",
+      "category": "anatomy"
+    },
+    "rodilla": {
+      "english": "knee",
+      "snomed_code": "72696002",
+      "category": "anatomy"
+    },
+    "tobillo": {
+      "english": "ankle",
+      "snomed_code": "70258002",
+      "category": "anatomy"
+    },
+    "cadera": {
+      "english": "hip",
+      "snomed_code": "29836001",
+      "category": "anatomy"
+    },
+    "hombro": {
+      "english": "shoulder",
+      "snomed_code": "16982005",
+      "category": "anatomy"
+    },
+    "codo": {
+      "english": "elbow",
+      "snomed_code": "127949000",
+      "category": "anatomy"
+    },
+    "muñeca": {
+      "english": "wrist",
+      "snomed_code": "8205005",
+      "category": "anatomy"
+    },
+    "columna": {
+      "english": "spine",
+      "snomed_code": "421060004",
+      "category": "anatomy"
+    },
+    "columna vertebral": {
+      "english": "spinal column",
+      "snomed_code": "421060004",
+      "category": "anatomy"
+    },
+    "costilla": {
+      "english": "rib",
+      "snomed_code": "113197003",
+      "category": "anatomy"
+    },
+    "piel": {
+      "english": "skin",
+      "snomed_code": "39937001",
+      "category": "anatomy"
+    },
+    "sangre": {
+      "english": "blood",
+      "snomed_code": "87612001",
+      "category": "anatomy"
+    },
+    "arteria": {
+      "english": "artery",
+      "snomed_code": "51114001",
+      "category": "anatomy"
+    },
+    "vena": {
+      "english": "vein",
+      "snomed_code": "29092000",
+      "category": "anatomy"
+    },
+    "nervio": {
+      "english": "nerve",
+      "snomed_code": "3057000",
+      "category": "anatomy"
+    },
+    "músculo": {
+      "english": "muscle",
+      "snomed_code": "71616004",
+      "category": "anatomy"
+    },
+    "hueso": {
+      "english": "bone",
+      "snomed_code": "272673000",
+      "category": "anatomy"
+    },
+    "articulación": {
+      "english": "joint",
+      "snomed_code": "39352004",
+      "category": "anatomy"
+    },
+    "tiroides": {
+      "english": "thyroid",
+      "snomed_code": "69748006",
+      "category": "anatomy"
+    },
+    "páncreas": {
+      "english": "pancreas",
+      "snomed_code": "15776009",
+      "category": "anatomy"
+    },
+    "vesícula": {
+      "english": "gallbladder",
+      "snomed_code": "28231008",
+      "category": "anatomy"
+    },
+    "vejiga": {
+      "english": "bladder",
+      "snomed_code": "89837001",
+      "category": "anatomy"
+    },
+    "próstata": {
+      "english": "prostate",
+      "snomed_code": "41216001",
+      "category": "anatomy"
+    },
+    "útero": {
+      "english": "uterus",
+      "snomed_code": "35039007",
+      "category": "anatomy"
+    },
+    "ovario": {
+      "english": "ovary",
+      "snomed_code": "15497006",
+      "category": "anatomy"
+    }
+  },
+  "vital_signs": {
+    "presión arterial": {
+      "english": "blood pressure",
+      "snomed_code": "75367002",
+      "loinc": "85354-9",
+      "category": "vital_sign"
+    },
+    "frecuencia cardíaca": {
+      "english": "heart rate",
+      "snomed_code": "364075005",
+      "loinc": "8867-4",
+      "category": "vital_sign"
+    },
+    "pulso": {
+      "english": "pulse",
+      "snomed_code": "8499008",
+      "loinc": "8867-4",
+      "category": "vital_sign"
+    },
+    "temperatura": {
+      "english": "temperature",
+      "snomed_code": "386725007",
+      "loinc": "8310-5",
+      "category": "vital_sign"
+    },
+    "frecuencia respiratoria": {
+      "english": "respiratory rate",
+      "snomed_code": "86290005",
+      "loinc": "9279-1",
+      "category": "vital_sign"
+    },
+    "saturación de oxígeno": {
+      "english": "oxygen saturation",
+      "snomed_code": "431314004",
+      "loinc": "2708-6",
+      "category": "vital_sign"
+    },
+    "peso": {
+      "english": "weight",
+      "snomed_code": "27113001",
+      "loinc": "29463-7",
+      "category": "vital_sign"
+    },
+    "altura": {
+      "english": "height",
+      "snomed_code": "50373000",
+      "loinc": "8302-2",
+      "category": "vital_sign"
+    },
+    "glucosa": {
+      "english": "glucose",
+      "snomed_code": "33747003",
+      "loinc": "2345-7",
+      "category": "vital_sign"
+    },
+    "azúcar en la sangre": {
+      "english": "blood sugar",
+      "snomed_code": "33747003",
+      "loinc": "2345-7",
+      "category": "vital_sign"
+    }
+  },
+  "procedures": {
+    "cirugía": {
+      "english": "surgery",
+      "snomed_code": "387713003",
+      "category": "procedure"
+    },
+    "operación": {
+      "english": "operation",
+      "snomed_code": "387713003",
+      "category": "procedure"
+    },
+    "biopsia": {
+      "english": "biopsy",
+      "snomed_code": "86273004",
+      "category": "procedure"
+    },
+    "radiografía": {
+      "english": "x-ray",
+      "snomed_code": "363680008",
+      "category": "procedure"
+    },
+    "tomografía": {
+      "english": "CT scan",
+      "snomed_code": "77477000",
+      "category": "procedure"
+    },
+    "resonancia magnética": {
+      "english": "MRI",
+      "snomed_code": "113091000",
+      "category": "procedure"
+    },
+    "ultrasonido": {
+      "english": "ultrasound",
+      "snomed_code": "16310003",
+      "category": "procedure"
+    },
+    "ecografía": {
+      "english": "ultrasound",
+      "snomed_code": "16310003",
+      "category": "procedure"
+    },
+    "electrocardiograma": {
+      "english": "electrocardiogram",
+      "snomed_code": "29303009",
+      "category": "procedure"
+    },
+    "endoscopia": {
+      "english": "endoscopy",
+      "snomed_code": "423827005",
+      "category": "procedure"
+    },
+    "colonoscopia": {
+      "english": "colonoscopy",
+      "snomed_code": "73761001",
+      "category": "procedure"
+    },
+    "análisis de sangre": {
+      "english": "blood test",
+      "snomed_code": "396550006",
+      "category": "procedure"
+    },
+    "análisis de orina": {
+      "english": "urinalysis",
+      "snomed_code": "27171005",
+      "category": "procedure"
+    },
+    "vacuna": {
+      "english": "vaccine",
+      "snomed_code": "33879002",
+      "category": "procedure"
+    },
+    "transfusión": {
+      "english": "transfusion",
+      "snomed_code": "116859006",
+      "category": "procedure"
+    },
+    "diálisis": {
+      "english": "dialysis",
+      "snomed_code": "108241001",
+      "category": "procedure"
+    },
+    "quimioterapia": {
+      "english": "chemotherapy",
+      "snomed_code": "367336001",
+      "category": "procedure"
+    },
+    "radioterapia": {
+      "english": "radiation therapy",
+      "snomed_code": "108290001",
+      "category": "procedure"
+    },
+    "fisioterapia": {
+      "english": "physical therapy",
+      "snomed_code": "91251008",
+      "category": "procedure"
+    },
+    "inyección": {
+      "english": "injection",
+      "snomed_code": "28289002",
+      "category": "procedure"
+    },
+    "sutura": {
+      "english": "suture",
+      "snomed_code": "18557009",
+      "category": "procedure"
+    }
+  },
+  "time_expressions": {
+    "hoy": "today",
+    "ayer": "yesterday",
+    "anteayer": "day before yesterday",
+    "hace un día": "one day ago",
+    "hace dos días": "two days ago",
+    "hace tres días": "three days ago",
+    "hace una semana": "one week ago",
+    "hace dos semanas": "two weeks ago",
+    "hace un mes": "one month ago",
+    "hace dos meses": "two months ago",
+    "hace un año": "one year ago",
+    "esta mañana": "this morning",
+    "esta tarde": "this afternoon",
+    "esta noche": "tonight",
+    "anoche": "last night",
+    "desde hace": "for the past",
+    "por la mañana": "in the morning",
+    "por la tarde": "in the afternoon",
+    "por la noche": "at night",
+    "todos los días": "every day",
+    "cada semana": "every week",
+    "cada mes": "every month",
+    "a veces": "sometimes",
+    "frecuentemente": "frequently",
+    "constantemente": "constantly",
+    "de vez en cuando": "occasionally"
+  },
+  "severity_modifiers": {
+    "leve": "mild",
+    "moderado": "moderate",
+    "severo": "severe",
+    "intenso": "intense",
+    "fuerte": "strong",
+    "débil": "weak",
+    "agudo": "acute",
+    "crónico": "chronic",
+    "intermitente": "intermittent",
+    "constante": "constant",
+    "repentino": "sudden",
+    "gradual": "gradual",
+    "peor": "worse",
+    "mejor": "better",
+    "igual": "same",
+    "mucho": "a lot",
+    "poco": "a little",
+    "muy": "very"
+  }
+}

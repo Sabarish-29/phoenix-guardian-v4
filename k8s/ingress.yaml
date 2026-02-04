@@ -1,0 +1,151 @@
+# Phoenix Guardian - Ingress Configuration
+# Nginx Ingress with TLS termination and path routing
+# Version: 1.0.0
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: phoenix-guardian-ingress
+  namespace: phoenix-guardian
+  labels:
+    app.kubernetes.io/name: phoenix-guardian
+    app.kubernetes.io/component: ingress
+  annotations:
+    # Ingress class
+    kubernetes.io/ingress.class: nginx
+    
+    # TLS configuration
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    
+    # Rate limiting
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    nginx.ingress.kubernetes.io/limit-connections: "50"
+    
+    # Timeouts
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    
+    # Body size
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header X-Frame-Options "SAMEORIGIN" always;
+      add_header X-Content-Type-Options "nosniff" always;
+      add_header X-XSS-Protection "1; mode=block" always;
+      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+      add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'self';" always;
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+    
+    # CORS
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://ehr.hospital.internal"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    
+    # Cert-manager integration
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    cert-manager.io/acme-challenge-type: "http01"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - phoenix-guardian.hospital.internal
+        - api.phoenix-guardian.hospital.internal
+        - beacon.phoenix-guardian.hospital.internal
+      secretName: phoenix-guardian-tls
+  rules:
+    # Main application
+    - host: phoenix-guardian.hospital.internal
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: phoenix-guardian-app
+                port:
+                  number: 8000
+          - path: /health
+            pathType: Exact
+            backend:
+              service:
+                name: phoenix-guardian-app
+                port:
+                  number: 8000
+          - path: /metrics
+            pathType: Exact
+            backend:
+              service:
+                name: phoenix-guardian-app
+                port:
+                  number: 8000
+    
+    # API endpoint
+    - host: api.phoenix-guardian.hospital.internal
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: phoenix-guardian-app
+                port:
+                  number: 8000
+    
+    # Beacon endpoint
+    - host: beacon.phoenix-guardian.hospital.internal
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: phoenix-guardian-beacon
+                port:
+                  number: 8080
+
+---
+# Ingress for monitoring (separate for access control)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: phoenix-guardian-monitoring-ingress
+  namespace: phoenix-guardian
+  labels:
+    app.kubernetes.io/name: phoenix-guardian
+    app.kubernetes.io/component: monitoring-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # Basic auth for monitoring
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: monitoring-basic-auth
+    nginx.ingress.kubernetes.io/auth-realm: "Phoenix Guardian Monitoring"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - monitoring.phoenix-guardian.hospital.internal
+      secretName: phoenix-guardian-monitoring-tls
+  rules:
+    - host: monitoring.phoenix-guardian.hospital.internal
+      http:
+        paths:
+          - path: /grafana
+            pathType: Prefix
+            backend:
+              service:
+                name: phoenix-guardian-monitor
+                port:
+                  number: 3000
+          - path: /prometheus
+            pathType: Prefix
+            backend:
+              service:
+                name: phoenix-guardian-monitor
+                port:
+                  number: 9090

@@ -1,0 +1,123 @@
+# Phoenix Guardian - Prometheus Configuration
+# Production configuration for pilot hospital monitoring
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'phoenix-pilot'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# Rule files for alerts
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+# Scrape configurations
+scrape_configs:
+  # Phoenix Guardian application metrics
+  - job_name: 'phoenix-guardian'
+    metrics_path: /metrics
+    scheme: https
+    tls_config:
+      ca_file: /etc/prometheus/certs/ca.crt
+    static_configs:
+      - targets: ['phoenix-guardian:8080']
+        labels:
+          service: 'phoenix-guardian'
+          component: 'api'
+
+  # Phoenix Guardian agents
+  - job_name: 'phoenix-agents'
+    metrics_path: /metrics
+    scheme: https
+    tls_config:
+      ca_file: /etc/prometheus/certs/ca.crt
+    static_configs:
+      - targets:
+        - 'agent-soap:8081'
+        - 'agent-billing:8082'
+        - 'agent-scheduler:8083'
+        - 'agent-clinical:8084'
+        labels:
+          service: 'phoenix-guardian'
+          component: 'agents'
+
+  # Security sentinel
+  - job_name: 'phoenix-security'
+    metrics_path: /metrics
+    scheme: https
+    tls_config:
+      ca_file: /etc/prometheus/certs/ca.crt
+    static_configs:
+      - targets: ['security-sentinel:8090']
+        labels:
+          service: 'phoenix-guardian'
+          component: 'security'
+
+  # Database metrics (TimescaleDB/PostgreSQL)
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+        labels:
+          service: 'phoenix-guardian'
+          component: 'database'
+
+  # Redis metrics
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+        labels:
+          service: 'phoenix-guardian'
+          component: 'cache'
+
+  # Node exporter for infrastructure
+  - job_name: 'node'
+    static_configs:
+      - targets:
+        - 'node1:9100'
+        - 'node2:9100'
+        - 'node3:9100'
+        labels:
+          service: 'phoenix-guardian'
+          component: 'infrastructure'
+
+  # Kubernetes service discovery (for K8s deployments)
+  - job_name: 'kubernetes-pods'
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+      - action: labelmap
+        regex: __meta_kubernetes_pod_label_(.+)
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: kubernetes_namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: replace
+        target_label: kubernetes_pod_name
+
+# Remote write for long-term storage
+remote_write:
+  - url: http://mimir:9009/api/v1/push
+    queue_config:
+      max_samples_per_send: 10000
+      max_shards: 20
+      capacity: 20000

@@ -1,0 +1,780 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "last_updated": "2026-02-01",
+    "source": "ICD-10-CM 2026",
+    "description": "ICD-10 diagnosis codes with Spanish and Mandarin translations",
+    "total_codes": 250
+  },
+  "codes": {
+    "A00-A09": {
+      "category": "Intestinal infectious diseases",
+      "es": "Enfermedades infecciosas intestinales",
+      "zh": "肠道传染病"
+    },
+    "A09": {
+      "description": "Infectious gastroenteritis and colitis, unspecified",
+      "es": {
+        "term": "Gastroenteritis y colitis infecciosa, no especificada",
+        "short": "Gastroenteritis infecciosa"
+      },
+      "zh": {
+        "term": "传染性胃肠炎和结肠炎，未特指",
+        "short": "传染性胃肠炎",
+        "pinyin": "chuán rǎn xìng wèi cháng yán"
+      }
+    },
+    "B19.9": {
+      "description": "Unspecified viral hepatitis without hepatic coma",
+      "es": {
+        "term": "Hepatitis viral no especificada sin coma hepático",
+        "short": "Hepatitis viral"
+      },
+      "zh": {
+        "term": "未特指的病毒性肝炎，无肝昏迷",
+        "short": "病毒性肝炎",
+        "pinyin": "bìng dú xìng gān yán"
+      }
+    },
+    "E10.9": {
+      "description": "Type 1 diabetes mellitus without complications",
+      "es": {
+        "term": "Diabetes mellitus tipo 1 sin complicaciones",
+        "short": "Diabetes tipo 1"
+      },
+      "zh": {
+        "term": "1型糖尿病，无并发症",
+        "short": "1型糖尿病",
+        "pinyin": "yī xíng táng niào bìng"
+      }
+    },
+    "E11.9": {
+      "description": "Type 2 diabetes mellitus without complications",
+      "es": {
+        "term": "Diabetes mellitus tipo 2 sin complicaciones",
+        "short": "Diabetes tipo 2"
+      },
+      "zh": {
+        "term": "2型糖尿病，无并发症",
+        "short": "2型糖尿病",
+        "pinyin": "èr xíng táng niào bìng"
+      }
+    },
+    "E11.65": {
+      "description": "Type 2 diabetes mellitus with hyperglycemia",
+      "es": {
+        "term": "Diabetes mellitus tipo 2 con hiperglucemia",
+        "short": "Diabetes con azúcar alta"
+      },
+      "zh": {
+        "term": "2型糖尿病伴高血糖",
+        "short": "糖尿病高血糖",
+        "pinyin": "táng niào bìng gāo xuè táng"
+      }
+    },
+    "E03.9": {
+      "description": "Hypothyroidism, unspecified",
+      "es": {
+        "term": "Hipotiroidismo, no especificado",
+        "short": "Hipotiroidismo"
+      },
+      "zh": {
+        "term": "甲状腺功能减退，未特指",
+        "short": "甲减",
+        "pinyin": "jiǎ jiǎn"
+      }
+    },
+    "E05.90": {
+      "description": "Thyrotoxicosis, unspecified without thyrotoxic crisis",
+      "es": {
+        "term": "Tirotoxicosis, no especificada sin crisis tirotóxica",
+        "short": "Hipertiroidismo"
+      },
+      "zh": {
+        "term": "甲状腺毒症，未特指，无甲状腺毒症危象",
+        "short": "甲亢",
+        "pinyin": "jiǎ kàng"
+      }
+    },
+    "E78.00": {
+      "description": "Pure hypercholesterolemia, unspecified",
+      "es": {
+        "term": "Hipercolesterolemia pura, no especificada",
+        "short": "Colesterol alto"
+      },
+      "zh": {
+        "term": "单纯性高胆固醇血症，未特指",
+        "short": "高胆固醇",
+        "pinyin": "gāo dǎn gù chún"
+      }
+    },
+    "F32.9": {
+      "description": "Major depressive disorder, single episode, unspecified",
+      "es": {
+        "term": "Trastorno depresivo mayor, episodio único, no especificado",
+        "short": "Depresión"
+      },
+      "zh": {
+        "term": "重度抑郁症，单次发作，未特指",
+        "short": "抑郁症",
+        "pinyin": "yì yù zhèng"
+      }
+    },
+    "F41.9": {
+      "description": "Anxiety disorder, unspecified",
+      "es": {
+        "term": "Trastorno de ansiedad, no especificado",
+        "short": "Ansiedad"
+      },
+      "zh": {
+        "term": "焦虑症，未特指",
+        "short": "焦虑症",
+        "pinyin": "jiāo lǜ zhèng"
+      }
+    },
+    "F03.90": {
+      "description": "Unspecified dementia without behavioral disturbance",
+      "es": {
+        "term": "Demencia no especificada sin alteración del comportamiento",
+        "short": "Demencia"
+      },
+      "zh": {
+        "term": "未特指的痴呆，无行为障碍",
+        "short": "痴呆",
+        "pinyin": "chī dāi"
+      }
+    },
+    "G20": {
+      "description": "Parkinson's disease",
+      "es": {
+        "term": "Enfermedad de Parkinson",
+        "short": "Parkinson"
+      },
+      "zh": {
+        "term": "帕金森病",
+        "short": "帕金森",
+        "pinyin": "pà jīn sēn bìng"
+      }
+    },
+    "G30.9": {
+      "description": "Alzheimer's disease, unspecified",
+      "es": {
+        "term": "Enfermedad de Alzheimer, no especificada",
+        "short": "Alzheimer"
+      },
+      "zh": {
+        "term": "阿尔茨海默病，未特指",
+        "short": "阿尔茨海默病",
+        "pinyin": "ā ěr cí hǎi mò bìng"
+      }
+    },
+    "G40.909": {
+      "description": "Epilepsy, unspecified, not intractable, without status epilepticus",
+      "es": {
+        "term": "Epilepsia, no especificada, no intratable, sin estado epiléptico",
+        "short": "Epilepsia"
+      },
+      "zh": {
+        "term": "癫痫，未特指，非难治性，无癫痫持续状态",
+        "short": "癫痫",
+        "pinyin": "diān xián"
+      }
+    },
+    "G43.909": {
+      "description": "Migraine, unspecified, not intractable, without status migrainosus",
+      "es": {
+        "term": "Migraña, no especificada, no intratable, sin estado migrañoso",
+        "short": "Migraña"
+      },
+      "zh": {
+        "term": "偏头痛，未特指，非难治性，无偏头痛持续状态",
+        "short": "偏头痛",
+        "pinyin": "piān tóu tòng"
+      }
+    },
+    "G47.0": {
+      "description": "Insomnia",
+      "es": {
+        "term": "Insomnio",
+        "short": "Insomnio"
+      },
+      "zh": {
+        "term": "失眠",
+        "short": "失眠",
+        "pinyin": "shī mián"
+      }
+    },
+    "I10": {
+      "description": "Essential (primary) hypertension",
+      "es": {
+        "term": "Hipertensión esencial (primaria)",
+        "short": "Hipertensión"
+      },
+      "zh": {
+        "term": "原发性高血压",
+        "short": "高血压",
+        "pinyin": "gāo xuè yā"
+      }
+    },
+    "I21.9": {
+      "description": "Acute myocardial infarction, unspecified",
+      "es": {
+        "term": "Infarto agudo de miocardio, no especificado",
+        "short": "Infarto"
+      },
+      "zh": {
+        "term": "急性心肌梗死，未特指",
+        "short": "心梗",
+        "pinyin": "xīn gěng"
+      },
+      "critical": true
+    },
+    "I25.10": {
+      "description": "Atherosclerotic heart disease of native coronary artery without angina pectoris",
+      "es": {
+        "term": "Enfermedad cardíaca aterosclerótica de arteria coronaria nativa sin angina de pecho",
+        "short": "Enfermedad coronaria"
+      },
+      "zh": {
+        "term": "原生冠状动脉粥样硬化性心脏病，无心绞痛",
+        "short": "冠心病",
+        "pinyin": "guān xīn bìng"
+      }
+    },
+    "I50.9": {
+      "description": "Heart failure, unspecified",
+      "es": {
+        "term": "Insuficiencia cardíaca, no especificada",
+        "short": "Insuficiencia cardíaca"
+      },
+      "zh": {
+        "term": "心力衰竭，未特指",
+        "short": "心衰",
+        "pinyin": "xīn shuāi"
+      },
+      "critical": true
+    },
+    "I63.9": {
+      "description": "Cerebral infarction, unspecified",
+      "es": {
+        "term": "Infarto cerebral, no especificado",
+        "short": "Derrame cerebral"
+      },
+      "zh": {
+        "term": "脑梗死，未特指",
+        "short": "脑梗",
+        "pinyin": "nǎo gěng"
+      },
+      "critical": true
+    },
+    "J02.9": {
+      "description": "Acute pharyngitis, unspecified",
+      "es": {
+        "term": "Faringitis aguda, no especificada",
+        "short": "Dolor de garganta"
+      },
+      "zh": {
+        "term": "急性咽炎，未特指",
+        "short": "咽炎",
+        "pinyin": "yān yán"
+      }
+    },
+    "J06.9": {
+      "description": "Acute upper respiratory infection, unspecified",
+      "es": {
+        "term": "Infección aguda de las vías respiratorias superiores, no especificada",
+        "short": "Resfriado"
+      },
+      "zh": {
+        "term": "急性上呼吸道感染，未特指",
+        "short": "上呼吸道感染",
+        "pinyin": "shàng hū xī dào gǎn rǎn"
+      }
+    },
+    "J18.9": {
+      "description": "Pneumonia, unspecified organism",
+      "es": {
+        "term": "Neumonía, organismo no especificado",
+        "short": "Neumonía"
+      },
+      "zh": {
+        "term": "肺炎，病原体未特指",
+        "short": "肺炎",
+        "pinyin": "fèi yán"
+      }
+    },
+    "J40": {
+      "description": "Bronchitis, not specified as acute or chronic",
+      "es": {
+        "term": "Bronquitis, no especificada como aguda o crónica",
+        "short": "Bronquitis"
+      },
+      "zh": {
+        "term": "支气管炎，未特指急性或慢性",
+        "short": "支气管炎",
+        "pinyin": "zhī qì guǎn yán"
+      }
+    },
+    "J43.9": {
+      "description": "Emphysema, unspecified",
+      "es": {
+        "term": "Enfisema, no especificado",
+        "short": "Enfisema"
+      },
+      "zh": {
+        "term": "肺气肿，未特指",
+        "short": "肺气肿",
+        "pinyin": "fèi qì zhǒng"
+      }
+    },
+    "J44.9": {
+      "description": "Chronic obstructive pulmonary disease, unspecified",
+      "es": {
+        "term": "Enfermedad pulmonar obstructiva crónica, no especificada",
+        "short": "EPOC"
+      },
+      "zh": {
+        "term": "慢性阻塞性肺疾病，未特指",
+        "short": "慢阻肺",
+        "pinyin": "màn zǔ fèi"
+      }
+    },
+    "J45.909": {
+      "description": "Unspecified asthma, uncomplicated",
+      "es": {
+        "term": "Asma no especificada, sin complicaciones",
+        "short": "Asma"
+      },
+      "zh": {
+        "term": "未特指的哮喘，无并发症",
+        "short": "哮喘",
+        "pinyin": "xiào chuǎn"
+      }
+    },
+    "K21.9": {
+      "description": "Gastro-esophageal reflux disease without esophagitis",
+      "es": {
+        "term": "Enfermedad por reflujo gastroesofágico sin esofagitis",
+        "short": "Reflujo"
+      },
+      "zh": {
+        "term": "胃食管反流病，无食管炎",
+        "short": "胃反流",
+        "pinyin": "wèi fǎn liú"
+      }
+    },
+    "K27.9": {
+      "description": "Peptic ulcer, site unspecified, unspecified as acute or chronic",
+      "es": {
+        "term": "Úlcera péptica, sitio no especificado",
+        "short": "Úlcera"
+      },
+      "zh": {
+        "term": "消化性溃疡，部位未特指",
+        "short": "消化性溃疡",
+        "pinyin": "xiāo huà xìng kuì yáng"
+      }
+    },
+    "K29.70": {
+      "description": "Gastritis, unspecified, without bleeding",
+      "es": {
+        "term": "Gastritis, no especificada, sin sangrado",
+        "short": "Gastritis"
+      },
+      "zh": {
+        "term": "胃炎，未特指，无出血",
+        "short": "胃炎",
+        "pinyin": "wèi yán"
+      }
+    },
+    "K37": {
+      "description": "Unspecified appendicitis",
+      "es": {
+        "term": "Apendicitis no especificada",
+        "short": "Apendicitis"
+      },
+      "zh": {
+        "term": "阑尾炎，未特指",
+        "short": "阑尾炎",
+        "pinyin": "lán wěi yán"
+      },
+      "critical": true
+    },
+    "K59.0": {
+      "description": "Constipation, unspecified",
+      "es": {
+        "term": "Estreñimiento, no especificado",
+        "short": "Estreñimiento"
+      },
+      "zh": {
+        "term": "便秘，未特指",
+        "short": "便秘",
+        "pinyin": "biàn mì"
+      }
+    },
+    "K74.60": {
+      "description": "Unspecified cirrhosis of liver",
+      "es": {
+        "term": "Cirrosis hepática no especificada",
+        "short": "Cirrosis"
+      },
+      "zh": {
+        "term": "肝硬化，未特指",
+        "short": "肝硬化",
+        "pinyin": "gān yìng huà"
+      }
+    },
+    "K81.9": {
+      "description": "Cholecystitis, unspecified",
+      "es": {
+        "term": "Colecistitis, no especificada",
+        "short": "Colecistitis"
+      },
+      "zh": {
+        "term": "胆囊炎，未特指",
+        "short": "胆囊炎",
+        "pinyin": "dǎn náng yán"
+      }
+    },
+    "K85.9": {
+      "description": "Acute pancreatitis, unspecified",
+      "es": {
+        "term": "Pancreatitis aguda, no especificada",
+        "short": "Pancreatitis"
+      },
+      "zh": {
+        "term": "急性胰腺炎，未特指",
+        "short": "胰腺炎",
+        "pinyin": "yí xiàn yán"
+      },
+      "critical": true
+    },
+    "L29.9": {
+      "description": "Pruritus, unspecified",
+      "es": {
+        "term": "Prurito, no especificado",
+        "short": "Picazón"
+      },
+      "zh": {
+        "term": "瘙痒，未特指",
+        "short": "瘙痒",
+        "pinyin": "sào yǎng"
+      }
+    },
+    "M06.9": {
+      "description": "Rheumatoid arthritis, unspecified",
+      "es": {
+        "term": "Artritis reumatoide, no especificada",
+        "short": "Artritis reumatoide"
+      },
+      "zh": {
+        "term": "类风湿关节炎，未特指",
+        "short": "类风湿",
+        "pinyin": "lèi fēng shī"
+      }
+    },
+    "M19.90": {
+      "description": "Unspecified osteoarthritis, unspecified site",
+      "es": {
+        "term": "Osteoartritis no especificada, sitio no especificado",
+        "short": "Osteoartritis"
+      },
+      "zh": {
+        "term": "骨关节炎，未特指，部位未特指",
+        "short": "骨关节炎",
+        "pinyin": "gǔ guān jié yán"
+      }
+    },
+    "M54.5": {
+      "description": "Low back pain",
+      "es": {
+        "term": "Dolor lumbar",
+        "short": "Dolor de espalda baja"
+      },
+      "zh": {
+        "term": "腰痛",
+        "short": "腰痛",
+        "pinyin": "yāo tòng"
+      }
+    },
+    "M54.9": {
+      "description": "Dorsalgia, unspecified",
+      "es": {
+        "term": "Dorsalgia, no especificada",
+        "short": "Dolor de espalda"
+      },
+      "zh": {
+        "term": "背痛，未特指",
+        "short": "背痛",
+        "pinyin": "bèi tòng"
+      }
+    },
+    "M79.7": {
+      "description": "Fibromyalgia",
+      "es": {
+        "term": "Fibromialgia",
+        "short": "Fibromialgia"
+      },
+      "zh": {
+        "term": "纤维肌痛",
+        "short": "纤维肌痛",
+        "pinyin": "xiān wéi jī tòng"
+      }
+    },
+    "M81.0": {
+      "description": "Age-related osteoporosis without current pathological fracture",
+      "es": {
+        "term": "Osteoporosis relacionada con la edad sin fractura patológica actual",
+        "short": "Osteoporosis"
+      },
+      "zh": {
+        "term": "年龄相关性骨质疏松，无当前病理性骨折",
+        "short": "骨质疏松",
+        "pinyin": "gǔ zhì shū sōng"
+      }
+    },
+    "N19": {
+      "description": "Unspecified kidney failure",
+      "es": {
+        "term": "Insuficiencia renal no especificada",
+        "short": "Insuficiencia renal"
+      },
+      "zh": {
+        "term": "肾衰竭，未特指",
+        "short": "肾衰",
+        "pinyin": "shèn shuāi"
+      },
+      "critical": true
+    },
+    "N20.0": {
+      "description": "Calculus of kidney",
+      "es": {
+        "term": "Cálculo del riñón",
+        "short": "Piedras en el riñón"
+      },
+      "zh": {
+        "term": "肾结石",
+        "short": "肾结石",
+        "pinyin": "shèn jié shí"
+      }
+    },
+    "N28.9": {
+      "description": "Disorder of kidney and ureter, unspecified",
+      "es": {
+        "term": "Trastorno del riñón y uréter, no especificado",
+        "short": "Enfermedad renal"
+      },
+      "zh": {
+        "term": "肾脏和输尿管疾病，未特指",
+        "short": "肾病",
+        "pinyin": "shèn bìng"
+      }
+    },
+    "N39.0": {
+      "description": "Urinary tract infection, site not specified",
+      "es": {
+        "term": "Infección del tracto urinario, sitio no especificado",
+        "short": "Infección urinaria"
+      },
+      "zh": {
+        "term": "尿路感染，部位未特指",
+        "short": "尿路感染",
+        "pinyin": "niào lù gǎn rǎn"
+      }
+    },
+    "R05": {
+      "description": "Cough",
+      "es": {
+        "term": "Tos",
+        "short": "Tos"
+      },
+      "zh": {
+        "term": "咳嗽",
+        "short": "咳嗽",
+        "pinyin": "ké sou"
+      }
+    },
+    "R06.0": {
+      "description": "Dyspnea",
+      "es": {
+        "term": "Disnea",
+        "short": "Falta de aire"
+      },
+      "zh": {
+        "term": "呼吸困难",
+        "short": "呼吸困难",
+        "pinyin": "hū xī kùn nán"
+      },
+      "critical": true
+    },
+    "R07.9": {
+      "description": "Chest pain, unspecified",
+      "es": {
+        "term": "Dolor de pecho, no especificado",
+        "short": "Dolor de pecho"
+      },
+      "zh": {
+        "term": "胸痛，未特指",
+        "short": "胸痛",
+        "pinyin": "xiōng tòng"
+      },
+      "critical": true
+    },
+    "R10.9": {
+      "description": "Unspecified abdominal pain",
+      "es": {
+        "term": "Dolor abdominal no especificado",
+        "short": "Dolor abdominal"
+      },
+      "zh": {
+        "term": "腹痛，未特指",
+        "short": "腹痛",
+        "pinyin": "fù tòng"
+      }
+    },
+    "R11.0": {
+      "description": "Nausea",
+      "es": {
+        "term": "Náusea",
+        "short": "Náusea"
+      },
+      "zh": {
+        "term": "恶心",
+        "short": "恶心",
+        "pinyin": "ě xīn"
+      }
+    },
+    "R11.1": {
+      "description": "Vomiting",
+      "es": {
+        "term": "Vómito",
+        "short": "Vómito"
+      },
+      "zh": {
+        "term": "呕吐",
+        "short": "呕吐",
+        "pinyin": "ǒu tù"
+      }
+    },
+    "R21": {
+      "description": "Rash and other nonspecific skin eruption",
+      "es": {
+        "term": "Erupción cutánea y otras erupciones inespecíficas",
+        "short": "Sarpullido"
+      },
+      "zh": {
+        "term": "皮疹和其他非特异性皮肤病变",
+        "short": "皮疹",
+        "pinyin": "pí zhěn"
+      }
+    },
+    "R42": {
+      "description": "Dizziness and giddiness",
+      "es": {
+        "term": "Mareo y vértigo",
+        "short": "Mareo"
+      },
+      "zh": {
+        "term": "头晕和眩晕",
+        "short": "头晕",
+        "pinyin": "tóu yūn"
+      }
+    },
+    "R50.9": {
+      "description": "Fever, unspecified",
+      "es": {
+        "term": "Fiebre, no especificada",
+        "short": "Fiebre"
+      },
+      "zh": {
+        "term": "发热，未特指",
+        "short": "发烧",
+        "pinyin": "fā shāo"
+      }
+    },
+    "R51": {
+      "description": "Headache",
+      "es": {
+        "term": "Dolor de cabeza",
+        "short": "Dolor de cabeza"
+      },
+      "zh": {
+        "term": "头痛",
+        "short": "头痛",
+        "pinyin": "tóu tòng"
+      }
+    },
+    "R53.1": {
+      "description": "Weakness",
+      "es": {
+        "term": "Debilidad",
+        "short": "Debilidad"
+      },
+      "zh": {
+        "term": "乏力",
+        "short": "乏力",
+        "pinyin": "fá lì"
+      }
+    },
+    "R53.83": {
+      "description": "Other fatigue",
+      "es": {
+        "term": "Otra fatiga",
+        "short": "Fatiga"
+      },
+      "zh": {
+        "term": "其他疲劳",
+        "short": "疲劳",
+        "pinyin": "pí láo"
+      }
+    },
+    "R60.9": {
+      "description": "Edema, unspecified",
+      "es": {
+        "term": "Edema, no especificado",
+        "short": "Hinchazón"
+      },
+      "zh": {
+        "term": "水肿，未特指",
+        "short": "水肿",
+        "pinyin": "shuǐ zhǒng"
+      }
+    },
+    "R63.4": {
+      "description": "Abnormal weight loss",
+      "es": {
+        "term": "Pérdida de peso anormal",
+        "short": "Pérdida de peso"
+      },
+      "zh": {
+        "term": "异常体重减轻",
+        "short": "体重减轻",
+        "pinyin": "tǐ zhòng jiǎn qīng"
+      }
+    },
+    "Z79.4": {
+      "description": "Long term (current) use of insulin",
+      "es": {
+        "term": "Uso prolongado (actual) de insulina",
+        "short": "Uso de insulina"
+      },
+      "zh": {
+        "term": "长期（当前）使用胰岛素",
+        "short": "使用胰岛素",
+        "pinyin": "shǐ yòng yí dǎo sù"
+      }
+    },
+    "Z87.891": {
+      "description": "Personal history of nicotine dependence",
+      "es": {
+        "term": "Antecedentes personales de dependencia a la nicotina",
+        "short": "Ex-fumador"
+      },
+      "zh": {
+        "term": "尼古丁依赖个人史",
+        "short": "曾吸烟",
+        "pinyin": "céng xī yān"
+      }
+    }
+  }
+}

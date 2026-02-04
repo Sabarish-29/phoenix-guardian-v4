@@ -1,0 +1,119 @@
+# Agent configuration patch for Pilot Hospital 002
+# Standard deployment - most agents enabled
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: phoenix-agents
+data:
+  agents.yaml: |
+    version: "1.0.0"
+    tenant_id: pilot_hospital_002
+    
+    clinical_agents:
+      scribe:
+        status: enabled
+        config:
+          model: gpt-4-medical
+          max_tokens: 4096
+          temperature: 0.1
+          departments:
+            - emergency
+            - surgery
+            - internal_medicine
+            - pediatrics
+            - obstetrics
+            
+      navigator:
+        status: enabled
+        config:
+          search_algorithm: semantic
+          max_results: 15
+          cache_ttl_seconds: 300
+          
+      safety:
+        status: enabled
+        critical: true
+        config:
+          drug_interaction_db: firstdatabank
+          allergy_check: true
+          contraindication_check: true
+          dosage_validation: true
+          pediatric_dosing: true
+          pregnancy_safety: true
+          
+      coding:
+        status: enabled
+        config:
+          icd_version: ICD-10-CM
+          cpt_version: 2026
+          auto_suggest: true
+          confidence_threshold: 0.85
+          
+      prior_auth:
+        status: pilot
+        config:
+          pilot_departments:
+            - orthopedics
+          payers:
+            - blue_cross
+            - aetna
+            - united
+          extra_logging: true
+          
+      quality:
+        status: enabled
+        config:
+          metrics:
+            - readmission_risk
+            - length_of_stay
+            - mortality_risk
+            - sepsis_risk
+            - fall_risk
+          alert_thresholds:
+            readmission_risk: 0.7
+            sepsis_risk: 0.8
+          
+      orders:
+        status: enabled
+        config:
+          order_types:
+            - lab
+            - imaging
+            - medication
+            - consult
+          cpoe_integration: true
+          
+    security_agents:
+      sentinelq:
+        status: enabled
+        critical: true
+        cannot_disable: true
+        config:
+          prompt_injection_detection: true
+          jailbreak_detection: true
+          data_exfiltration_detection: true
+          anomaly_threshold: 0.80
+          auto_block: true
+          
+      deception:
+        status: enabled
+        critical: true
+        cannot_disable: true
+        config:
+          honeytoken_types:
+            - patient_record
+            - api_key
+            - credential
+            - medication_list
+          deployment_density: high
+          alert_on_access: true
+          beacon_enabled: true
+          
+      threat_intel:
+        status: enabled
+        config:
+          fingerprint_sharing: true
+          threat_feed_sync: true
+          sync_interval_minutes: 10
+          ioc_check: true

@@ -1,0 +1,165 @@
+# Agent configuration patch for Pilot Hospital 003
+# Aggressive feature rollout - all agents enabled with advanced features
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: phoenix-agents
+data:
+  agents.yaml: |
+    version: "1.0.0"
+    tenant_id: pilot_hospital_003
+    
+    # Academic medical center with full feature set
+    deployment_profile: academic_advanced
+    
+    clinical_agents:
+      scribe:
+        status: enabled
+        config:
+          model: gpt-4-medical-advanced
+          specialty_models: true
+          specialties:
+            - surgery
+            - cardiology
+            - oncology
+            - neurology
+            - transplant
+          max_tokens: 8192
+          temperature: 0.05  # More deterministic
+          multi_speaker: true
+          real_time_transcription: true
+          gpu_acceleration: true
+            
+      navigator:
+        status: enabled
+        config:
+          search_algorithm: semantic_advanced
+          research_mode: true
+          max_results: 25
+          cache_ttl_seconds: 600
+          federated_search: true
+          cross_department_search: true
+          
+      safety:
+        status: enabled
+        critical: true
+        config:
+          drug_interaction_db: firstdatabank_premium
+          allergy_check: true
+          contraindication_check: true
+          dosage_validation: true
+          pediatric_dosing: true
+          pregnancy_safety: true
+          renal_adjustment: true
+          hepatic_adjustment: true
+          transplant_interactions: true
+          chemotherapy_protocols: true
+          clinical_trials_check: true
+          
+      coding:
+        status: enabled
+        config:
+          icd_version: ICD-10-CM
+          cpt_version: 2026
+          auto_suggest: true
+          auto_code: true
+          confidence_threshold: 0.90
+          specialty_coding:
+            - oncology
+            - transplant
+            - cardiac_surgery
+          research_coding: true
+          
+      prior_auth:
+        status: enabled
+        config:
+          payers:
+            - blue_cross
+            - aetna
+            - united
+            - medicare
+            - medicaid
+            - cigna
+          auto_submission: true
+          appeal_generation: true
+          ml_prediction: true
+          
+      quality:
+        status: enabled
+        config:
+          metrics:
+            - readmission_risk
+            - length_of_stay
+            - mortality_risk
+            - sepsis_risk
+            - fall_risk
+            - pressure_ulcer_risk
+            - vte_risk
+            - aki_risk
+            - delirium_risk
+          research_metrics:
+            - clinical_trial_eligibility
+            - outcome_prediction
+          alert_thresholds:
+            readmission_risk: 0.6
+            sepsis_risk: 0.7
+            mortality_risk: 0.5
+          
+      orders:
+        status: enabled
+        config:
+          order_types:
+            - lab
+            - imaging
+            - medication
+            - consult
+            - procedure
+            - transfusion
+          cpoe_integration: true
+          smart_order_sets: true
+          clinical_decision_support: true
+          
+    security_agents:
+      sentinelq:
+        status: enabled
+        critical: true
+        cannot_disable: true
+        config:
+          prompt_injection_detection: true
+          jailbreak_detection: true
+          data_exfiltration_detection: true
+          anomaly_threshold: 0.75  # More sensitive
+          auto_block: true
+          research_protection: true
+          ml_enhanced_detection: true
+          adversarial_detection: true
+          
+      deception:
+        status: enabled
+        critical: true
+        cannot_disable: true
+        config:
+          honeytoken_types:
+            - patient_record
+            - api_key
+            - credential
+            - medication_list
+            - research_data
+            - clinical_trial
+          deployment_density: very_high
+          alert_on_access: true
+          beacon_enabled: true
+          research_honeytokens: true
+          ml_generated_decoys: true
+          
+      threat_intel:
+        status: enabled
+        config:
+          fingerprint_sharing: true
+          threat_feed_sync: true
+          sync_interval_minutes: 5  # Faster sync
+          ioc_check: true
+          real_time_sharing: true
+          ml_enhanced: true
+          academic_threat_sharing: true

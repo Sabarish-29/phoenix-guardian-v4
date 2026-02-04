@@ -1,0 +1,83 @@
+# Phoenix Guardian - Honeytoken Beacon Server
+# Lightweight edge-optimized container for CDN deployment
+# Version: 1.0.0
+
+# ==============================================================================
+# Stage 1: Builder
+# ==============================================================================
+FROM python:3.11-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /build
+
+# Minimal dependencies for beacon
+RUN pip install --user --no-cache-dir \
+    flask==3.0.0 \
+    gunicorn==21.2.0 \
+    redis==5.0.1 \
+    requests==2.31.0 \
+    cryptography==41.0.7
+
+# ==============================================================================
+# Stage 2: Runtime - Ultra-lightweight
+# ==============================================================================
+FROM python:3.11-slim
+
+LABEL maintainer="Phoenix Guardian Team <security@phoenix-guardian.io>" \
+      version="1.0.0" \
+      description="Phoenix Guardian - Honeytoken Beacon Server" \
+      org.opencontainers.image.source="https://github.com/phoenix-guardian/phoenix-guardian"
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    APP_HOME=/app \
+    APP_USER=phoenix \
+    APP_UID=1000 \
+    APP_GID=1000 \
+    BEACON_PORT=8080 \
+    PATH="/home/phoenix/.local/bin:$PATH" \
+    PYTHONPATH="/app"
+
+WORKDIR $APP_HOME
+
+# Minimal runtime packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Create non-root user
+RUN groupadd --gid $APP_GID $APP_USER \
+    && useradd --uid $APP_UID --gid $APP_GID --shell /bin/bash --create-home $APP_USER
+
+# Copy Python packages
+COPY --from=builder /root/.local /home/phoenix/.local
+
+# Copy only beacon-related code
+COPY --chown=$APP_USER:$APP_USER phoenix_guardian/security/honeytokens/ ./phoenix_guardian/security/honeytokens/
+COPY --chown=$APP_USER:$APP_USER phoenix_guardian/__init__.py ./phoenix_guardian/
+
+# Switch to non-root user
+USER $APP_USER
+
+# Expose beacon port
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8080/beacon/health || exit 1
+
+# Lightweight gunicorn for beacon
+CMD ["gunicorn", \
+     "--bind", "0.0.0.0:8080", \
+     "--workers", "2", \
+     "--threads", "4", \
+     "--timeout", "30", \
+     "--keep-alive", "2", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-", \
+     "--log-level", "warning", \
+     "phoenix_guardian.security.honeytokens.beacon:app"]

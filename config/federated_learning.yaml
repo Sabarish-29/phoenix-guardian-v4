@@ -1,0 +1,312 @@
+# Phoenix Guardian - Federated Learning Configuration
+# Week 25-26: Privacy-Preserving Threat Intelligence Network
+
+version: "1.0"
+description: "Configuration for privacy-preserving federated learning system"
+
+# =============================================================================
+# Global Settings
+# =============================================================================
+global:
+  enabled: true
+  environment: "production"
+  log_level: "INFO"
+  
+  # Update cycle
+  update_cycle_hours: 24
+  
+  # Privacy guarantees
+  privacy:
+    epsilon: 0.5
+    delta: 1.0e-5
+    noise_mechanism: "laplace"  # Options: laplace, gaussian
+    
+  # Minimum hospitals for aggregation (k-anonymity)
+  min_contributing_hospitals: 2
+
+# =============================================================================
+# Differential Privacy Engine
+# =============================================================================
+differential_privacy:
+  # Core parameters
+  epsilon: 0.5
+  delta: 1.0e-5
+  
+  # Noise parameters
+  noise:
+    mechanism: "laplace"
+    sensitivity: 1.0
+    clip_bounds:
+      lower: -1.0
+      upper: 1.0
+  
+  # Feature privatization
+  features:
+    epsilon: 0.1  # Per-feature epsilon
+    dimension: 128
+  
+  # Count privatization
+  counts:
+    epsilon: 0.2
+    threshold: 10  # Minimum count to report
+  
+  # Composition theorem
+  composition:
+    theorem: "advanced"  # Options: basic, advanced
+    track_per_query: true
+
+# =============================================================================
+# Privacy Budget
+# =============================================================================
+privacy_budget:
+  # Per-hospital budget
+  max_epsilon_per_month: 50.0
+  max_queries_per_month: 100
+  
+  # Budget tracking
+  tracking:
+    enabled: true
+    persistence: "database"  # Options: database, file
+    reset_day_of_month: 1
+  
+  # Alerts
+  alerts:
+    low_budget_threshold: 0.2  # 20% remaining
+    exhausted_action: "block"  # Options: block, warn, ignore
+
+# =============================================================================
+# Threat Signature Generation
+# =============================================================================
+threat_signatures:
+  # Feature extraction
+  features:
+    dimension: 128
+    categories:
+      - name: "token_statistics"
+        size: 32
+      - name: "syntactic_patterns"
+        size: 32
+      - name: "semantic_embeddings"
+        size: 32
+      - name: "behavioral_metrics"
+        size: 32
+  
+  # Privacy sanitization
+  sanitization:
+    forbidden_fields:
+      - "hospital_id"
+      - "hospital_name"
+      - "patient_id"
+      - "patient_name"
+      - "mrn"
+      - "ssn"
+      - "ip_address"
+      - "user_id"
+      - "username"
+      - "email"
+    
+    # Timestamp coarsening
+    timestamp_granularity: "month"  # YYYY-MM format only
+    
+    # Field hashing
+    hash_fields: true
+    hash_algorithm: "sha256"
+    hash_salt_length: 16
+  
+  # Attack types
+  attack_types:
+    - "prompt_injection"
+    - "jailbreak"
+    - "data_exfiltration"
+    - "system_compromise"
+    - "authentication_attack"
+    - "dos_attack"
+    - "unknown"
+
+# =============================================================================
+# Contribution Pipeline
+# =============================================================================
+contribution_pipeline:
+  # Batch processing
+  batch:
+    size: 100
+    flush_interval_seconds: 300
+    max_pending: 1000
+  
+  # Quality filters
+  quality:
+    min_confidence: 0.3
+    min_feature_variance: 0.01
+  
+  # Rate limiting
+  rate_limit:
+    max_per_minute: 60
+    max_per_hour: 500
+  
+  # Validation
+  validation:
+    require_noise: true
+    require_privacy_metadata: true
+    check_forbidden_fields: true
+
+# =============================================================================
+# Secure Aggregation
+# =============================================================================
+secure_aggregation:
+  # k-Anonymity
+  anonymity:
+    min_hospitals: 2
+    verification: "strict"  # Options: strict, relaxed
+  
+  # Aggregation method
+  aggregation:
+    method: "weighted_average"  # Options: weighted_average, median, trimmed_mean
+    confidence_weighting: true
+    outlier_removal: true
+    outlier_threshold: 3.0  # Standard deviations
+  
+  # Signature buffer
+  buffer:
+    max_pending: 10000
+    cleanup_interval_hours: 24
+    expire_after_hours: 168  # 7 days
+  
+  # Hospital ID handling
+  hospital_ids:
+    storage: "none"  # NEVER store hospital IDs
+    deduplication: "hashed"  # Use hashed IDs for dedup only
+
+# =============================================================================
+# Global Model
+# =============================================================================
+global_model:
+  # Versioning
+  versioning:
+    strategy: "semantic"
+    max_versions: 100
+    cleanup_older_than_days: 365
+  
+  # Clustering
+  clustering:
+    method: "agglomerative"
+    similarity_threshold: 0.85
+    min_cluster_size: 2
+  
+  # Temporal decay
+  temporal_decay:
+    enabled: true
+    rate_per_month: 0.1  # 10% decay
+    min_weight: 0.1
+  
+  # Quality scoring
+  quality:
+    weight_confidence: 0.4
+    weight_hospitals: 0.3
+    weight_recency: 0.3
+
+# =============================================================================
+# Model Distribution
+# =============================================================================
+model_distribution:
+  # Distribution schedule
+  schedule:
+    enabled: true
+    interval_hours: 24
+    preferred_hour_utc: 2  # 2 AM UTC
+  
+  # Delta encoding
+  delta_encoding:
+    enabled: true
+    threshold: 0.01  # Only include changes > 1%
+  
+  # Hospital filtering
+  hospital_filtering:
+    enabled: true
+    relevance_threshold: 0.5
+  
+  # Bandwidth optimization
+  bandwidth:
+    compression: true
+    max_signatures_per_update: 1000
+
+# =============================================================================
+# Privacy Auditing
+# =============================================================================
+privacy_auditing:
+  # Audit schedule
+  schedule:
+    audit_interval_hours: 24
+    attack_simulation_interval_hours: 168  # Weekly
+  
+  # Risk thresholds
+  thresholds:
+    max_reidentification_risk: 0.1
+    min_anonymity_set: 2
+  
+  # Attack simulations
+  attack_simulations:
+    enabled: true
+    types:
+      - "linkage_attack"
+      - "membership_inference"
+      - "attribute_inference"
+  
+  # Compliance
+  compliance:
+    hipaa_checks: true
+    gdpr_checks: true
+    generate_reports: true
+    report_retention_days: 365
+
+# =============================================================================
+# Monitoring and Alerts
+# =============================================================================
+monitoring:
+  # Metrics
+  metrics:
+    enabled: true
+    export_interval_seconds: 60
+    destinations:
+      - type: "prometheus"
+        endpoint: "/metrics"
+  
+  # Alerts
+  alerts:
+    enabled: true
+    channels:
+      - type: "slack"
+        webhook_url: "${SLACK_WEBHOOK_URL}"
+      - type: "email"
+        recipients: ["security@hospital.org"]
+    
+    # Alert conditions
+    conditions:
+      - name: "privacy_budget_low"
+        threshold: 0.2
+        severity: "warning"
+      - name: "k_anonymity_violation"
+        threshold: 0
+        severity: "critical"
+      - name: "audit_failed"
+        threshold: 0
+        severity: "critical"
+
+# =============================================================================
+# Performance Tuning
+# =============================================================================
+performance:
+  # Threading
+  threads:
+    aggregation_workers: 4
+    distribution_workers: 2
+  
+  # Caching
+  caching:
+    enabled: true
+    ttl_seconds: 3600
+    max_size_mb: 512
+  
+  # Database
+  database:
+    connection_pool_size: 10
+    query_timeout_seconds: 30

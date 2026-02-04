@@ -1,0 +1,122 @@
+{
+  "metadata": {
+    "version": "4.0.0",
+    "phase": 4,
+    "generated_at": "2025-01-15T00:00:00Z",
+    "description": "Phoenix Guardian Phase 4 Performance Baseline"
+  },
+  "performance": {
+    "api_latency": {
+      "p50_ms": 25,
+      "p95_ms": 85,
+      "p99_ms": 150,
+      "target_p95_ms": 100
+    },
+    "ml_inference": {
+      "readmission_model": {
+        "p50_ms": 12,
+        "p95_ms": 35,
+        "p99_ms": 65,
+        "batch_throughput_per_sec": 500
+      },
+      "cds_classifier": {
+        "p50_ms": 5,
+        "p95_ms": 15,
+        "p99_ms": 30
+      }
+    },
+    "database": {
+      "query_p95_ms": 50,
+      "connection_pool_size": 20,
+      "max_connections": 100
+    },
+    "ehr_connectors": {
+      "epic_fhir": {
+        "auth_latency_ms": 150,
+        "query_p95_ms": 200
+      },
+      "cerner_fhir": {
+        "auth_latency_ms": 180,
+        "query_p95_ms": 220
+      },
+      "allscripts": {
+        "auth_latency_ms": 200,
+        "query_p95_ms": 250
+      },
+      "meditech": {
+        "auth_latency_ms": 170,
+        "query_p95_ms": 230
+      },
+      "athenahealth": {
+        "auth_latency_ms": 160,
+        "query_p95_ms": 210
+      }
+    }
+  },
+  "ml_models": {
+    "readmission_xgb": {
+      "auc_roc": 0.7238,
+      "accuracy": 0.68,
+      "precision": 0.72,
+      "recall": 0.65,
+      "f1_score": 0.68,
+      "version": "1.0.0",
+      "training_date": "2025-01-10"
+    }
+  },
+  "test_coverage": {
+    "overall": 85.0,
+    "core": 92.0,
+    "ml": 88.0,
+    "security": 90.0,
+    "compliance": 87.0,
+    "integrations": 82.0
+  },
+  "security": {
+    "keystroke_dynamics": {
+      "signal_weight": 0.55,
+      "false_positive_rate": 0.02,
+      "false_negative_rate": 0.05
+    },
+    "anomaly_detection": {
+      "alert_threshold": 0.65,
+      "detection_rate": 0.95
+    }
+  },
+  "compliance": {
+    "fda_cds_categories": [
+      "NON_DEVICE",
+      "DEVICE_CLASS_I",
+      "DEVICE_CLASS_II",
+      "DEVICE_CLASS_III",
+      "EXEMPT"
+    ],
+    "hipaa_audit_retention_years": 6,
+    "soc2_controls_covered": 45
+  },
+  "disaster_recovery": {
+    "rpo_minutes": 15,
+    "rto_minutes": 60,
+    "failover_scenarios_tested": 5,
+    "data_integrity_verified": true
+  },
+  "load_testing": {
+    "max_concurrent_users": 1000,
+    "requests_per_second": 500,
+    "error_rate_percent": 0.1,
+    "scenarios": [
+      "normal_load",
+      "peak_traffic",
+      "sustained_load",
+      "burst_traffic",
+      "recovery"
+    ]
+  },
+  "dependencies": {
+    "python": "3.11.9",
+    "xgboost": "2.0.0",
+    "pydantic": "2.0.0",
+    "fastapi": "0.109.0",
+    "httpx": "0.27.0"
+  }
+}

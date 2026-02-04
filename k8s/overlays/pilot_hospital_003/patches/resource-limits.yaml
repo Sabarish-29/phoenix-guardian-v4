@@ -1,0 +1,89 @@
+# Resource limits patch for Pilot Hospital 003
+# High capacity resources for academic medical center
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phoenix-api
+spec:
+  replicas: 5
+  template:
+    spec:
+      containers:
+        - name: phoenix-api
+          resources:
+            requests:
+              cpu: "2000m"
+              memory: "4Gi"
+            limits:
+              cpu: "8000m"
+              memory: "16Gi"
+          env:
+            - name: TENANT_ID
+              value: "pilot_hospital_003"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: PILOT_MODE
+              value: "true"
+            - name: TRACE_SAMPLING_RATE
+              value: "0.25"
+            - name: RESEARCH_MODE
+              value: "true"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phoenix-worker
+spec:
+  replicas: 4
+  template:
+    spec:
+      containers:
+        - name: phoenix-worker
+          resources:
+            requests:
+              cpu: "2000m"
+              memory: "8Gi"
+            limits:
+              cpu: "8000m"
+              memory: "32Gi"
+          env:
+            - name: TENANT_ID
+              value: "pilot_hospital_003"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: ML_BATCH_SIZE
+              value: "16"
+            - name: BULK_EXPORT_ENABLED
+              value: "true"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phoenix-agents
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+        - name: phoenix-agents
+          resources:
+            requests:
+              cpu: "4000m"
+              memory: "16Gi"
+            limits:
+              cpu: "16000m"
+              memory: "64Gi"
+          env:
+            - name: TENANT_ID
+              value: "pilot_hospital_003"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: AGENT_PILOT_MODE
+              value: "true"
+            - name: GPU_ACCELERATION
+              value: "true"
+            - name: ADVANCED_FEATURES
+              value: "true"

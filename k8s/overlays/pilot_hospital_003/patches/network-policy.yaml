@@ -1,0 +1,166 @@
+# Network policy patch for Pilot Hospital 003
+# Enhanced network isolation with research access
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: phoenix-network-policy
+  labels:
+    tenant-id: pilot_hospital_003
+spec:
+  podSelector:
+    matchLabels:
+      app: phoenix-guardian
+      tenant-id: pilot_hospital_003
+  policyTypes:
+    - Ingress
+    - Egress
+  
+  ingress:
+    # Allow from hospital internal network
+    - from:
+        - ipBlock:
+            cidr: 10.0.0.0/8
+        - ipBlock:
+            cidr: 172.16.0.0/12
+        - ipBlock:
+            cidr: 192.168.100.0/24
+      ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 8443
+    
+    # Allow from VPN gateway
+    - from:
+        - ipBlock:
+            cidr: 10.250.0.0/16  # VPN pool
+      ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 8443
+    
+    # Allow internal pod communication
+    - from:
+        - podSelector:
+            matchLabels:
+              tenant-id: pilot_hospital_003
+      ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 9090
+        - protocol: TCP
+          port: 6379
+    
+    # Allow research data platform access
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: research-platform
+      ports:
+        - protocol: TCP
+          port: 8443
+  
+  egress:
+    # Epic FHIR endpoints
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 443
+    
+    # PostgreSQL
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
+    
+    # Redis
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    
+    # PQC KMS
+    - to:
+        - ipBlock:
+            cidr: 10.200.0.0/16
+      ports:
+        - protocol: TCP
+          port: 8200
+    
+    # Logging (SIEM)
+    - to:
+        - ipBlock:
+            cidr: 10.70.0.0/24
+      ports:
+        - protocol: TCP
+          port: 6514
+    
+    # Research Data Lake
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: research-platform
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 9000  # MinIO
+    
+    # Azure ML (for advanced models)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0  # Azure Private Link endpoint
+      ports:
+        - protocol: TCP
+          port: 443
+    
+    # DNS
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
+---
+# Additional policy for research access
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: phoenix-research-policy
+  labels:
+    tenant-id: pilot_hospital_003
+spec:
+  podSelector:
+    matchLabels:
+      app: phoenix-guardian
+      tenant-id: pilot_hospital_003
+      research-enabled: "true"
+  policyTypes:
+    - Egress
+  egress:
+    # Allow access to research APIs
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: research-platform
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 8080

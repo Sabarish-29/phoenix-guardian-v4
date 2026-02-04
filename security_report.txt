@@ -1,0 +1,243 @@
+Run started:2026-02-01 17:36:04.972610+00:00
+
+Test results:
+>> Issue: [B104:hardcoded_bind_all_interfaces] Possible binding to all interfaces.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-605 (https://cwe.mitre.org/data/definitions/605.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.3/plugins/b104_hardcoded_bind_all_interfaces.html
+   Location: phoenix_guardian\api\main.py:164:26
+163	
+164	    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+--------------------------------------------------
+>> Issue: [B301:blacklist] Pickle and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue.
+   Severity: Medium   Confidence: High
+   CWE: CWE-502 (https://cwe.mitre.org/data/definitions/502.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.3/blacklists/blacklist_calls.html#b301-pickle
+   Location: phoenix_guardian\cache\tenant_redis.py:304:19
+303	            import pickle
+304	            return pickle.loads(bytes.fromhex(data))
+305	    
+
+--------------------------------------------------
+>> Issue: [B324:hashlib] Use of weak MD5 hash for security. Consider usedforsecurity=False
+   Severity: High   Confidence: High
+   CWE: CWE-327 (https://cwe.mitre.org/data/definitions/327.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.3/plugins/b324_hashlib.html
+   Location: phoenix_guardian\config\ehr_connectors.py:496:17
+495	        """Generate mock document creation response for testing."""
+496	        doc_id = hashlib.md5(str(time.time()).encode()).hexdigest()[:8]
+497	        return {
+
+--------------------------------------------------
+>> Issue: [B324:hashlib] Use of weak MD5 hash for security. Consider usedforsecurity=False
+   Severity: High   Confidence: High
+   CWE: CWE-327 (https://cwe.mitre.org/data/definitions/327.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.3/plugins/b324_hashlib.html
+   Location: phoenix_guardian\config\ehr_connectors.py:566:39
+565	        token = TokenInfo(
+566	            access_token=f"epic_token_{hashlib.md5(str(now).encode()).hexdigest()[:16]}",
+567	            token_type="Bearer",
+
+--------------------------------------------------
+>> Issue: [B324:hashlib] Use of weak MD5 hash for security. Consider usedforsecurity=False
+   Severity: High   Confidence: High
+   CWE: CWE-327 (https://cwe.mitre.org/data/definitions/327.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.3/plugins/b324_hashlib.html
+   Location: phoenix_guardian\config\ehr_connectors.py:584:19
+583	            "aud": self.token_endpoint,
+584	            "jti": hashlib.md5(str(time.time()).encode()).hexdigest(),
+585	            "exp": int((datetime.now() + timedelta(minutes=5)).timestamp()),
+
+--------------------------------------------------
+>> Issue: [B324:hashlib] Use of weak MD5 hash for security. Consider usedforsecurity=False
+   Severity: High   Confidence: High
+   CWE: CWE-327 (https://cwe.mitre.org/data/definitions/327.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.3/plugins/b324_hashlib.html
+   Location: phoenix_guardian\config\ehr_connectors.py:763:41
+762	        token = TokenInfo(
+763	            access_token=f"cerner_token_{hashlib.md5(str(now).encode()).hexdigest()[:16]}",
+764	            token_type="Bearer",
+
+--------------------------------------------------
+>> Issue: [B324:hashlib] Use of weak MD5 hash for security. Consider usedforsecurity=False
+   Severity: High   Confidence: High
+   CWE: CWE-327 (https://cwe.mitre.org/data/definitions/327.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.3/plugins/b324_hashlib.html
+   Location: phoenix_guardian\config\ehr_connectors.py:943:45
+942	        token = TokenInfo(
+943	            access_token=f"allscripts_token_{hashlib.md5(str(now).encode()).hexdigest()[:16]}",
+944	            token_type="Bearer",
+
+--------------------------------------------------
+>> Issue: [B324:hashlib] Use of weak MD5 hash for security. Consider usedforsecurity=False
+   Severity: High   Confidence: High
+   CWE: CWE-327 (https://cwe.mitre.org/data/definitions/327.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.3/plugins/b324_hashlib.html
+   Location: phoenix_guardian\federated\privacy_validator.py:615:15
+614	        
+615	        return hashlib.md5(canonical.encode()).hexdigest()[:16]
+616	
+
+--------------------------------------------------
+>> Issue: [B324:hashlib] Use of weak MD5 hash for security. Consider usedforsecurity=False
+   Severity: High   Confidence: High
+   CWE: CWE-327 (https://cwe.mitre.org/data/definitions/327.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.3/plugins/b324_hashlib.html
+   Location: phoenix_guardian\learning\ab_tester.py:527:25
+526	            # Consistent hashing - same user always gets same variant
+527	            hash_bytes = hashlib.md5(user_id.encode()).digest()
+528	            hash_value = int.from_bytes(hash_bytes[:4], byteorder='big') % 100
+
+--------------------------------------------------
+>> Issue: [B615:huggingface_unsafe_download] Unsafe Hugging Face Hub download without revision pinning in from_pretrained()
+   Severity: Medium   Confidence: High
+   CWE: CWE-494 (https://cwe.mitre.org/data/definitions/494.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.3/plugins/b615_huggingface_unsafe_download.html
+   Location: phoenix_guardian\learning\active_learner.py:596:29
+595	            logger.info(f"Loading model from {model_path}...")
+596	            self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+597	            self.model = AutoModelForSequenceClassification.from_pretrained(model_path)
+
+--------------------------------------------------
+>> Issue: [B615:huggingface_unsafe_download] Unsafe Hugging Face Hub download without revision pinning in from_pretrained()
+   Severity: Medium   Confidence: High
+   CWE: CWE-494 (https://cwe.mitre.org/data/definitions/494.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.3/plugins/b615_huggingface_unsafe_download.html
+   Location: phoenix_guardian\learning\active_learner.py:597:25
+596	            self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+597	            self.model = AutoModelForSequenceClassification.from_pretrained(model_path)
+598	            self.model.eval()
+
+--------------------------------------------------
+>> Issue: [B615:huggingface_unsafe_download] Unsafe Hugging Face Hub download without revision pinning in from_pretrained()
+   Severity: Medium   Confidence: High
+   CWE: CWE-494 (https://cwe.mitre.org/data/definitions/494.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.3/plugins/b615_huggingface_unsafe_download.html
+   Location: phoenix_guardian\learning\model_finetuner.py:641:29
+640	            logger.info(f"Loading tokenizer: {self.config.base_model}")
+641	            self.tokenizer = AutoTokenizer.from_pretrained(self.config.base_model)
+642	            self._tokenizer_loaded = True
+
+--------------------------------------------------
+>> Issue: [B615:huggingface_unsafe_download] Unsafe Hugging Face Hub download without revision pinning in from_pretrained()
+   Severity: Medium   Confidence: High
+   CWE: CWE-494 (https://cwe.mitre.org/data/definitions/494.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.3/plugins/b615_huggingface_unsafe_download.html
+   Location: phoenix_guardian\learning\model_finetuner.py:651:25
+650	            logger.info(f"Loading model: {self.config.base_model}")
+651	            self.model = AutoModelForSequenceClassification.from_pretrained(
+652	                self.config.base_model,
+653	                num_labels=2
+654	            )
+655	    
+
+--------------------------------------------------
+>> Issue: [B615:huggingface_unsafe_download] Unsafe Hugging Face Hub download without revision pinning in from_pretrained()
+   Severity: Medium   Confidence: High
+   CWE: CWE-494 (https://cwe.mitre.org/data/definitions/494.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.3/plugins/b615_huggingface_unsafe_download.html
+   Location: phoenix_guardian\learning\model_finetuner.py:1221:25
+1220	        try:
+1221	            self.model = AutoModelForSequenceClassification.from_pretrained(model_path)
+1222	            self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+
+--------------------------------------------------
+>> Issue: [B615:huggingface_unsafe_download] Unsafe Hugging Face Hub download without revision pinning in from_pretrained()
+   Severity: Medium   Confidence: High
+   CWE: CWE-494 (https://cwe.mitre.org/data/definitions/494.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.3/plugins/b615_huggingface_unsafe_download.html
+   Location: phoenix_guardian\learning\model_finetuner.py:1222:29
+1221	            self.model = AutoModelForSequenceClassification.from_pretrained(model_path)
+1222	            self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+1223	            self._tokenizer_loaded = True
+
+--------------------------------------------------
+>> Issue: [B615:huggingface_unsafe_download] Unsafe Hugging Face Hub download without revision pinning in from_pretrained()
+   Severity: Medium   Confidence: High
+   CWE: CWE-494 (https://cwe.mitre.org/data/definitions/494.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.3/plugins/b615_huggingface_unsafe_download.html
+   Location: phoenix_guardian\ml\model_cache.py:141:28
+140	            else:
+141	                tokenizer = AutoTokenizer.from_pretrained(model_name)
+142	                model = AutoModelForSequenceClassification.from_pretrained(model_name)
+
+--------------------------------------------------
+>> Issue: [B615:huggingface_unsafe_download] Unsafe Hugging Face Hub download without revision pinning in from_pretrained()
+   Severity: Medium   Confidence: High
+   CWE: CWE-494 (https://cwe.mitre.org/data/definitions/494.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.3/plugins/b615_huggingface_unsafe_download.html
+   Location: phoenix_guardian\ml\model_cache.py:142:24
+141	                tokenizer = AutoTokenizer.from_pretrained(model_name)
+142	                model = AutoModelForSequenceClassification.from_pretrained(model_name)
+143	            
+
+--------------------------------------------------
+>> Issue: [B615:huggingface_unsafe_download] Unsafe Hugging Face Hub download without revision pinning in from_pretrained()
+   Severity: Medium   Confidence: High
+   CWE: CWE-494 (https://cwe.mitre.org/data/definitions/494.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.3/plugins/b615_huggingface_unsafe_download.html
+   Location: phoenix_guardian\security\ml_detector.py:315:29
+314	            logger.info("Loading RoBERTa model...", model_name=self.model_name)
+315	            self.tokenizer = RobertaTokenizer.from_pretrained(self.model_name)
+316	            self.encoder = RobertaModel.from_pretrained(self.model_name)
+
+--------------------------------------------------
+>> Issue: [B615:huggingface_unsafe_download] Unsafe Hugging Face Hub download without revision pinning in from_pretrained()
+   Severity: Medium   Confidence: High
+   CWE: CWE-494 (https://cwe.mitre.org/data/definitions/494.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.3/plugins/b615_huggingface_unsafe_download.html
+   Location: phoenix_guardian\security\ml_detector.py:316:27
+315	            self.tokenizer = RobertaTokenizer.from_pretrained(self.model_name)
+316	            self.encoder = RobertaModel.from_pretrained(self.model_name)
+317	            self.encoder.to(self.device)
+
+--------------------------------------------------
+>> Issue: [B324:hashlib] Use of weak MD5 hash for security. Consider usedforsecurity=False
+   Severity: High   Confidence: High
+   CWE: CWE-327 (https://cwe.mitre.org/data/definitions/327.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.3/plugins/b324_hashlib.html
+   Location: phoenix_guardian\security\ml_detector.py:354:20
+353	        # Check cache
+354	        cache_key = hashlib.md5(text.encode()).hexdigest()
+355	        if use_cache and self.enable_caching and cache_key in self._embedding_cache:
+
+--------------------------------------------------
+>> Issue: [B324:hashlib] Use of weak MD5 hash for security. Consider usedforsecurity=False
+   Severity: High   Confidence: High
+   CWE: CWE-327 (https://cwe.mitre.org/data/definitions/327.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.3/plugins/b324_hashlib.html
+   Location: phoenix_guardian\security\ml_detector.py:605:25
+604	        embeddings = self.get_embeddings(text)
+605	        embedding_hash = hashlib.md5(embeddings.tobytes()).hexdigest()[:8]
+606	        
+
+--------------------------------------------------
+>> Issue: [B301:blacklist] Pickle and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue.
+   Severity: Medium   Confidence: High
+   CWE: CWE-502 (https://cwe.mitre.org/data/definitions/502.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.3/blacklists/blacklist_calls.html#b301-pickle
+   Location: phoenix_guardian\security\ml_detector.py:850:25
+849	        with open(path, "rb") as f:
+850	            model_data = pickle.load(f)
+851	        
+
+--------------------------------------------------
+
+Code scanned:
+	Total lines of code: 63187
+	Total lines skipped (#nosec): 0
+	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
+
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 78
+		Medium: 21
+		High: 9
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 8
+		Medium: 19
+		High: 81
+Files skipped (0):

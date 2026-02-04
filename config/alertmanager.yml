@@ -1,0 +1,190 @@
+# Phoenix Guardian - Alertmanager Configuration
+# Routing and notification configuration for pilot monitoring
+
+global:
+  resolve_timeout: 5m
+  
+  # SMTP configuration for email alerts
+  smtp_smarthost: 'smtp.hospital.local:587'
+  smtp_from: 'phoenix-alerts@hospital.local'
+  smtp_auth_username: '${SMTP_USERNAME}'
+  smtp_auth_password: '${SMTP_PASSWORD}'
+  smtp_require_tls: true
+
+  # Slack configuration
+  slack_api_url: '${SLACK_WEBHOOK_URL}'
+
+  # PagerDuty configuration
+  pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+
+# Templates for notifications
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Inhibition rules to prevent alert noise
+inhibit_rules:
+  # If a critical alert fires, suppress warnings for same alertname
+  - source_matchers:
+      - severity="critical"
+    target_matchers:
+      - severity="warning"
+    equal:
+      - alertname
+      - tenant_id
+
+  # If service is down, suppress all other alerts for that service
+  - source_matchers:
+      - alertname="PhoenixNoEncounters"
+    target_matchers:
+      - severity=~"warning|high"
+    equal:
+      - tenant_id
+
+# Routing tree
+route:
+  # Default receiver
+  receiver: 'default-slack'
+  
+  # Group alerts by these labels
+  group_by: ['alertname', 'tenant_id', 'severity']
+  
+  # Wait before sending first notification
+  group_wait: 30s
+  
+  # Wait before sending updated notifications
+  group_interval: 5m
+  
+  # Repeat interval for ongoing alerts
+  repeat_interval: 4h
+
+  # Child routes
+  routes:
+    # P1 Critical - Page immediately
+    - matchers:
+        - severity="critical"
+      receiver: 'pagerduty-critical'
+      group_wait: 10s
+      group_interval: 1m
+      repeat_interval: 30m
+      continue: true  # Also send to default
+
+    # P2 High - Page during business hours
+    - matchers:
+        - severity="high"
+      receiver: 'pagerduty-high'
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 1h
+      continue: true
+
+    # Security alerts - Special handling
+    - matchers:
+        - category="security"
+      receiver: 'security-team'
+      group_wait: 10s
+      group_interval: 1m
+      repeat_interval: 30m
+      continue: true
+
+    # Benchmark alerts - Product team
+    - matchers:
+        - category="benchmark"
+      receiver: 'product-team'
+      group_wait: 5m
+      group_interval: 15m
+      repeat_interval: 2h
+
+    # SLA alerts - Leadership
+    - matchers:
+        - category="sla"
+      receiver: 'leadership'
+      group_wait: 5m
+      group_interval: 30m
+      repeat_interval: 4h
+
+# Receivers
+receivers:
+  # Default Slack channel
+  - name: 'default-slack'
+    slack_configs:
+      - channel: '#phoenix-alerts'
+        send_resolved: true
+        title: '{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} [{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}'
+        text: >-
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Severity:* {{ .Labels.severity }}
+          *Tenant:* {{ .Labels.tenant_id }}
+          *Description:* {{ .Annotations.description }}
+          {{ end }}
+        actions:
+          - type: button
+            text: 'View in Grafana'
+            url: 'https://grafana.phoenix.local/d/phoenix-overview'
+          - type: button
+            text: 'Runbook'
+            url: 'https://wiki.phoenix.local/runbooks/{{ .CommonLabels.alertname }}'
+
+  # PagerDuty for critical alerts
+  - name: 'pagerduty-critical'
+    pagerduty_configs:
+      - service_key: '${PAGERDUTY_CRITICAL_SERVICE_KEY}'
+        severity: critical
+        description: '{{ .CommonAnnotations.summary }}'
+        details:
+          alertname: '{{ .CommonLabels.alertname }}'
+          tenant_id: '{{ .CommonLabels.tenant_id }}'
+          description: '{{ .CommonAnnotations.description }}'
+
+  # PagerDuty for high severity
+  - name: 'pagerduty-high'
+    pagerduty_configs:
+      - service_key: '${PAGERDUTY_HIGH_SERVICE_KEY}'
+        severity: error
+        description: '{{ .CommonAnnotations.summary }}'
+
+  # Security team notifications
+  - name: 'security-team'
+    slack_configs:
+      - channel: '#phoenix-security'
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        title: '🛡️ Security Alert: {{ .CommonLabels.alertname }}'
+        text: >-
+          {{ range .Alerts }}
+          *Summary:* {{ .Annotations.summary }}
+          *Severity:* {{ .Labels.severity }}
+          *Tenant:* {{ .Labels.tenant_id }}
+          {{ end }}
+    pagerduty_configs:
+      - service_key: '${PAGERDUTY_SECURITY_SERVICE_KEY}'
+        severity: '{{ if eq .CommonLabels.severity "critical" }}critical{{ else }}error{{ end }}'
+
+  # Product team for benchmark alerts
+  - name: 'product-team'
+    slack_configs:
+      - channel: '#phoenix-product'
+        send_resolved: true
+        title: '📊 Benchmark Alert: {{ .CommonLabels.alertname }}'
+        text: >-
+          {{ range .Alerts }}
+          *Metric:* {{ .Annotations.summary }}
+          *Current Value:* {{ .Annotations.description }}
+          {{ end }}
+    email_configs:
+      - to: 'phoenix-product@hospital.local'
+        send_resolved: true
+        headers:
+          Subject: '[Phoenix] Benchmark Alert: {{ .CommonLabels.alertname }}'
+
+  # Leadership for SLA alerts
+  - name: 'leadership'
+    slack_configs:
+      - channel: '#phoenix-leadership'
+        send_resolved: true
+        title: '⚠️ SLA Alert: {{ .CommonLabels.alertname }}'
+    email_configs:
+      - to: 'phoenix-leadership@hospital.local,cto@hospital.local'
+        send_resolved: true
+        headers:
+          Subject: '[Phoenix] SLA Alert - Action Required'

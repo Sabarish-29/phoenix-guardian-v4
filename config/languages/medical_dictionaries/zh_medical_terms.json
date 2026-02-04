@@ -1,0 +1,1341 @@
+{
+  "metadata": {
+    "language": "zh-CN",
+    "version": "1.0.0",
+    "last_updated": "2026-02-01",
+    "source": "Phoenix Guardian Medical Dictionary",
+    "total_terms": 400,
+    "script": "simplified"
+  },
+  "symptoms": {
+    "疼痛": {
+      "english": "pain",
+      "pinyin": "téng tòng",
+      "snomed_code": "22253000",
+      "category": "symptom"
+    },
+    "头痛": {
+      "english": "headache",
+      "pinyin": "tóu tòng",
+      "snomed_code": "25064002",
+      "icd10": "R51",
+      "category": "symptom"
+    },
+    "胸痛": {
+      "english": "chest pain",
+      "pinyin": "xiōng tòng",
+      "snomed_code": "29857009",
+      "icd10": "R07.9",
+      "category": "symptom",
+      "critical": true
+    },
+    "腹痛": {
+      "english": "abdominal pain",
+      "pinyin": "fù tòng",
+      "snomed_code": "21522001",
+      "icd10": "R10.9",
+      "category": "symptom"
+    },
+    "背痛": {
+      "english": "back pain",
+      "pinyin": "bèi tòng",
+      "snomed_code": "161891005",
+      "icd10": "M54.9",
+      "category": "symptom"
+    },
+    "发烧": {
+      "english": "fever",
+      "pinyin": "fā shāo",
+      "snomed_code": "386661006",
+      "icd10": "R50.9",
+      "category": "symptom"
+    },
+    "发热": {
+      "english": "fever",
+      "pinyin": "fā rè",
+      "snomed_code": "386661006",
+      "icd10": "R50.9",
+      "category": "symptom"
+    },
+    "咳嗽": {
+      "english": "cough",
+      "pinyin": "ké sou",
+      "snomed_code": "49727002",
+      "icd10": "R05",
+      "category": "symptom"
+    },
+    "咳血": {
+      "english": "hemoptysis",
+      "pinyin": "ké xuè",
+      "snomed_code": "66857006",
+      "icd10": "R04.2",
+      "category": "symptom",
+      "critical": true
+    },
+    "恶心": {
+      "english": "nausea",
+      "pinyin": "ě xīn",
+      "snomed_code": "422587007",
+      "icd10": "R11.0",
+      "category": "symptom"
+    },
+    "呕吐": {
+      "english": "vomiting",
+      "pinyin": "ǒu tù",
+      "snomed_code": "422400008",
+      "icd10": "R11.1",
+      "category": "symptom"
+    },
+    "腹泻": {
+      "english": "diarrhea",
+      "pinyin": "fù xiè",
+      "snomed_code": "62315008",
+      "icd10": "R19.7",
+      "category": "symptom"
+    },
+    "便秘": {
+      "english": "constipation",
+      "pinyin": "biàn mì",
+      "snomed_code": "14760008",
+      "icd10": "K59.0",
+      "category": "symptom"
+    },
+    "头晕": {
+      "english": "dizziness",
+      "pinyin": "tóu yūn",
+      "snomed_code": "404640003",
+      "icd10": "R42",
+      "category": "symptom"
+    },
+    "疲劳": {
+      "english": "fatigue",
+      "pinyin": "pí láo",
+      "snomed_code": "84229001",
+      "icd10": "R53.83",
+      "category": "symptom"
+    },
+    "乏力": {
+      "english": "weakness",
+      "pinyin": "fá lì",
+      "snomed_code": "13791008",
+      "icd10": "R53.1",
+      "category": "symptom"
+    },
+    "气短": {
+      "english": "shortness of breath",
+      "pinyin": "qì duǎn",
+      "snomed_code": "267036007",
+      "icd10": "R06.0",
+      "category": "symptom",
+      "critical": true
+    },
+    "呼吸困难": {
+      "english": "difficulty breathing",
+      "pinyin": "hū xī kùn nán",
+      "snomed_code": "230145002",
+      "icd10": "R06.0",
+      "category": "symptom",
+      "critical": true
+    },
+    "心悸": {
+      "english": "palpitations",
+      "pinyin": "xīn jì",
+      "snomed_code": "80313002",
+      "icd10": "R00.2",
+      "category": "symptom"
+    },
+    "水肿": {
+      "english": "swelling",
+      "pinyin": "shuǐ zhǒng",
+      "snomed_code": "65124004",
+      "icd10": "R60.9",
+      "category": "symptom"
+    },
+    "瘙痒": {
+      "english": "itching",
+      "pinyin": "sào yǎng",
+      "snomed_code": "418290006",
+      "icd10": "L29.9",
+      "category": "symptom"
+    },
+    "皮疹": {
+      "english": "rash",
+      "pinyin": "pí zhěn",
+      "snomed_code": "271807003",
+      "icd10": "R21",
+      "category": "symptom"
+    },
+    "体重减轻": {
+      "english": "weight loss",
+      "pinyin": "tǐ zhòng jiǎn qīng",
+      "snomed_code": "89362005",
+      "icd10": "R63.4",
+      "category": "symptom"
+    },
+    "体重增加": {
+      "english": "weight gain",
+      "pinyin": "tǐ zhòng zēng jiā",
+      "snomed_code": "8943002",
+      "icd10": "R63.5",
+      "category": "symptom"
+    },
+    "失眠": {
+      "english": "insomnia",
+      "pinyin": "shī mián",
+      "snomed_code": "193462001",
+      "icd10": "G47.0",
+      "category": "symptom"
+    },
+    "焦虑": {
+      "english": "anxiety",
+      "pinyin": "jiāo lǜ",
+      "snomed_code": "48694002",
+      "icd10": "F41.9",
+      "category": "symptom"
+    },
+    "抑郁": {
+      "english": "depression",
+      "pinyin": "yì yù",
+      "snomed_code": "35489007",
+      "icd10": "F32.9",
+      "category": "symptom"
+    },
+    "意识模糊": {
+      "english": "confusion",
+      "pinyin": "yì shí mó hu",
+      "snomed_code": "40917007",
+      "icd10": "R41.0",
+      "category": "symptom"
+    },
+    "记忆力减退": {
+      "english": "memory loss",
+      "pinyin": "jì yì lì jiǎn tuì",
+      "snomed_code": "48167000",
+      "icd10": "R41.3",
+      "category": "symptom"
+    },
+    "视力模糊": {
+      "english": "blurred vision",
+      "pinyin": "shì lì mó hu",
+      "snomed_code": "246636008",
+      "icd10": "H53.8",
+      "category": "symptom"
+    },
+    "耳痛": {
+      "english": "ear pain",
+      "pinyin": "ěr tòng",
+      "snomed_code": "16001004",
+      "icd10": "H92.0",
+      "category": "symptom"
+    },
+    "咽喉痛": {
+      "english": "sore throat",
+      "pinyin": "yān hóu tòng",
+      "snomed_code": "162397003",
+      "icd10": "J02.9",
+      "category": "symptom"
+    },
+    "鼻塞": {
+      "english": "nasal congestion",
+      "pinyin": "bí sè",
+      "snomed_code": "68235000",
+      "icd10": "R09.81",
+      "category": "symptom"
+    },
+    "流鼻血": {
+      "english": "nosebleed",
+      "pinyin": "liú bí xuè",
+      "snomed_code": "249366005",
+      "icd10": "R04.0",
+      "category": "symptom"
+    },
+    "口渴": {
+      "english": "excessive thirst",
+      "pinyin": "kǒu kě",
+      "snomed_code": "17173007",
+      "icd10": "R63.1",
+      "category": "symptom"
+    },
+    "尿频": {
+      "english": "frequent urination",
+      "pinyin": "niào pín",
+      "snomed_code": "162116003",
+      "icd10": "R35.0",
+      "category": "symptom"
+    },
+    "尿痛": {
+      "english": "painful urination",
+      "pinyin": "niào tòng",
+      "snomed_code": "49650001",
+      "icd10": "R30.0",
+      "category": "symptom"
+    },
+    "血尿": {
+      "english": "blood in urine",
+      "pinyin": "xuè niào",
+      "snomed_code": "34436003",
+      "icd10": "R31.9",
+      "category": "symptom"
+    },
+    "麻木": {
+      "english": "numbness",
+      "pinyin": "má mù",
+      "snomed_code": "44077006",
+      "icd10": "R20.0",
+      "category": "symptom"
+    },
+    "刺痛": {
+      "english": "tingling",
+      "pinyin": "cì tòng",
+      "snomed_code": "62507009",
+      "icd10": "R20.2",
+      "category": "symptom"
+    },
+    "抽筋": {
+      "english": "cramps",
+      "pinyin": "chōu jīn",
+      "snomed_code": "55300003",
+      "icd10": "R25.2",
+      "category": "symptom"
+    }
+  },
+  "diagnoses": {
+    "糖尿病": {
+      "english": "diabetes",
+      "pinyin": "táng niào bìng",
+      "snomed_code": "73211009",
+      "icd10": "E11.9",
+      "category": "diagnosis"
+    },
+    "1型糖尿病": {
+      "english": "type 1 diabetes",
+      "pinyin": "yī xíng táng niào bìng",
+      "snomed_code": "46635009",
+      "icd10": "E10.9",
+      "category": "diagnosis"
+    },
+    "2型糖尿病": {
+      "english": "type 2 diabetes",
+      "pinyin": "èr xíng táng niào bìng",
+      "snomed_code": "44054006",
+      "icd10": "E11.9",
+      "category": "diagnosis"
+    },
+    "高血压": {
+      "english": "hypertension",
+      "pinyin": "gāo xuè yā",
+      "snomed_code": "38341003",
+      "icd10": "I10",
+      "category": "diagnosis"
+    },
+    "哮喘": {
+      "english": "asthma",
+      "pinyin": "xiào chuǎn",
+      "snomed_code": "195967001",
+      "icd10": "J45.909",
+      "category": "diagnosis"
+    },
+    "关节炎": {
+      "english": "arthritis",
+      "pinyin": "guān jié yán",
+      "snomed_code": "3723001",
+      "icd10": "M19.90",
+      "category": "diagnosis"
+    },
+    "类风湿关节炎": {
+      "english": "rheumatoid arthritis",
+      "pinyin": "lèi fēng shī guān jié yán",
+      "snomed_code": "69896004",
+      "icd10": "M06.9",
+      "category": "diagnosis"
+    },
+    "骨关节炎": {
+      "english": "osteoarthritis",
+      "pinyin": "gǔ guān jié yán",
+      "snomed_code": "396275006",
+      "icd10": "M19.90",
+      "category": "diagnosis"
+    },
+    "心力衰竭": {
+      "english": "heart failure",
+      "pinyin": "xīn lì shuāi jié",
+      "snomed_code": "84114007",
+      "icd10": "I50.9",
+      "category": "diagnosis",
+      "critical": true
+    },
+    "心肌梗死": {
+      "english": "myocardial infarction",
+      "pinyin": "xīn jī gěng sǐ",
+      "snomed_code": "22298006",
+      "icd10": "I21.9",
+      "category": "diagnosis",
+      "critical": true
+    },
+    "心脏病": {
+      "english": "heart disease",
+      "pinyin": "xīn zàng bìng",
+      "snomed_code": "56265001",
+      "icd10": "I51.9",
+      "category": "diagnosis"
+    },
+    "中风": {
+      "english": "stroke",
+      "pinyin": "zhòng fēng",
+      "snomed_code": "230690007",
+      "icd10": "I63.9",
+      "category": "diagnosis",
+      "critical": true
+    },
+    "脑卒中": {
+      "english": "stroke",
+      "pinyin": "nǎo cù zhòng",
+      "snomed_code": "230690007",
+      "icd10": "I63.9",
+      "category": "diagnosis",
+      "critical": true
+    },
+    "慢性阻塞性肺疾病": {
+      "english": "COPD",
+      "pinyin": "màn xìng zǔ sè xìng fèi jí bìng",
+      "snomed_code": "13645005",
+      "icd10": "J44.9",
+      "category": "diagnosis"
+    },
+    "肺炎": {
+      "english": "pneumonia",
+      "pinyin": "fèi yán",
+      "snomed_code": "233604007",
+      "icd10": "J18.9",
+      "category": "diagnosis"
+    },
+    "支气管炎": {
+      "english": "bronchitis",
+      "pinyin": "zhī qì guǎn yán",
+      "snomed_code": "32398004",
+      "icd10": "J40",
+      "category": "diagnosis"
+    },
+    "肺气肿": {
+      "english": "emphysema",
+      "pinyin": "fèi qì zhǒng",
+      "snomed_code": "87433001",
+      "icd10": "J43.9",
+      "category": "diagnosis"
+    },
+    "癌症": {
+      "english": "cancer",
+      "pinyin": "ái zhèng",
+      "snomed_code": "363346000",
+      "icd10": "C80.1",
+      "category": "diagnosis",
+      "critical": true
+    },
+    "肿瘤": {
+      "english": "tumor",
+      "pinyin": "zhǒng liú",
+      "snomed_code": "108369006",
+      "icd10": "D49.9",
+      "category": "diagnosis"
+    },
+    "贫血": {
+      "english": "anemia",
+      "pinyin": "pín xuè",
+      "snomed_code": "271737000",
+      "icd10": "D64.9",
+      "category": "diagnosis"
+    },
+    "甲状腺功能减退": {
+      "english": "hypothyroidism",
+      "pinyin": "jiǎ zhuàng xiàn gōng néng jiǎn tuì",
+      "snomed_code": "40930008",
+      "icd10": "E03.9",
+      "category": "diagnosis"
+    },
+    "甲状腺功能亢进": {
+      "english": "hyperthyroidism",
+      "pinyin": "jiǎ zhuàng xiàn gōng néng kàng jìn",
+      "snomed_code": "34486009",
+      "icd10": "E05.90",
+      "category": "diagnosis"
+    },
+    "肾病": {
+      "english": "kidney disease",
+      "pinyin": "shèn bìng",
+      "snomed_code": "90708001",
+      "icd10": "N28.9",
+      "category": "diagnosis"
+    },
+    "肾衰竭": {
+      "english": "kidney failure",
+      "pinyin": "shèn shuāi jié",
+      "snomed_code": "42399005",
+      "icd10": "N19",
+      "category": "diagnosis",
+      "critical": true
+    },
+    "肝炎": {
+      "english": "hepatitis",
+      "pinyin": "gān yán",
+      "snomed_code": "128241005",
+      "icd10": "B19.9",
+      "category": "diagnosis"
+    },
+    "肝硬化": {
+      "english": "cirrhosis",
+      "pinyin": "gān yìng huà",
+      "snomed_code": "19943007",
+      "icd10": "K74.60",
+      "category": "diagnosis"
+    },
+    "溃疡": {
+      "english": "ulcer",
+      "pinyin": "kuì yáng",
+      "snomed_code": "429040005",
+      "icd10": "K27.9",
+      "category": "diagnosis"
+    },
+    "胃炎": {
+      "english": "gastritis",
+      "pinyin": "wèi yán",
+      "snomed_code": "4556007",
+      "icd10": "K29.70",
+      "category": "diagnosis"
+    },
+    "胃食管反流": {
+      "english": "reflux",
+      "pinyin": "wèi shí guǎn fǎn liú",
+      "snomed_code": "235595009",
+      "icd10": "K21.9",
+      "category": "diagnosis"
+    },
+    "高胆固醇": {
+      "english": "high cholesterol",
+      "pinyin": "gāo dǎn gù chún",
+      "snomed_code": "13644009",
+      "icd10": "E78.00",
+      "category": "diagnosis"
+    },
+    "骨质疏松": {
+      "english": "osteoporosis",
+      "pinyin": "gǔ zhì shū sōng",
+      "snomed_code": "64859006",
+      "icd10": "M81.0",
+      "category": "diagnosis"
+    },
+    "纤维肌痛": {
+      "english": "fibromyalgia",
+      "pinyin": "xiān wéi jī tòng",
+      "snomed_code": "203082005",
+      "icd10": "M79.7",
+      "category": "diagnosis"
+    },
+    "偏头痛": {
+      "english": "migraine",
+      "pinyin": "piān tóu tòng",
+      "snomed_code": "37796009",
+      "icd10": "G43.909",
+      "category": "diagnosis"
+    },
+    "癫痫": {
+      "english": "epilepsy",
+      "pinyin": "diān xián",
+      "snomed_code": "84757009",
+      "icd10": "G40.909",
+      "category": "diagnosis"
+    },
+    "帕金森病": {
+      "english": "Parkinson's disease",
+      "pinyin": "pà jīn sēn bìng",
+      "snomed_code": "49049000",
+      "icd10": "G20",
+      "category": "diagnosis"
+    },
+    "阿尔茨海默病": {
+      "english": "Alzheimer's disease",
+      "pinyin": "ā ěr cí hǎi mò bìng",
+      "snomed_code": "26929004",
+      "icd10": "G30.9",
+      "category": "diagnosis"
+    },
+    "痴呆": {
+      "english": "dementia",
+      "pinyin": "chī dāi",
+      "snomed_code": "52448006",
+      "icd10": "F03.90",
+      "category": "diagnosis"
+    },
+    "尿路感染": {
+      "english": "urinary tract infection",
+      "pinyin": "niào lù gǎn rǎn",
+      "snomed_code": "68566005",
+      "icd10": "N39.0",
+      "category": "diagnosis"
+    },
+    "肾结石": {
+      "english": "kidney stones",
+      "pinyin": "shèn jié shí",
+      "snomed_code": "95570007",
+      "icd10": "N20.0",
+      "category": "diagnosis"
+    },
+    "阑尾炎": {
+      "english": "appendicitis",
+      "pinyin": "lán wěi yán",
+      "snomed_code": "74400008",
+      "icd10": "K37",
+      "category": "diagnosis",
+      "critical": true
+    },
+    "胆囊炎": {
+      "english": "cholecystitis",
+      "pinyin": "dǎn náng yán",
+      "snomed_code": "76581006",
+      "icd10": "K81.9",
+      "category": "diagnosis"
+    },
+    "胰腺炎": {
+      "english": "pancreatitis",
+      "pinyin": "yí xiàn yán",
+      "snomed_code": "75694006",
+      "icd10": "K85.9",
+      "category": "diagnosis",
+      "critical": true
+    }
+  },
+  "medications": {
+    "阿司匹林": {
+      "english": "aspirin",
+      "pinyin": "ā sī pǐ lín",
+      "rxnorm": "1191",
+      "category": "medication"
+    },
+    "布洛芬": {
+      "english": "ibuprofen",
+      "pinyin": "bù luò fēn",
+      "rxnorm": "5640",
+      "category": "medication"
+    },
+    "对乙酰氨基酚": {
+      "english": "acetaminophen",
+      "pinyin": "duì yǐ xiān ān jī fēn",
+      "rxnorm": "161",
+      "category": "medication"
+    },
+    "扑热息痛": {
+      "english": "acetaminophen",
+      "pinyin": "pū rè xī tòng",
+      "rxnorm": "161",
+      "category": "medication"
+    },
+    "二甲双胍": {
+      "english": "metformin",
+      "pinyin": "èr jiǎ shuāng guā",
+      "rxnorm": "6809",
+      "category": "medication"
+    },
+    "胰岛素": {
+      "english": "insulin",
+      "pinyin": "yí dǎo sù",
+      "rxnorm": "5856",
+      "category": "medication"
+    },
+    "赖诺普利": {
+      "english": "lisinopril",
+      "pinyin": "lài nuò pǔ lì",
+      "rxnorm": "29046",
+      "category": "medication"
+    },
+    "氯沙坦": {
+      "english": "losartan",
+      "pinyin": "lǜ shā tǎn",
+      "rxnorm": "52175",
+      "category": "medication"
+    },
+    "氨氯地平": {
+      "english": "amlodipine",
+      "pinyin": "ān lǜ dì píng",
+      "rxnorm": "17767",
+      "category": "medication"
+    },
+    "阿托伐他汀": {
+      "english": "atorvastatin",
+      "pinyin": "ā tuō fá tā tīng",
+      "rxnorm": "83367",
+      "category": "medication"
+    },
+    "辛伐他汀": {
+      "english": "simvastatin",
+      "pinyin": "xīn fá tā tīng",
+      "rxnorm": "36567",
+      "category": "medication"
+    },
+    "奥美拉唑": {
+      "english": "omeprazole",
+      "pinyin": "ào měi lā zuò",
+      "rxnorm": "7646",
+      "category": "medication"
+    },
+    "阿莫西林": {
+      "english": "amoxicillin",
+      "pinyin": "ā mò xī lín",
+      "rxnorm": "723",
+      "category": "medication"
+    },
+    "阿奇霉素": {
+      "english": "azithromycin",
+      "pinyin": "ā qí méi sù",
+      "rxnorm": "18631",
+      "category": "medication"
+    },
+    "环丙沙星": {
+      "english": "ciprofloxacin",
+      "pinyin": "huán bǐng shā xīng",
+      "rxnorm": "2551",
+      "category": "medication"
+    },
+    "美托洛尔": {
+      "english": "metoprolol",
+      "pinyin": "měi tuō luò ěr",
+      "rxnorm": "6918",
+      "category": "medication"
+    },
+    "卡维地洛": {
+      "english": "carvedilol",
+      "pinyin": "kǎ wéi dì luò",
+      "rxnorm": "20352",
+      "category": "medication"
+    },
+    "呋塞米": {
+      "english": "furosemide",
+      "pinyin": "fū sāi mǐ",
+      "rxnorm": "4603",
+      "category": "medication"
+    },
+    "氢氯噻嗪": {
+      "english": "hydrochlorothiazide",
+      "pinyin": "qīng lǜ sāi qín",
+      "rxnorm": "5487",
+      "category": "medication"
+    },
+    "泼尼松": {
+      "english": "prednisone",
+      "pinyin": "pō ní sōng",
+      "rxnorm": "8640",
+      "category": "medication"
+    },
+    "加巴喷丁": {
+      "english": "gabapentin",
+      "pinyin": "jiā bā pēn dīng",
+      "rxnorm": "25480",
+      "category": "medication"
+    },
+    "曲马多": {
+      "english": "tramadol",
+      "pinyin": "qū mǎ duō",
+      "rxnorm": "10689",
+      "category": "medication"
+    },
+    "吗啡": {
+      "english": "morphine",
+      "pinyin": "mǎ fēi",
+      "rxnorm": "7052",
+      "category": "medication",
+      "controlled": true
+    },
+    "华法林": {
+      "english": "warfarin",
+      "pinyin": "huá fǎ lín",
+      "rxnorm": "11289",
+      "category": "medication",
+      "high_alert": true
+    },
+    "氯吡格雷": {
+      "english": "clopidogrel",
+      "pinyin": "lǜ bǐ gé léi",
+      "rxnorm": "32968",
+      "category": "medication"
+    },
+    "左甲状腺素": {
+      "english": "levothyroxine",
+      "pinyin": "zuǒ jiǎ zhuàng xiàn sù",
+      "rxnorm": "10582",
+      "category": "medication"
+    },
+    "沙丁胺醇": {
+      "english": "albuterol",
+      "pinyin": "shā dīng àn chún",
+      "rxnorm": "435",
+      "category": "medication"
+    },
+    "舍曲林": {
+      "english": "sertraline",
+      "pinyin": "shě qū lín",
+      "rxnorm": "36437",
+      "category": "medication"
+    },
+    "氟西汀": {
+      "english": "fluoxetine",
+      "pinyin": "fú xī tīng",
+      "rxnorm": "4493",
+      "category": "medication"
+    },
+    "艾司西酞普兰": {
+      "english": "escitalopram",
+      "pinyin": "ài sī xī tài pǔ lán",
+      "rxnorm": "321988",
+      "category": "medication"
+    },
+    "阿普唑仑": {
+      "english": "alprazolam",
+      "pinyin": "ā pǔ zuò lún",
+      "rxnorm": "596",
+      "category": "medication",
+      "controlled": true
+    },
+    "劳拉西泮": {
+      "english": "lorazepam",
+      "pinyin": "láo lā xī pàn",
+      "rxnorm": "6470",
+      "category": "medication",
+      "controlled": true
+    },
+    "地西泮": {
+      "english": "diazepam",
+      "pinyin": "dì xī pàn",
+      "rxnorm": "3322",
+      "category": "medication",
+      "controlled": true
+    },
+    "维生素D": {
+      "english": "vitamin D",
+      "pinyin": "wéi shēng sù D",
+      "rxnorm": "11253",
+      "category": "medication"
+    },
+    "维生素B12": {
+      "english": "vitamin B12",
+      "pinyin": "wéi shēng sù B12",
+      "rxnorm": "11248",
+      "category": "medication"
+    },
+    "铁剂": {
+      "english": "iron",
+      "pinyin": "tiě jì",
+      "rxnorm": "5852",
+      "category": "medication"
+    },
+    "钙片": {
+      "english": "calcium",
+      "pinyin": "gài piàn",
+      "rxnorm": "1731",
+      "category": "medication"
+    }
+  },
+  "anatomy": {
+    "头": {
+      "english": "head",
+      "pinyin": "tóu",
+      "snomed_code": "69536005",
+      "category": "anatomy"
+    },
+    "颈": {
+      "english": "neck",
+      "pinyin": "jǐng",
+      "snomed_code": "45048000",
+      "category": "anatomy"
+    },
+    "胸": {
+      "english": "chest",
+      "pinyin": "xiōng",
+      "snomed_code": "51185008",
+      "category": "anatomy"
+    },
+    "背": {
+      "english": "back",
+      "pinyin": "bèi",
+      "snomed_code": "77568009",
+      "category": "anatomy"
+    },
+    "腹部": {
+      "english": "abdomen",
+      "pinyin": "fù bù",
+      "snomed_code": "818983003",
+      "category": "anatomy"
+    },
+    "胃": {
+      "english": "stomach",
+      "pinyin": "wèi",
+      "snomed_code": "69695003",
+      "category": "anatomy"
+    },
+    "肝": {
+      "english": "liver",
+      "pinyin": "gān",
+      "snomed_code": "10200004",
+      "category": "anatomy"
+    },
+    "肾": {
+      "english": "kidney",
+      "pinyin": "shèn",
+      "snomed_code": "64033007",
+      "category": "anatomy"
+    },
+    "心脏": {
+      "english": "heart",
+      "pinyin": "xīn zàng",
+      "snomed_code": "80891009",
+      "category": "anatomy"
+    },
+    "肺": {
+      "english": "lung",
+      "pinyin": "fèi",
+      "snomed_code": "39607008",
+      "category": "anatomy"
+    },
+    "脑": {
+      "english": "brain",
+      "pinyin": "nǎo",
+      "snomed_code": "12738006",
+      "category": "anatomy"
+    },
+    "眼睛": {
+      "english": "eye",
+      "pinyin": "yǎn jīng",
+      "snomed_code": "81745001",
+      "category": "anatomy"
+    },
+    "耳朵": {
+      "english": "ear",
+      "pinyin": "ěr duǒ",
+      "snomed_code": "117590005",
+      "category": "anatomy"
+    },
+    "鼻子": {
+      "english": "nose",
+      "pinyin": "bí zi",
+      "snomed_code": "45206002",
+      "category": "anatomy"
+    },
+    "喉咙": {
+      "english": "throat",
+      "pinyin": "hóu lóng",
+      "snomed_code": "54066008",
+      "category": "anatomy"
+    },
+    "嘴": {
+      "english": "mouth",
+      "pinyin": "zuǐ",
+      "snomed_code": "123851003",
+      "category": "anatomy"
+    },
+    "舌头": {
+      "english": "tongue",
+      "pinyin": "shé tóu",
+      "snomed_code": "21974007",
+      "category": "anatomy"
+    },
+    "牙齿": {
+      "english": "teeth",
+      "pinyin": "yá chǐ",
+      "snomed_code": "38199008",
+      "category": "anatomy"
+    },
+    "手臂": {
+      "english": "arm",
+      "pinyin": "shǒu bì",
+      "snomed_code": "40983000",
+      "category": "anatomy"
+    },
+    "手": {
+      "english": "hand",
+      "pinyin": "shǒu",
+      "snomed_code": "85562004",
+      "category": "anatomy"
+    },
+    "手指": {
+      "english": "finger",
+      "pinyin": "shǒu zhǐ",
+      "snomed_code": "7569003",
+      "category": "anatomy"
+    },
+    "腿": {
+      "english": "leg",
+      "pinyin": "tuǐ",
+      "snomed_code": "61685007",
+      "category": "anatomy"
+    },
+    "脚": {
+      "english": "foot",
+      "pinyin": "jiǎo",
+      "snomed_code": "56459004",
+      "category": "anatomy"
+    },
+    "膝盖": {
+      "english": "knee",
+      "pinyin": "xī gài",
+      "snomed_code": "72696002",
+      "category": "anatomy"
+    },
+    "脚踝": {
+      "english": "ankle",
+      "pinyin": "jiǎo huái",
+      "snomed_code": "70258002",
+      "category": "anatomy"
+    },
+    "髋部": {
+      "english": "hip",
+      "pinyin": "kuān bù",
+      "snomed_code": "29836001",
+      "category": "anatomy"
+    },
+    "肩膀": {
+      "english": "shoulder",
+      "pinyin": "jiān bǎng",
+      "snomed_code": "16982005",
+      "category": "anatomy"
+    },
+    "肘": {
+      "english": "elbow",
+      "pinyin": "zhǒu",
+      "snomed_code": "127949000",
+      "category": "anatomy"
+    },
+    "手腕": {
+      "english": "wrist",
+      "pinyin": "shǒu wàn",
+      "snomed_code": "8205005",
+      "category": "anatomy"
+    },
+    "脊柱": {
+      "english": "spine",
+      "pinyin": "jǐ zhù",
+      "snomed_code": "421060004",
+      "category": "anatomy"
+    },
+    "肋骨": {
+      "english": "rib",
+      "pinyin": "lèi gǔ",
+      "snomed_code": "113197003",
+      "category": "anatomy"
+    },
+    "皮肤": {
+      "english": "skin",
+      "pinyin": "pí fū",
+      "snomed_code": "39937001",
+      "category": "anatomy"
+    },
+    "血液": {
+      "english": "blood",
+      "pinyin": "xuè yè",
+      "snomed_code": "87612001",
+      "category": "anatomy"
+    },
+    "动脉": {
+      "english": "artery",
+      "pinyin": "dòng mài",
+      "snomed_code": "51114001",
+      "category": "anatomy"
+    },
+    "静脉": {
+      "english": "vein",
+      "pinyin": "jìng mài",
+      "snomed_code": "29092000",
+      "category": "anatomy"
+    },
+    "神经": {
+      "english": "nerve",
+      "pinyin": "shén jīng",
+      "snomed_code": "3057000",
+      "category": "anatomy"
+    },
+    "肌肉": {
+      "english": "muscle",
+      "pinyin": "jī ròu",
+      "snomed_code": "71616004",
+      "category": "anatomy"
+    },
+    "骨头": {
+      "english": "bone",
+      "pinyin": "gǔ tóu",
+      "snomed_code": "272673000",
+      "category": "anatomy"
+    },
+    "关节": {
+      "english": "joint",
+      "pinyin": "guān jié",
+      "snomed_code": "39352004",
+      "category": "anatomy"
+    },
+    "甲状腺": {
+      "english": "thyroid",
+      "pinyin": "jiǎ zhuàng xiàn",
+      "snomed_code": "69748006",
+      "category": "anatomy"
+    },
+    "胰腺": {
+      "english": "pancreas",
+      "pinyin": "yí xiàn",
+      "snomed_code": "15776009",
+      "category": "anatomy"
+    },
+    "胆囊": {
+      "english": "gallbladder",
+      "pinyin": "dǎn náng",
+      "snomed_code": "28231008",
+      "category": "anatomy"
+    },
+    "膀胱": {
+      "english": "bladder",
+      "pinyin": "páng guāng",
+      "snomed_code": "89837001",
+      "category": "anatomy"
+    },
+    "前列腺": {
+      "english": "prostate",
+      "pinyin": "qián liè xiàn",
+      "snomed_code": "41216001",
+      "category": "anatomy"
+    },
+    "子宫": {
+      "english": "uterus",
+      "pinyin": "zǐ gōng",
+      "snomed_code": "35039007",
+      "category": "anatomy"
+    },
+    "卵巢": {
+      "english": "ovary",
+      "pinyin": "luǎn cháo",
+      "snomed_code": "15497006",
+      "category": "anatomy"
+    }
+  },
+  "vital_signs": {
+    "血压": {
+      "english": "blood pressure",
+      "pinyin": "xuè yā",
+      "snomed_code": "75367002",
+      "loinc": "85354-9",
+      "category": "vital_sign"
+    },
+    "心率": {
+      "english": "heart rate",
+      "pinyin": "xīn lǜ",
+      "snomed_code": "364075005",
+      "loinc": "8867-4",
+      "category": "vital_sign"
+    },
+    "脉搏": {
+      "english": "pulse",
+      "pinyin": "mài bó",
+      "snomed_code": "8499008",
+      "loinc": "8867-4",
+      "category": "vital_sign"
+    },
+    "体温": {
+      "english": "temperature",
+      "pinyin": "tǐ wēn",
+      "snomed_code": "386725007",
+      "loinc": "8310-5",
+      "category": "vital_sign"
+    },
+    "呼吸频率": {
+      "english": "respiratory rate",
+      "pinyin": "hū xī pín lǜ",
+      "snomed_code": "86290005",
+      "loinc": "9279-1",
+      "category": "vital_sign"
+    },
+    "血氧饱和度": {
+      "english": "oxygen saturation",
+      "pinyin": "xuè yǎng bǎo hé dù",
+      "snomed_code": "431314004",
+      "loinc": "2708-6",
+      "category": "vital_sign"
+    },
+    "体重": {
+      "english": "weight",
+      "pinyin": "tǐ zhòng",
+      "snomed_code": "27113001",
+      "loinc": "29463-7",
+      "category": "vital_sign"
+    },
+    "身高": {
+      "english": "height",
+      "pinyin": "shēn gāo",
+      "snomed_code": "50373000",
+      "loinc": "8302-2",
+      "category": "vital_sign"
+    },
+    "血糖": {
+      "english": "blood sugar",
+      "pinyin": "xuè táng",
+      "snomed_code": "33747003",
+      "loinc": "2345-7",
+      "category": "vital_sign"
+    }
+  },
+  "procedures": {
+    "手术": {
+      "english": "surgery",
+      "pinyin": "shǒu shù",
+      "snomed_code": "387713003",
+      "category": "procedure"
+    },
+    "活检": {
+      "english": "biopsy",
+      "pinyin": "huó jiǎn",
+      "snomed_code": "86273004",
+      "category": "procedure"
+    },
+    "X光": {
+      "english": "x-ray",
+      "pinyin": "X guāng",
+      "snomed_code": "363680008",
+      "category": "procedure"
+    },
+    "CT扫描": {
+      "english": "CT scan",
+      "pinyin": "CT sǎo miáo",
+      "snomed_code": "77477000",
+      "category": "procedure"
+    },
+    "核磁共振": {
+      "english": "MRI",
+      "pinyin": "hé cí gòng zhèn",
+      "snomed_code": "113091000",
+      "category": "procedure"
+    },
+    "超声波": {
+      "english": "ultrasound",
+      "pinyin": "chāo shēng bō",
+      "snomed_code": "16310003",
+      "category": "procedure"
+    },
+    "心电图": {
+      "english": "electrocardiogram",
+      "pinyin": "xīn diàn tú",
+      "snomed_code": "29303009",
+      "category": "procedure"
+    },
+    "内窥镜": {
+      "english": "endoscopy",
+      "pinyin": "nèi kuī jìng",
+      "snomed_code": "423827005",
+      "category": "procedure"
+    },
+    "肠镜": {
+      "english": "colonoscopy",
+      "pinyin": "cháng jìng",
+      "snomed_code": "73761001",
+      "category": "procedure"
+    },
+    "验血": {
+      "english": "blood test",
+      "pinyin": "yàn xuè",
+      "snomed_code": "396550006",
+      "category": "procedure"
+    },
+    "尿检": {
+      "english": "urinalysis",
+      "pinyin": "niào jiǎn",
+      "snomed_code": "27171005",
+      "category": "procedure"
+    },
+    "疫苗": {
+      "english": "vaccine",
+      "pinyin": "yì miáo",
+      "snomed_code": "33879002",
+      "category": "procedure"
+    },
+    "输血": {
+      "english": "transfusion",
+      "pinyin": "shū xuè",
+      "snomed_code": "116859006",
+      "category": "procedure"
+    },
+    "透析": {
+      "english": "dialysis",
+      "pinyin": "tòu xī",
+      "snomed_code": "108241001",
+      "category": "procedure"
+    },
+    "化疗": {
+      "english": "chemotherapy",
+      "pinyin": "huà liáo",
+      "snomed_code": "367336001",
+      "category": "procedure"
+    },
+    "放疗": {
+      "english": "radiation therapy",
+      "pinyin": "fàng liáo",
+      "snomed_code": "108290001",
+      "category": "procedure"
+    },
+    "物理治疗": {
+      "english": "physical therapy",
+      "pinyin": "wù lǐ zhì liáo",
+      "snomed_code": "91251008",
+      "category": "procedure"
+    },
+    "注射": {
+      "english": "injection",
+      "pinyin": "zhù shè",
+      "snomed_code": "28289002",
+      "category": "procedure"
+    },
+    "缝合": {
+      "english": "suture",
+      "pinyin": "féng hé",
+      "snomed_code": "18557009",
+      "category": "procedure"
+    }
+  },
+  "time_expressions": {
+    "今天": "today",
+    "昨天": "yesterday",
+    "前天": "day before yesterday",
+    "一天前": "one day ago",
+    "两天前": "two days ago",
+    "三天前": "three days ago",
+    "一周前": "one week ago",
+    "两周前": "two weeks ago",
+    "一个月前": "one month ago",
+    "两个月前": "two months ago",
+    "一年前": "one year ago",
+    "今天早上": "this morning",
+    "今天下午": "this afternoon",
+    "今天晚上": "tonight",
+    "昨晚": "last night",
+    "早上": "in the morning",
+    "下午": "in the afternoon",
+    "晚上": "at night",
+    "每天": "every day",
+    "每周": "every week",
+    "每月": "every month",
+    "有时": "sometimes",
+    "经常": "frequently",
+    "一直": "constantly",
+    "偶尔": "occasionally"
+  },
+  "severity_modifiers": {
+    "轻微": "mild",
+    "中度": "moderate",
+    "严重": "severe",
+    "剧烈": "intense",
+    "强烈": "strong",
+    "微弱": "weak",
+    "急性": "acute",
+    "慢性": "chronic",
+    "间歇性": "intermittent",
+    "持续性": "constant",
+    "突然": "sudden",
+    "逐渐": "gradual",
+    "更糟": "worse",
+    "更好": "better",
+    "一样": "same",
+    "很多": "a lot",
+    "一点": "a little",
+    "非常": "very"
+  }
+}

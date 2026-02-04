@@ -1,0 +1,456 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pilot-hospital-001
+  labels:
+    app.kubernetes.io/part-of: phoenix-guardian
+    phoenix/environment: pilot
+    phoenix/hospital-id: hospital-001
+    phoenix/hospital-name: memorial-general
+    compliance/hipaa: "true"
+    compliance/data-classification: phi
+  annotations:
+    description: "Pilot namespace for Memorial General Hospital"
+    onboarding-date: "2026-02-10"
+    support-channel: "#pilot-hospital-001"
+    cost-center: "pilot-program"
+---
+# Resource Quotas - Limit pilot resource usage
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: pilot-quota
+  namespace: pilot-hospital-001
+spec:
+  hard:
+    requests.cpu: "8"
+    requests.memory: 16Gi
+    limits.cpu: "16"
+    limits.memory: 32Gi
+    persistentvolumeclaims: "5"
+    services: "10"
+    secrets: "20"
+    configmaps: "20"
+    pods: "50"
+    services.nodeports: "0"  # No NodePorts for security
+---
+# Limit Ranges - Default resource limits for pods
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: pilot-limits
+  namespace: pilot-hospital-001
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: "500m"
+        memory: 512Mi
+      defaultRequest:
+        cpu: "100m"
+        memory: 128Mi
+      max:
+        cpu: "4"
+        memory: 8Gi
+      min:
+        cpu: "50m"
+        memory: 64Mi
+    - type: PersistentVolumeClaim
+      max:
+        storage: 100Gi
+      min:
+        storage: 1Gi
+---
+# Network Policy - Strict isolation for PHI protection
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: pilot-hospital-001
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  # Deny all traffic by default - explicit allow rules below
+---
+# Allow ingress from API gateway only
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-ingress
+  namespace: pilot-hospital-001
+spec:
+  podSelector:
+    matchLabels:
+      app: phoenix-api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: phoenix-production
+          podSelector:
+            matchLabels:
+              app: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8000
+---
+# Allow egress to database and cache (in production namespace)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-database-egress
+  namespace: pilot-hospital-001
+spec:
+  podSelector:
+    matchLabels:
+      app: phoenix-api
+  policyTypes:
+    - Egress
+  egress:
+    # PostgreSQL RDS
+    - to:
+        - ipBlock:
+            cidr: 10.0.0.0/8  # VPC CIDR - RDS endpoints
+      ports:
+        - protocol: TCP
+          port: 5432
+    # Redis ElastiCache
+    - to:
+        - ipBlock:
+            cidr: 10.0.0.0/8
+      ports:
+        - protocol: TCP
+          port: 6379
+    # DNS
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+    # Hospital EHR (external HTTPS)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443
+---
+# Service Account for pilot workloads
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: phoenix-pilot-sa
+  namespace: pilot-hospital-001
+  annotations:
+    # IRSA - link to AWS IAM role for this specific hospital
+    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/phoenix-pilot-hospital-001
+---
+# ConfigMap for hospital-specific settings
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hospital-config
+  namespace: pilot-hospital-001
+data:
+  HOSPITAL_ID: "hospital-001"
+  HOSPITAL_NAME: "Memorial General Hospital"
+  EHR_VENDOR: "epic"
+  EHR_FHIR_VERSION: "R4"
+  TIMEZONE: "America/New_York"
+  LOCALE: "en-US"
+  # Feature flags for pilot
+  FEATURE_FEDERATED_LEARNING: "true"
+  FEATURE_BEHAVIORAL_BIOMETRICS: "true"
+  FEATURE_READMISSION_RISK: "true"
+  FEATURE_LENGTH_OF_STAY: "true"
+  # Pilot-specific limits
+  MAX_CONCURRENT_ENCOUNTERS: "100"
+  MAX_SOAP_NOTES_PER_HOUR: "500"
+  # Logging level (more verbose for pilot debugging)
+  LOG_LEVEL: "DEBUG"
+---
+# Secret reference - EHR credentials stored externally
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ehr-credentials
+  namespace: pilot-hospital-001
+type: Opaque
+stringData:
+  # These will be populated during deployment from AWS Secrets Manager
+  # Using ExternalSecrets operator in production
+  EHR_CLIENT_ID: "PLACEHOLDER_REPLACE_DURING_DEPLOY"
+  EHR_CLIENT_SECRET: "PLACEHOLDER_REPLACE_DURING_DEPLOY"
+  EHR_BASE_URL: "https://fhir.memorialgeneral.example.com/api/FHIR/R4"
+  EHR_TOKEN_URL: "https://fhir.memorialgeneral.example.com/oauth2/token"
+---
+# ExternalSecret to pull from AWS Secrets Manager
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: ehr-credentials-external
+  namespace: pilot-hospital-001
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: aws-secrets-manager
+    kind: ClusterSecretStore
+  target:
+    name: ehr-credentials
+    creationPolicy: Owner
+  data:
+    - secretKey: EHR_CLIENT_ID
+      remoteRef:
+        key: phoenix/pilot/hospital-001/ehr
+        property: client_id
+    - secretKey: EHR_CLIENT_SECRET
+      remoteRef:
+        key: phoenix/pilot/hospital-001/ehr
+        property: client_secret
+    - secretKey: EHR_BASE_URL
+      remoteRef:
+        key: phoenix/pilot/hospital-001/ehr
+        property: base_url
+    - secretKey: EHR_TOKEN_URL
+      remoteRef:
+        key: phoenix/pilot/hospital-001/ehr
+        property: token_url
+---
+# Pilot API Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phoenix-api
+  namespace: pilot-hospital-001
+  labels:
+    app: phoenix-api
+    hospital: hospital-001
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: phoenix-api
+      hospital: hospital-001
+  template:
+    metadata:
+      labels:
+        app: phoenix-api
+        hospital: hospital-001
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: phoenix-pilot-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: phoenix-api
+          image: ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/phoenix-api:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: hospital-config
+            - secretRef:
+                name: ehr-credentials
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: phoenix-secrets
+                  key: database-url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: phoenix-secrets
+                  key: redis-url
+            - name: AWS_REGION
+              value: "us-east-1"
+            - name: OTEL_SERVICE_NAME
+              value: "phoenix-api-hospital-001"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector.monitoring:4317"
+          resources:
+            requests:
+              cpu: "500m"
+              memory: 1Gi
+            limits:
+              cpu: "2"
+              memory: 4Gi
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: cache
+              mountPath: /app/.cache
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: cache
+          emptyDir:
+            sizeLimit: 500Mi
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: phoenix-api
+                    hospital: hospital-001
+                topologyKey: kubernetes.io/hostname
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: phoenix-api
+              hospital: hospital-001
+---
+# Service for pilot API
+apiVersion: v1
+kind: Service
+metadata:
+  name: phoenix-api
+  namespace: pilot-hospital-001
+  labels:
+    app: phoenix-api
+    hospital: hospital-001
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app: phoenix-api
+    hospital: hospital-001
+---
+# HPA for pilot - more conservative scaling
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: phoenix-api-hpa
+  namespace: pilot-hospital-001
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: phoenix-api
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120
+---
+# PodDisruptionBudget - ensure availability during updates
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: phoenix-api-pdb
+  namespace: pilot-hospital-001
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: phoenix-api
+      hospital: hospital-001
+---
+# Ingress for pilot (hospital-specific subdomain)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: phoenix-api-ingress
+  namespace: pilot-hospital-001
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Rate limiting for pilot
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    nginx.ingress.kubernetes.io/limit-connections: "50"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - hospital-001.phoenix-guardian.example.com
+      secretName: hospital-001-tls
+  rules:
+    - host: hospital-001.phoenix-guardian.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: phoenix-api
+                port:
+                  number: 80
