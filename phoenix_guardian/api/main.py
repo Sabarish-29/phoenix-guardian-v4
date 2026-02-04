@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 
 from phoenix_guardian.agents.navigator_agent import PatientNotFoundError
 from phoenix_guardian.agents.safety_agent import SecurityException
-from phoenix_guardian.api.routes import auth, encounters, health, patients
+from phoenix_guardian.api.routes import agents, auth, encounters, health, patients
 from phoenix_guardian.api.utils.orchestrator import OrchestrationError
 from phoenix_guardian.database.connection import db
 
@@ -161,6 +161,12 @@ app.include_router(
     encounters.router,
     prefix="/api/v1/encounters",
     tags=["encounters"],
+)
+
+app.include_router(
+    agents.router,
+    prefix="/api/v1",
+    tags=["agents"],
 )
 
 

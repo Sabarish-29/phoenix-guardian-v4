@@ -6,14 +6,21 @@ This module provides advanced security features including:
 - Honeytoken system for attacker tracking
 - Deception agent for intelligent honeytoken deployment
 - Post-quantum cryptography (AES-256 + Kyber-1024)
+- Simple Fernet encryption for PII/PHI
 - Attacker intelligence database (PostgreSQL-backed)
 - Threat intelligence analysis (STIX 2.1 export, IOC feeds)
+- Comprehensive audit logging for HIPAA compliance
 
 Phase 2 Implementation:
 - Week 9: ML threat detector
 - Week 15: Honeytoken system
 - Week 16: Post-quantum crypto
 - Week 17: Attacker intelligence database
+
+Phase 3 Implementation (Week 4):
+- Fernet encryption service for PII
+- Audit logger service
+- SecurityIncident integration
 """
 
 from phoenix_guardian.security.ml_detector import (
@@ -62,6 +69,22 @@ from phoenix_guardian.security.honeytoken_generator import (
     MRN_RANGE_MIN,
     MRN_RANGE_MAX,
     BEACON_TRACKING_ENDPOINT,
+)
+
+from phoenix_guardian.security.encryption import (
+    EncryptionService,
+    EncryptionError,
+    DecryptionError,
+    get_encryption_service,
+    reset_encryption_service,
+    encrypt_pii,
+    decrypt_pii,
+    encrypt_phi,
+    decrypt_phi,
+)
+
+from phoenix_guardian.security.audit_logger import (
+    AuditLogger,
 )
 
 from phoenix_guardian.security.deception_agent import (
@@ -166,6 +189,16 @@ __all__ = [
     "ForensicBeacon",
     "LegalHoneytoken",
     "AttackerFingerprint",
+    # Simple Encryption Service
+    "EncryptionService",
+    "get_encryption_service",
+    "reset_encryption_service",
+    "encrypt_pii",
+    "decrypt_pii",
+    "encrypt_phi",
+    "decrypt_phi",
+    # Audit Logger
+    "AuditLogger",
     # Deception Agent
     "DeceptionAgent",
     "DeceptionDecision",
@@ -187,6 +220,8 @@ __all__ = [
     "DeceptionError",
     "DeploymentError",
     "DecisionError",
+    "EncryptionError",
+    "DecryptionError",
     # Constants
     "FCC_FICTION_PHONE_PREFIX",
     "NON_ROUTABLE_EMAIL_DOMAIN",
@@ -218,8 +253,6 @@ __all__ = [
     "KeyStatus",
     "SecurityLevel",
     "PQCError",
-    "EncryptionError",
-    "DecryptionError",
     "TamperDetectedError",
     "encrypt_string",
     "decrypt_string",

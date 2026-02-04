@@ -21,6 +21,7 @@ from .base import AuditableMixin, Base, BaseModel, SoftDeleteMixin, TimestampMix
 from .encounter import Encounter, EncounterStatus, EncounterType
 from .hospital import Hospital, HospitalType
 from .security_event import SecurityEvent, ThreatSeverity
+from .security_incident import SecurityIncident, IncidentSeverity, IncidentStatus, IncidentType
 from .soap_note import SOAPNote
 from .user import ROLE_HIERARCHY, User, UserRole
 
@@ -47,9 +48,14 @@ __all__ = [
     # Audit
     "AuditLog",
     "AuditAction",
-    # Security
+    # Security Events
     "SecurityEvent",
     "ThreatSeverity",
+    # Security Incidents
+    "SecurityIncident",
+    "IncidentSeverity",
+    "IncidentStatus",
+    "IncidentType",
     # Metrics
     "AgentMetric",
 ]

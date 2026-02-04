@@ -30,10 +30,11 @@ scikit-learn==1.5.2
 xgboost==2.1.1
 
 # =============================================================================
-# ML Models (Optional - large packages, comment if not needed)
+# ML Models (Required for Week 3 ML training)
 # =============================================================================
-# torch==2.4.0
-# transformers==4.44.2
+torch>=2.0.0
+transformers>=4.30.0
+datasets>=2.14.0
 
 # =============================================================================
 # Structured Logging

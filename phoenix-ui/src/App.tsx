@@ -22,6 +22,7 @@ import {
   CreateEncounterPage,
   ReviewSOAPNotePage,
   EncountersListPage,
+  SOAPGeneratorPage,
   UnauthorizedPage,
   NotFoundPage,
 } from './pages';
@@ -99,6 +100,16 @@ const App: React.FC = () => {
             >
               {/* Dashboard - accessible to all authenticated users */}
               <Route path="/dashboard" element={<DashboardPage />} />
+              
+              {/* SOAP Generator - physicians and admins */}
+              <Route
+                path="/soap-generator"
+                element={
+                  <ProtectedRoute requiredRoles={['physician', 'admin']}>
+                    <SOAPGeneratorPage />
+                  </ProtectedRoute>
+                }
+              />
               
               {/* Encounters list */}
               <Route path="/encounters" element={<EncountersListPage />} />

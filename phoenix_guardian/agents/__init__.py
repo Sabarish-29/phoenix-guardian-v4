@@ -75,6 +75,7 @@ from phoenix_guardian.agents.sentinel_q_agent import (
 from phoenix_guardian.agents.sentinelq_integration import (
     SentinelQDeceptionBridge,
 )
+from phoenix_guardian.agents.readmission import ReadmissionAgent
 
 __all__ = [
     # Base
@@ -135,4 +136,6 @@ __all__ = [
     "OrderUrgency",
     "OrderStatus",
     "Priority",
+    # ML Agents (Week 3)
+    "ReadmissionAgent",
 ]

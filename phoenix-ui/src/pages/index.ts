@@ -7,5 +7,6 @@ export { DashboardPage } from './DashboardPage';
 export { CreateEncounterPage } from './CreateEncounterPage';
 export { ReviewSOAPNotePage } from './ReviewSOAPNotePage';
 export { EncountersListPage } from './EncountersListPage';
+export { SOAPGeneratorPage } from './SOAPGeneratorPage';
 export { UnauthorizedPage } from './UnauthorizedPage';
 export { NotFoundPage } from './NotFoundPage';

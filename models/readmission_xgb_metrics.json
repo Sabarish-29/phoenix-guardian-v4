@@ -1,0 +1,39 @@
+{
+  "auc": 0.689869773210489,
+  "accuracy": 0.5975,
+  "precision": 0.25906735751295334,
+  "recall": 0.7352941176470589,
+  "f1": 0.3831417624521073,
+  "specificity": 0.5692771084337349,
+  "feature_names": [
+    "age",
+    "has_heart_failure",
+    "has_diabetes",
+    "has_copd",
+    "comorbidity_count",
+    "length_of_stay",
+    "visits_30d",
+    "visits_90d",
+    "discharge_encoded"
+  ],
+  "num_train_samples": 1600,
+  "num_test_samples": 400,
+  "positive_rate": 0.1695,
+  "confusion_matrix": {
+    "tn": 189,
+    "fp": 143,
+    "fn": 18,
+    "tp": 50
+  },
+  "feature_importance": {
+    "age": 11.235742568969727,
+    "has_heart_failure": 19.501483917236328,
+    "has_diabetes": 6.3606181144714355,
+    "has_copd": 17.97382926940918,
+    "comorbidity_count": 37.893089294433594,
+    "length_of_stay": 11.350835800170898,
+    "visits_30d": 8.319713592529297,
+    "visits_90d": 5.069952011108398,
+    "discharge_encoded": 14.634922981262207
+  }
+}
