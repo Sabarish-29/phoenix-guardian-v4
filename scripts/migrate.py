@@ -66,6 +66,44 @@ try:
     db.create_tables()
     print("   ✓ All tables created")
     
+    # Add missing columns if they don't exist (for existing databases)
+    with engine.connect() as conn:
+        # Create hospitals table if not exists (check first)
+        result = conn.execute(text("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'hospitals'
+            )
+        """))
+        if not result.fetchone()[0]:
+            from phoenix_guardian.models import Hospital
+            Hospital.__table__.create(engine, checkfirst=True)
+            print("   ✓ Created hospitals table")
+        
+        # Check and add hospital_id to users table
+        result = conn.execute(text("""
+            SELECT column_name FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'hospital_id'
+        """))
+        if not result.fetchone():
+            conn.execute(text("ALTER TABLE users ADD COLUMN hospital_id INTEGER REFERENCES hospitals(id)"))
+            conn.commit()
+            print("   ✓ Added hospital_id column to users")
+        
+        # Check and add new columns to encounters table
+        for col in ['patient_first_name', 'patient_last_name', 'patient_dob', 'chief_complaint']:
+            result = conn.execute(text(f"""
+                SELECT column_name FROM information_schema.columns 
+                WHERE table_name = 'encounters' AND column_name = '{col}'
+            """))
+            if not result.fetchone():
+                if col == 'chief_complaint':
+                    conn.execute(text(f"ALTER TABLE encounters ADD COLUMN {col} VARCHAR(500)"))
+                else:
+                    conn.execute(text(f"ALTER TABLE encounters ADD COLUMN {col} VARCHAR(100)"))
+                conn.commit()
+                print(f"   ✓ Added {col} column to encounters")
+    
     # Seed test users if they don't exist
     from phoenix_guardian.models import User, UserRole
     from phoenix_guardian.api.auth.utils import hash_password

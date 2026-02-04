@@ -623,7 +623,7 @@ def create_tokens_for_user(user: User) -> Dict[str, str]:
     
     # Create tokens
     access_token = create_access_token(data=token_data)
-    refresh_token = create_refresh_token(data={"sub": user.id})
+    refresh_token = create_refresh_token(data={"sub": str(user.id)})  # JWT standard expects sub to be string
     
     return {
         "access_token": access_token,

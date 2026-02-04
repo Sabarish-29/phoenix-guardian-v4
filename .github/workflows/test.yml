@@ -13,6 +13,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: phoenix_guardian
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
     steps:
       - uses: actions/checkout@v4
       
@@ -30,6 +45,14 @@ jobs:
       - name: Verify imports
         run: |
           python -c "import phoenix_guardian; print('✅ Backend imports OK')"
+      
+      - name: Run core tests
+        run: |
+          python -m pytest tests/test_auth.py tests/test_models.py tests/test_base_agent.py -v --no-cov -q
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/phoenix_guardian
+          JWT_SECRET_KEY: test-secret-key-for-ci-only
+          JWT_ALGORITHM: HS256
 
   frontend:
     runs-on: ubuntu-latest

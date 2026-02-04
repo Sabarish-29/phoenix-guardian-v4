@@ -110,9 +110,11 @@ def mock_psycopg2_fixture():
     mock_conn.cursor.return_value.__enter__ = Mock(return_value=mock_cursor)
     mock_conn.cursor.return_value.__exit__ = Mock(return_value=False)
     
-    mock_psycopg2.connect.return_value = mock_conn
-    
-    return mock_psycopg2, mock_conn, mock_cursor
+    # Patch at the module level where it's imported
+    with patch('phoenix_guardian.learning.feedback_collector.psycopg2') as patched_psycopg2:
+        patched_psycopg2.connect.return_value = mock_conn
+        patched_psycopg2.Error = Exception
+        yield patched_psycopg2, mock_conn, mock_cursor
 
 
 @pytest.fixture

@@ -19,6 +19,7 @@ from .agent_metrics import AgentMetric
 from .audit_log import AuditAction, AuditLog
 from .base import AuditableMixin, Base, BaseModel, SoftDeleteMixin, TimestampMixin
 from .encounter import Encounter, EncounterStatus, EncounterType
+from .hospital import Hospital, HospitalType
 from .security_event import SecurityEvent, ThreatSeverity
 from .soap_note import SOAPNote
 from .user import ROLE_HIERARCHY, User, UserRole
@@ -30,6 +31,9 @@ __all__ = [
     "TimestampMixin",
     "SoftDeleteMixin",
     "AuditableMixin",
+    # Hospital
+    "Hospital",
+    "HospitalType",
     # User
     "User",
     "UserRole",

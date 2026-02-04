@@ -224,7 +224,7 @@ class TestJWTTokens:
 
     def test_create_access_token_basic(self):
         """Test basic access token creation."""
-        data = {"sub": 123, "email": "test@example.com"}
+        data = {"sub": "123", "email": "test@example.com"}
         token = create_access_token(data)
         
         assert isinstance(token, str)
@@ -232,12 +232,12 @@ class TestJWTTokens:
 
     def test_create_access_token_contains_required_fields(self):
         """Test that access token contains required fields."""
-        data = {"sub": 123, "email": "test@example.com"}
+        data = {"sub": "123", "email": "test@example.com"}
         token = create_access_token(data)
         
         decoded = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         
-        assert decoded["sub"] == 123
+        assert decoded["sub"] == "123"
         assert decoded["email"] == "test@example.com"
         assert "exp" in decoded
         assert "iat" in decoded
@@ -246,7 +246,7 @@ class TestJWTTokens:
 
     def test_create_access_token_default_expiry(self):
         """Test access token has correct default expiry."""
-        token = create_access_token({"sub": 1})
+        token = create_access_token({"sub": "1"})
         decoded = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         
         exp_time = datetime.fromtimestamp(decoded["exp"], tz=timezone.utc)
@@ -259,7 +259,7 @@ class TestJWTTokens:
     def test_create_access_token_custom_expiry(self):
         """Test access token with custom expiry."""
         custom_delta = timedelta(minutes=30)
-        token = create_access_token({"sub": 1}, expires_delta=custom_delta)
+        token = create_access_token({"sub": "1"}, expires_delta=custom_delta)
         decoded = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         
         exp_time = datetime.fromtimestamp(decoded["exp"], tz=timezone.utc)
@@ -270,7 +270,7 @@ class TestJWTTokens:
 
     def test_create_refresh_token_basic(self):
         """Test basic refresh token creation."""
-        data = {"sub": 123}
+        data = {"sub": "123"}
         token = create_refresh_token(data)
         
         assert isinstance(token, str)
@@ -278,15 +278,15 @@ class TestJWTTokens:
 
     def test_create_refresh_token_type(self):
         """Test refresh token has correct type."""
-        token = create_refresh_token({"sub": 1})
+        token = create_refresh_token({"sub": "1"})
         decoded = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         
         assert decoded["type"] == "refresh"
 
     def test_create_refresh_token_longer_expiry(self):
         """Test refresh token has longer expiry than access token."""
-        access = create_access_token({"sub": 1})
-        refresh = create_refresh_token({"sub": 1})
+        access = create_access_token({"sub": "1"})
+        refresh = create_refresh_token({"sub": "1"})
         
         access_decoded = jwt.decode(access, SECRET_KEY, algorithms=[ALGORITHM])
         refresh_decoded = jwt.decode(refresh, SECRET_KEY, algorithms=[ALGORITHM])
@@ -295,18 +295,18 @@ class TestJWTTokens:
 
     def test_decode_token_success(self):
         """Test successful token decoding."""
-        original_data = {"sub": 456, "email": "decode@test.com"}
+        original_data = {"sub": "456", "email": "decode@test.com"}
         token = create_access_token(original_data)
         
         decoded = decode_token(token)
         
-        assert decoded["sub"] == 456
+        assert decoded["sub"] == "456"
         assert decoded["email"] == "decode@test.com"
 
     def test_decode_token_expired(self):
         """Test decoding expired token raises error."""
         expired_delta = timedelta(seconds=-10)  # Already expired
-        token = create_access_token({"sub": 1}, expires_delta=expired_delta)
+        token = create_access_token({"sub": "1"}, expires_delta=expired_delta)
         
         with pytest.raises(AuthenticationError) as exc:
             decode_token(token)
@@ -315,7 +315,7 @@ class TestJWTTokens:
 
     def test_decode_token_invalid_signature(self):
         """Test decoding token with invalid signature."""
-        token = create_access_token({"sub": 1})
+        token = create_access_token({"sub": "1"})
         # Tamper with the token
         token = token[:-5] + "XXXXX"
         
@@ -336,8 +336,8 @@ class TestJWTTokens:
 
     def test_token_jti_unique(self):
         """Test that each token has a unique JTI."""
-        token1 = create_access_token({"sub": 1})
-        token2 = create_access_token({"sub": 1})
+        token1 = create_access_token({"sub": "1"})
+        token2 = create_access_token({"sub": "1"})
         
         decoded1 = jwt.decode(token1, SECRET_KEY, algorithms=[ALGORITHM])
         decoded2 = jwt.decode(token2, SECRET_KEY, algorithms=[ALGORITHM])
@@ -442,7 +442,7 @@ class TestUserAuthentication:
         
         # Verify access token contents
         decoded = decode_token(tokens["access_token"])
-        assert decoded["sub"] == sample_user.id
+        assert decoded["sub"] == str(sample_user.id)
         assert decoded["email"] == sample_user.email
         assert decoded["role"] == sample_user.role.value
 
@@ -478,7 +478,7 @@ class TestTokenRefresh:
         
         # New access token should be valid
         decoded = decode_token(new_tokens["access_token"])
-        assert decoded["sub"] == sample_user.id
+        assert decoded["sub"] == str(sample_user.id)
 
     def test_refresh_with_access_token_fails(self, test_db, sample_user):
         """Test that using access token for refresh fails."""
@@ -495,7 +495,7 @@ class TestTokenRefresh:
     def test_refresh_expired_token_fails(self, test_db, sample_user):
         """Test that expired refresh token fails."""
         expired_refresh = create_refresh_token(
-            {"sub": sample_user.id},
+            {"sub": str(sample_user.id)},
             expires_delta=timedelta(seconds=-10)
         )
         
@@ -702,14 +702,14 @@ class TestSecurityEdgeCases:
 
     def test_unicode_in_token_data(self):
         """Test handling of Unicode in token data."""
-        data = {"sub": 1, "name": "日本語テスト"}
+        data = {"sub": "1", "name": "日本語テスト"}
         token = create_access_token(data)
         decoded = decode_token(token)
         assert decoded["name"] == "日本語テスト"
 
     def test_very_long_token_data(self):
         """Test handling of very long data in tokens."""
-        data = {"sub": 1, "extra": "x" * 10000}
+        data = {"sub": "1", "extra": "x" * 10000}
         token = create_access_token(data)
         decoded = decode_token(token)
         assert decoded["extra"] == "x" * 10000
@@ -740,7 +740,7 @@ class TestIntegration:
         
         # 3. Decode access token
         payload = decode_token(tokens["access_token"])
-        assert payload["sub"] == user.id
+        assert payload["sub"] == str(user.id)  # JWT sub is always a string
         
         # 4. Refresh tokens
         new_tokens = refresh_access_token(
@@ -751,7 +751,7 @@ class TestIntegration:
         
         # 5. New token is valid
         new_payload = decode_token(new_tokens["access_token"])
-        assert new_payload["sub"] == user.id
+        assert new_payload["sub"] == str(user.id)  # JWT sub is always a string
 
     def test_multiple_users_independent_tokens(self, test_db, sample_user, admin_user):
         """Test that different users get independent tokens."""
@@ -810,7 +810,7 @@ class TestPerformance:
         
         start = time.time()
         for _ in range(100):
-            create_access_token({"sub": 1, "email": "test@test.com"})
+            create_access_token({"sub": "1", "email": "test@test.com"})
         elapsed = time.time() - start
         
         # 100 tokens should complete in under 1 second
@@ -820,7 +820,7 @@ class TestPerformance:
         """Test that token decoding is fast."""
         import time
         
-        token = create_access_token({"sub": 1})
+        token = create_access_token({"sub": "1"})
         
         start = time.time()
         for _ in range(100):

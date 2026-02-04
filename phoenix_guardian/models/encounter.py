@@ -82,6 +82,30 @@ class Encounter(BaseModel):
         comment="Patient Medical Record Number (encrypted)",
     )
 
+    patient_first_name = Column(
+        String(100),
+        nullable=True,
+        comment="Patient first name (encrypted PHI)",
+    )
+
+    patient_last_name = Column(
+        String(100),
+        nullable=True,
+        comment="Patient last name (encrypted PHI)",
+    )
+
+    patient_dob = Column(
+        String(20),
+        nullable=True,
+        comment="Patient date of birth (encrypted PHI)",
+    )
+
+    chief_complaint = Column(
+        String(500),
+        nullable=True,
+        comment="Chief complaint / reason for visit",
+    )
+
     # Encounter details
     encounter_type = Column(
         String(50),

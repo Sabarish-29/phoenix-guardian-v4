@@ -5,16 +5,17 @@ Provides role-based access control (RBAC) for HIPAA compliance.
 """
 
 from enum import Enum
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import Boolean, Column, Enum as SQLEnum, String
-from sqlalchemy.orm import Relationship, relationship
+from sqlalchemy import Boolean, Column, Enum as SQLEnum, ForeignKey, Integer, String
+from sqlalchemy.orm import Mapped, Relationship, relationship
 
 from .base import BaseModel
 
 if TYPE_CHECKING:
     from .audit_log import AuditLog
     from .encounter import Encounter
+    from .hospital import Hospital
 
 
 class UserRole(str, Enum):
@@ -132,14 +133,27 @@ class User(BaseModel):
         comment="State of medical licensure",
     )
 
+    # Hospital/Tenant association
+    hospital_id = Column(
+        Integer,
+        ForeignKey("hospitals.id"),
+        nullable=True,
+        comment="Associated hospital/organization",
+    )
+
     # Relationships
-    encounters: Relationship[List["Encounter"]] = relationship(
+    hospital: Mapped[Optional["Hospital"]] = relationship(
+        "Hospital",
+        back_populates="users",
+    )
+
+    encounters: Mapped[List["Encounter"]] = relationship(
         "Encounter",
         back_populates="provider",
         foreign_keys="Encounter.provider_id",
     )
 
-    audit_logs: Relationship[List["AuditLog"]] = relationship(
+    audit_logs: Mapped[List["AuditLog"]] = relationship(
         "AuditLog",
         back_populates="user",
         foreign_keys="AuditLog.user_id",
