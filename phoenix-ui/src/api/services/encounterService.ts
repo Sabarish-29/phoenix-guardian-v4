@@ -48,9 +48,19 @@ export interface PatientInfo {
 }
 
 /**
- * Create encounter request
+ * Create encounter request (matches backend EncounterRequest)
  */
 export interface CreateEncounterRequest {
+  patient_mrn: string;
+  encounter_type: 'office_visit' | 'urgent_care' | 'emergency' | 'telehealth' | 'follow_up';
+  transcript: string;
+  provider_id?: string;
+}
+
+/**
+ * Simple encounter create request (for quick creation without full transcript)
+ */
+export interface SimpleEncounterRequest {
   patient_info?: PatientInfo;
   encounter_type?: string;
   chief_complaint?: string;
@@ -238,15 +248,37 @@ export const transformEncounterResponse = (apiEncounter: EncounterApiResponse): 
 });
 
 /**
+ * SOAP Note Response from create endpoint
+ */
+export interface SOAPNoteApiResponse {
+  encounter_id: string;
+  patient_mrn: string;
+  soap_note: string;
+  sections: {
+    subjective: string;
+    objective: string;
+    assessment: string;
+    plan: string;
+  };
+  reasoning: string;
+  model_used: string;
+  token_count: number;
+  execution_time_ms: number;
+  created_at: string;
+  status: string;
+}
+
+/**
  * Encounter service
  */
 export const encounterService = {
   /**
-   * Create a new encounter.
+   * Create a new encounter and generate SOAP note.
+   * Returns SOAPNoteApiResponse from the backend.
    */
-  async createEncounter(data: CreateEncounterRequest): Promise<Encounter> {
-    const response = await apiClient.post<EncounterApiResponse>('/encounters/', data);
-    return transformEncounterResponse(response.data);
+  async createEncounter(data: CreateEncounterRequest): Promise<SOAPNoteApiResponse> {
+    const response = await apiClient.post<SOAPNoteApiResponse>('/encounters/', data);
+    return response.data;
   },
   
   /**

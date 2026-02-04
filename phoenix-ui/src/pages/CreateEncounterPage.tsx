@@ -11,7 +11,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { encounterService, CreateEncounterRequest } from '../api/services/encounterService';
+import { encounterService, CreateEncounterRequest, SOAPNoteApiResponse } from '../api/services/encounterService';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
 type EncounterType = 
@@ -53,20 +53,24 @@ export const CreateEncounterPage: React.FC = () => {
   // Create encounter mutation
   const createMutation = useMutation({
     mutationFn: encounterService.createEncounter,
-    onSuccess: async (encounter) => {
-      // Automatically process the encounter through AI pipeline
+    onSuccess: async (response: SOAPNoteApiResponse) => {
+      // Backend returns SOAPNoteResponse with encounter_id
+      const encounterId = response.encounter_id;
+      
+      // Navigate to the encounter review page
       setIsProcessing(true);
-      try {
-        await encounterService.processEncounter(encounter.id);
-        navigate(`/encounters/${encounter.uuid}/review`);
-      } catch (processError) {
-        // Still navigate to the encounter even if processing fails
-        console.error('Processing error:', processError);
-        navigate(`/encounters/${encounter.uuid}`);
-      }
+      // The encounter was already processed during creation
+      navigate(`/encounters/${encounterId}/review`);
     },
-    onError: (err: Error & { response?: { data?: { detail?: string } } }) => {
-      const message = err.response?.data?.detail || 'Failed to create encounter';
+    onError: (err: Error & { response?: { data?: { detail?: string | Array<{msg: string}> } } }) => {
+      const detail = err.response?.data?.detail;
+      let message = 'Failed to create encounter';
+      if (typeof detail === 'string') {
+        message = detail;
+      } else if (Array.isArray(detail) && detail.length > 0) {
+        // Handle Pydantic validation errors
+        message = detail.map(e => e.msg).join(', ');
+      }
       setError(message);
       setIsProcessing(false);
     },
@@ -76,9 +80,19 @@ export const CreateEncounterPage: React.FC = () => {
     e.preventDefault();
     setError(null);
     
-    // Validation
-    if (!patientFirstName || !patientLastName) {
-      setError('Patient first and last name are required');
+    // Validation - match backend requirements
+    if (!patientMrn.trim()) {
+      setError('Patient MRN is required');
+      return;
+    }
+    
+    if (patientMrn.trim().length < 5) {
+      setError('Patient MRN must be at least 5 characters');
+      return;
+    }
+    
+    if (patientMrn.trim().length > 20) {
+      setError('Patient MRN must be at most 20 characters');
       return;
     }
     
@@ -87,17 +101,25 @@ export const CreateEncounterPage: React.FC = () => {
       return;
     }
     
+    if (transcriptText.trim().length < 50) {
+      setError('Transcript must be at least 50 characters');
+      return;
+    }
+    
+    // Map encounter type to backend format
+    const encounterTypeMap: Record<string, CreateEncounterRequest['encounter_type']> = {
+      'office_visit': 'office_visit',
+      'follow_up': 'follow_up',
+      'annual_physical': 'office_visit',
+      'urgent_care': 'urgent_care',
+      'telehealth': 'telehealth',
+      'procedure': 'office_visit',
+    };
+    
     const request: CreateEncounterRequest = {
-      patient_info: {
-        first_name: patientFirstName,
-        last_name: patientLastName,
-        date_of_birth: patientDob || undefined,
-        mrn: patientMrn || undefined,
-        gender: patientGender || undefined,
-      },
-      encounter_type: encounterType,
-      chief_complaint: chiefComplaint || undefined,
-      transcript_text: transcriptText,
+      patient_mrn: patientMrn.trim(),
+      encounter_type: encounterTypeMap[encounterType] || 'office_visit',
+      transcript: transcriptText.trim(),
     };
     
     createMutation.mutate(request);
@@ -175,7 +197,7 @@ export const CreateEncounterPage: React.FC = () => {
             
             <div>
               <label htmlFor="mrn" className="block text-sm font-medium text-gray-700 mb-1">
-                Medical Record Number (MRN)
+                Medical Record Number (MRN) <span className="text-red-500">*</span>
               </label>
               <input
                 id="mrn"
@@ -185,6 +207,7 @@ export const CreateEncounterPage: React.FC = () => {
                 className="input-field"
                 placeholder="MRN-12345"
                 disabled={isSubmitting}
+                required
               />
             </div>
             

@@ -43,8 +43,15 @@ export const LoginPage: React.FC = () => {
       login(data.access_token, data.refresh_token, user);
       navigate(from, { replace: true });
     },
-    onError: (err: Error & { response?: { data?: { detail?: string } } }) => {
-      const message = err.response?.data?.detail || 'Invalid email or password';
+    onError: (err: Error & { response?: { data?: { detail?: string | Array<{msg: string}> } } }) => {
+      const detail = err.response?.data?.detail;
+      let message = 'Invalid email or password';
+      if (typeof detail === 'string') {
+        message = detail;
+      } else if (Array.isArray(detail) && detail.length > 0) {
+        // Handle Pydantic validation errors
+        message = detail.map(e => e.msg).join(', ');
+      }
       setError(message);
     },
   });

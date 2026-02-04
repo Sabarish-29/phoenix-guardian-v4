@@ -60,9 +60,15 @@ export const SOAPGeneratorPage: React.FC = () => {
     const startTime = Date.now();
 
     try {
+      // Convert vitals to Record<string, string> format
+      const vitalsRecord: Record<string, string> = {};
+      Object.entries(formData.vitals).forEach(([key, value]) => {
+        if (value) vitalsRecord[key] = value;
+      });
+
       const request: SOAPRequest = {
         chief_complaint: formData.chief_complaint,
-        vitals: formData.vitals,
+        vitals: vitalsRecord,
         symptoms: formData.symptoms.split(',').map(s => s.trim()).filter(Boolean),
         exam_findings: formData.exam_findings
       };
@@ -73,7 +79,18 @@ export const SOAPGeneratorPage: React.FC = () => {
       setIcdCodes(response.icd_codes || []);
       setGenerationTime((Date.now() - startTime) / 1000);
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || err.message || 'Failed to generate SOAP note';
+      const detail = err.response?.data?.detail;
+      let errorMessage = 'Failed to generate SOAP note';
+      
+      if (typeof detail === 'string') {
+        errorMessage = detail;
+      } else if (Array.isArray(detail) && detail.length > 0) {
+        // Handle Pydantic validation errors (objects with {type, loc, msg, input})
+        errorMessage = detail.map((e: any) => e.msg || String(e)).join(', ');
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
       setError(errorMessage);
       console.error('SOAP generation error:', err);
     } finally {
