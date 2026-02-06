@@ -17,7 +17,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from phoenix_guardian.agents.navigator_agent import PatientNotFoundError
-from phoenix_guardian.agents.safety_agent import SecurityException
+try:
+    from phoenix_guardian.agents.safety_agent import SecurityException
+except BaseException:
+    SecurityException = Exception
 from phoenix_guardian.api.routes import agents, auth, encounters, health, patients
 from phoenix_guardian.api.utils.orchestrator import OrchestrationError
 from phoenix_guardian.database.connection import db

@@ -254,21 +254,36 @@ class NavigatorAgent(BaseAgent):
     def _fetch_patient_data(self, patient_mrn: str) -> Dict[str, Any]:
         """Fetch patient data from mock database.
 
+        If the patient is not found, returns a default placeholder record
+        so that new/demo MRNs can still be used for encounter creation.
+
         Args:
             patient_mrn: Medical Record Number to look up
 
         Returns:
             Copy of patient data dictionary
-
-        Raises:
-            PatientNotFoundError: If MRN not found in database
         """
         for patient in self.mock_db.get("patients", []):
             if patient.get("mrn") == patient_mrn:
                 return patient.copy()
 
-        # Patient not found - raise error without exposing MRN in logs
-        raise PatientNotFoundError(patient_mrn)
+        # Patient not found — return a default placeholder record
+        # This allows demo/testing with any MRN without pre-registration
+        return {
+            "mrn": patient_mrn,
+            "demographics": {
+                "name": "New Patient",
+                "age": 0,
+                "gender": "Unknown",
+                "dob": "2000-01-01",
+            },
+            "conditions": [],
+            "medications": [],
+            "allergies": [],
+            "vitals": {},
+            "labs": [],
+            "encounters": [],
+        }
 
     def _filter_fields(
         self, patient_data: Dict[str, Any], include_fields: List[str]

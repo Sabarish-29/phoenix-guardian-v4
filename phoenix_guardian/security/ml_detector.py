@@ -38,31 +38,41 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import structlog
 
-# Conditional imports for ML components
-try:
-    import torch
-    from transformers import RobertaModel, RobertaTokenizer
-    TRANSFORMERS_AVAILABLE = True
-except ImportError:
-    TRANSFORMERS_AVAILABLE = False
-    torch = None
-    RobertaModel = None
-    RobertaTokenizer = None
+# ML components are imported lazily to avoid slow/hanging imports at module load time
+TRANSFORMERS_AVAILABLE = False
+torch = None
+RobertaModel = None
+RobertaTokenizer = None
 
-try:
-    from sklearn.ensemble import RandomForestClassifier
-    from sklearn.model_selection import train_test_split
-    from sklearn.metrics import (
-        accuracy_score,
-        precision_score,
-        recall_score,
-        f1_score,
-        classification_report,
-    )
-    SKLEARN_AVAILABLE = True
-except ImportError:
-    SKLEARN_AVAILABLE = False
-    RandomForestClassifier = None
+SKLEARN_AVAILABLE = False
+RandomForestClassifier = None
+
+def _try_import_transformers():
+    """Lazy import of transformers/torch — only called when actually needed."""
+    global TRANSFORMERS_AVAILABLE, torch, RobertaModel, RobertaTokenizer
+    if TRANSFORMERS_AVAILABLE:
+        return
+    try:
+        import torch as _torch
+        from transformers import RobertaModel as _RM, RobertaTokenizer as _RT
+        torch = _torch
+        RobertaModel = _RM
+        RobertaTokenizer = _RT
+        TRANSFORMERS_AVAILABLE = True
+    except BaseException:
+        TRANSFORMERS_AVAILABLE = False
+
+def _try_import_sklearn():
+    """Lazy import of sklearn — only called when actually needed."""
+    global SKLEARN_AVAILABLE, RandomForestClassifier
+    if SKLEARN_AVAILABLE:
+        return
+    try:
+        from sklearn.ensemble import RandomForestClassifier as _RFC
+        RandomForestClassifier = _RFC
+        SKLEARN_AVAILABLE = True
+    except BaseException:
+        SKLEARN_AVAILABLE = False
 
 logger = structlog.get_logger(__name__)
 

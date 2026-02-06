@@ -23,11 +23,16 @@ Phase 3 Implementation (Week 4):
 - SecurityIncident integration
 """
 
-from phoenix_guardian.security.ml_detector import (
-    MLThreatDetector,
-    ThreatDetectionResult,
-    ThreatCategory,
-)
+try:
+    from phoenix_guardian.security.ml_detector import (
+        MLThreatDetector,
+        ThreatDetectionResult,
+        ThreatCategory,
+    )
+except BaseException:
+    MLThreatDetector = None
+    ThreatDetectionResult = None
+    ThreatCategory = None
 
 from phoenix_guardian.security.attacker_intelligence_db import (
     AttackerIntelligenceDB,

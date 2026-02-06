@@ -333,7 +333,7 @@ export const encounterService = {
   /**
    * Approve SOAP note with physician signature.
    */
-  async approveSOAPNote(encounterId: number, data: ApproveSOAPNoteRequest): Promise<Encounter> {
+  async approveSOAPNote(encounterId: number | string, data: ApproveSOAPNoteRequest): Promise<Encounter> {
     const response = await apiClient.post<EncounterApiResponse>(
       `/encounters/${encounterId}/approve`,
       data
@@ -344,7 +344,7 @@ export const encounterService = {
   /**
    * Reject SOAP note with reason.
    */
-  async rejectSOAPNote(encounterId: number, data: RejectSOAPNoteRequest): Promise<Encounter> {
+  async rejectSOAPNote(encounterId: number | string, data: RejectSOAPNoteRequest): Promise<Encounter> {
     const response = await apiClient.post<EncounterApiResponse>(
       `/encounters/${encounterId}/reject`,
       data

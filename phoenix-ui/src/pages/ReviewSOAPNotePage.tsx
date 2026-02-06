@@ -150,9 +150,9 @@ export const ReviewSOAPNotePage: React.FC = () => {
     },
   });
   
-  // Approve mutation
+  // Approve mutation — use uuid (string encounter ID) for in-memory encounters
   const approveMutation = useMutation({
-    mutationFn: (data: { encounterId: number; signature: string }) =>
+    mutationFn: (data: { encounterId: number | string; signature: string }) =>
       encounterService.approveSOAPNote(data.encounterId, { signature: data.signature }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['encounter', uuid] });
@@ -160,9 +160,9 @@ export const ReviewSOAPNotePage: React.FC = () => {
     },
   });
   
-  // Reject mutation
+  // Reject mutation — use uuid (string encounter ID) for in-memory encounters
   const rejectMutation = useMutation({
-    mutationFn: (data: { encounterId: number; reason: string }) =>
+    mutationFn: (data: { encounterId: number | string; reason: string }) =>
       encounterService.rejectSOAPNote(data.encounterId, { reason: data.reason }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['encounter', uuid] });
@@ -215,14 +215,17 @@ export const ReviewSOAPNotePage: React.FC = () => {
     if (!signature.trim()) {
       return;
     }
-    approveMutation.mutate({ encounterId: encounter.id, signature });
+    // Use uuid for in-memory encounters (id=0), numeric id for DB encounters
+    const eid = encounter.id === 0 ? encounter.uuid : encounter.id;
+    approveMutation.mutate({ encounterId: eid, signature });
   };
   
   const handleReject = () => {
     if (!rejectReason.trim()) {
       return;
     }
-    rejectMutation.mutate({ encounterId: encounter.id, reason: rejectReason });
+    const eid = encounter.id === 0 ? encounter.uuid : encounter.id;
+    rejectMutation.mutate({ encounterId: eid, reason: rejectReason });
   };
   
   return (

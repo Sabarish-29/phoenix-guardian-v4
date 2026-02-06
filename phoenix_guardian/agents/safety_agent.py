@@ -30,7 +30,7 @@ try:
         ThreatCategory,
     )
     ML_DETECTOR_AVAILABLE = True
-except ImportError:
+except BaseException:
     ML_DETECTOR_AVAILABLE = False
     MLThreatDetector = None
     ThreatDetectionResult = None

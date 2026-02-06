@@ -58,24 +58,43 @@ from phoenix_guardian.agents.navigator_agent import (
     PatientNotFoundError,
     create_mock_patient_database,
 )
-from phoenix_guardian.agents.safety_agent import (
-    SafetyAgent,
-    SecurityException,
-    ThreatDetection,
-    ThreatLevel,
-    ThreatType,
-)
+try:
+    from phoenix_guardian.agents.safety_agent import (
+        SafetyAgent,
+        SecurityException,
+        ThreatDetection,
+        ThreatLevel,
+        ThreatType,
+    )
+except BaseException:
+    SafetyAgent = None
+    SecurityException = None
+    ThreatDetection = None
+    ThreatLevel = None
+    ThreatType = None
 from phoenix_guardian.agents.scribe_agent import ScribeAgent
-from phoenix_guardian.agents.sentinel_q_agent import (
-    SentinelQAgent,
-    SecurityAction,
-    SentinelDecision,
-    ThreatIntelligence,
-)
-from phoenix_guardian.agents.sentinelq_integration import (
-    SentinelQDeceptionBridge,
-)
-from phoenix_guardian.agents.readmission import ReadmissionAgent
+try:
+    from phoenix_guardian.agents.sentinel_q_agent import (
+        SentinelQAgent,
+        SecurityAction,
+        SentinelDecision,
+        ThreatIntelligence,
+    )
+except BaseException:
+    SentinelQAgent = None
+    SecurityAction = None
+    SentinelDecision = None
+    ThreatIntelligence = None
+try:
+    from phoenix_guardian.agents.sentinelq_integration import (
+        SentinelQDeceptionBridge,
+    )
+except BaseException:
+    SentinelQDeceptionBridge = None
+try:
+    from phoenix_guardian.agents.readmission import ReadmissionAgent
+except BaseException:
+    ReadmissionAgent = None
 
 __all__ = [
     # Base

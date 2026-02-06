@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
+from fastapi import Query as QueryParam
 
 from phoenix_guardian.agents.navigator_agent import PatientNotFoundError
 from phoenix_guardian.api.auth.utils import (
@@ -178,21 +179,26 @@ async def create_encounter(
         ip_address = request.client.host if request.client else None
         
         # Log PHI access for HIPAA compliance
-        AuditLog.log_action(
-            session=db,
-            action=AuditAction.PHI_ACCESSED,
-            user_id=current_user.id,
-            user_email=current_user.email,
-            resource_type="encounter",
-            resource_id=encounter_id,
-            ip_address=ip_address,
-            success=True,
-            description=f"Created encounter for patient {encounter.patient_mrn}",
-            metadata={
-                "patient_mrn": encounter.patient_mrn,
-                "encounter_type": encounter.encounter_type.value
-            }
-        )
+        try:
+            AuditLog.log_action(
+                session=db,
+                action=AuditAction.PHI_ACCESSED,
+                user_id=current_user.id,
+                user_email=current_user.email,
+                resource_type="encounter",
+                resource_id=None,
+                ip_address=ip_address,
+                success=True,
+                description=f"Created encounter for patient {encounter.patient_mrn}",
+                metadata={
+                    "patient_mrn": encounter.patient_mrn,
+                    "encounter_type": encounter.encounter_type.value,
+                    "encounter_id": encounter_id,
+                }
+            )
+        except Exception:
+            # Don't let audit logging failure prevent encounter creation
+            db.rollback()
 
         # Build response
         response = SOAPNoteResponse(
@@ -223,19 +229,21 @@ async def create_encounter(
         ) from e
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred while processing the encounter",
         ) from e
 
 
-@router.get("/{encounter_id}", response_model=SOAPNoteResponse)
+@router.get("/{encounter_id}")
 async def get_encounter(
     request: Request,
     encounter_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
-) -> SOAPNoteResponse:
+) -> Dict[str, Any]:
     """
     Retrieve an encounter by ID.
     
@@ -264,51 +272,233 @@ async def get_encounter(
     # Get client info for audit log
     ip_address = request.client.host if request.client else None
     
-    # Log PHI access
-    AuditLog.log_action(
-        session=db,
-        action=AuditAction.PHI_ACCESSED,
-        user_id=current_user.id,
-        user_email=current_user.email,
-        resource_type="encounter",
-        resource_id=encounter_id,
-        ip_address=ip_address,
-        success=True,
-        description=f"Viewed encounter {encounter_id}",
-        metadata={"patient_mrn": encounter.get("patient_mrn")}
-    )
+    # Log PHI access (don't let audit failure break the endpoint)
+    try:
+        AuditLog.log_action(
+            session=db,
+            action=AuditAction.PHI_ACCESSED,
+            user_id=current_user.id,
+            user_email=current_user.email,
+            resource_type="encounter",
+            resource_id=None,
+            ip_address=ip_address,
+            success=True,
+            description=f"Viewed encounter {encounter_id}",
+            metadata={"patient_mrn": encounter.get("patient_mrn"), "encounter_id": encounter_id}
+        )
+    except Exception:
+        db.rollback()
 
-    return SOAPNoteResponse(
-        encounter_id=encounter["encounter_id"],
-        patient_mrn=encounter["patient_mrn"],
-        soap_note=encounter["soap_note"],
-        sections=encounter["sections"],
-        reasoning=encounter["reasoning"],
-        model_used=encounter["model_used"],
-        token_count=encounter["token_count"],
-        execution_time_ms=encounter["execution_metrics"]["total_time_ms"],
-        created_at=encounter["created_at"],
-        status=encounter["status"],
-    )
+    # Return in the format the frontend expects (EncounterApiResponse shape)
+    sections = encounter.get("sections", {})
+    # Map status: backend uses 'pending_review', frontend expects 'awaiting_review'
+    raw_status = encounter.get("status", "pending_review")
+    fe_status = "awaiting_review" if raw_status == "pending_review" else raw_status
+    return {
+        "id": 0,
+        "uuid": encounter_id,
+        "status": fe_status,
+        "patient_first_name": None,
+        "patient_last_name": None,
+        "patient_dob": None,
+        "patient_mrn": encounter.get("patient_mrn"),
+        "encounter_type": encounter.get("encounter_type", "office_visit"),
+        "chief_complaint": None,
+        "transcript_text": None,
+        "soap_note": sections if sections else None,
+        "ai_confidence_score": None,
+        "safety_flags": [],
+        "icd_codes": [],
+        "cpt_codes": [],
+        "physician_edits": None,
+        "physician_signature": None,
+        "signed_at": None,
+        "created_at": encounter.get("created_at", ""),
+        "updated_at": None,
+        "created_by_id": current_user.id,
+        "assigned_physician_id": None,
+    }
+
+
+@router.post("/{encounter_id}/approve")
+async def approve_encounter(
+    encounter_id: str,
+    request: Request,
+    current_user: User = Depends(require_physician),
+) -> Dict[str, Any]:
+    """
+    Approve and sign a SOAP note.
+    
+    **Requires:** PHYSICIAN role
+    """
+    encounter = ENCOUNTERS_DB.get(encounter_id)
+    if not encounter:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Encounter '{encounter_id}' not found",
+        )
+    
+    # Parse request body
+    body = await request.json()
+    signature = body.get("signature", "")
+    
+    # Update encounter status
+    encounter["status"] = "approved"
+    encounter["physician_signature"] = signature
+    encounter["signed_at"] = datetime.now(timezone.utc).isoformat()
+    ENCOUNTERS_DB[encounter_id] = encounter
+    
+    sections = encounter.get("sections", {})
+    return {
+        "id": 0,
+        "uuid": encounter_id,
+        "status": "approved",
+        "patient_first_name": None,
+        "patient_last_name": None,
+        "patient_dob": None,
+        "patient_mrn": encounter.get("patient_mrn"),
+        "encounter_type": encounter.get("encounter_type", "office_visit"),
+        "chief_complaint": None,
+        "transcript_text": None,
+        "soap_note": sections if sections else None,
+        "ai_confidence_score": None,
+        "safety_flags": [],
+        "icd_codes": [],
+        "cpt_codes": [],
+        "physician_edits": None,
+        "physician_signature": signature,
+        "signed_at": encounter["signed_at"],
+        "created_at": encounter.get("created_at", ""),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "created_by_id": current_user.id,
+        "assigned_physician_id": None,
+    }
+
+
+@router.post("/{encounter_id}/reject")
+async def reject_encounter(
+    encounter_id: str,
+    request: Request,
+    current_user: User = Depends(require_physician),
+) -> Dict[str, Any]:
+    """
+    Reject a SOAP note.
+    
+    **Requires:** PHYSICIAN role
+    """
+    encounter = ENCOUNTERS_DB.get(encounter_id)
+    if not encounter:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Encounter '{encounter_id}' not found",
+        )
+    
+    body = await request.json()
+    reason = body.get("reason", "")
+    
+    encounter["status"] = "rejected"
+    encounter["reject_reason"] = reason
+    ENCOUNTERS_DB[encounter_id] = encounter
+    
+    sections = encounter.get("sections", {})
+    return {
+        "id": 0,
+        "uuid": encounter_id,
+        "status": "rejected",
+        "patient_first_name": None,
+        "patient_last_name": None,
+        "patient_dob": None,
+        "patient_mrn": encounter.get("patient_mrn"),
+        "encounter_type": encounter.get("encounter_type", "office_visit"),
+        "chief_complaint": None,
+        "transcript_text": None,
+        "soap_note": sections if sections else None,
+        "ai_confidence_score": None,
+        "safety_flags": [],
+        "icd_codes": [],
+        "cpt_codes": [],
+        "physician_edits": None,
+        "physician_signature": None,
+        "signed_at": None,
+        "created_at": encounter.get("created_at", ""),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "created_by_id": current_user.id,
+        "assigned_physician_id": None,
+    }
 
 
 @router.get("")
 async def list_encounters(
+    page: int = 1,
+    page_size: int = 10,
+    status: Optional[str] = QueryParam(None, alias="status"),
     current_user: User = Depends(get_current_active_user)
 ) -> Dict[str, Any]:
     """
-    List all encounters.
+    List all encounters with pagination.
     
     **Requires:** Any authenticated user
     
-    Returns summary information (no PHI in list view).
+    **Query Parameters:**
+    - `page`: Page number (default: 1)
+    - `page_size`: Items per page (default: 10)
+    - `status`: Optional status filter (e.g. 'awaiting_review')
     
     **Returns:**
-    - Dictionary with list of encounter IDs and count
+    - Paginated list of encounters
     """
+    # Get all in-memory encounters as list
+    all_encounters = []
+    for eid, enc in ENCOUNTERS_DB.items():
+        sections = enc.get("sections", {})
+        raw_status = enc.get("status", "pending_review")
+        fe_status = "awaiting_review" if raw_status == "pending_review" else raw_status
+        
+        all_encounters.append({
+            "id": 0,
+            "uuid": eid,
+            "status": fe_status,
+            "patient_first_name": None,
+            "patient_last_name": None,
+            "patient_dob": None,
+            "patient_mrn": enc.get("patient_mrn"),
+            "encounter_type": enc.get("encounter_type", "office_visit"),
+            "chief_complaint": None,
+            "transcript_text": None,
+            "soap_note": sections if sections else None,
+            "ai_confidence_score": None,
+            "safety_flags": [],
+            "icd_codes": [],
+            "cpt_codes": [],
+            "physician_edits": None,
+            "physician_signature": enc.get("physician_signature"),
+            "signed_at": enc.get("signed_at"),
+            "created_at": enc.get("created_at", ""),
+            "updated_at": None,
+            "created_by_id": current_user.id,
+            "assigned_physician_id": None,
+        })
+    
+    # Apply status filter if provided
+    if status:
+        all_encounters = [e for e in all_encounters if e["status"] == status]
+    
+    # Sort by created_at descending
+    all_encounters.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+    
+    # Paginate
+    total = len(all_encounters)
+    start = (page - 1) * page_size
+    end = start + page_size
+    items = all_encounters[start:end]
+    pages = max(1, (total + page_size - 1) // page_size)
+    
     return {
-        "count": len(ENCOUNTERS_DB),
-        "encounters": list(ENCOUNTERS_DB.keys()),
+        "items": items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "pages": pages,
     }
 
 

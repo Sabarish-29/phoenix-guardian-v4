@@ -120,7 +120,7 @@ class EncounterRequest(BaseModel):
         max_length=10000,
         description="Encounter transcript",
     )
-    provider_id: str = Field(..., description="Physician/provider ID")
+    provider_id: Optional[str] = Field(None, description="Physician/provider ID (defaults to current user)")
 
     @field_validator("transcript")
     @classmethod
