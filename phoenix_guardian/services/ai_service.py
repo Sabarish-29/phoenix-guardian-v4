@@ -1,8 +1,8 @@
 """Unified AI Service for Phoenix Guardian.
 
 Provides a single interface for AI/LLM interactions with automatic failover:
-    1. Groq Cloud API (primary) - Free tier, Llama 3.1 70B, ~8x faster
-    2. Ollama (local fallback) - Llama 3.1 8B / Meditron 7B for offline use
+    1. Groq Cloud API (primary) - Free tier, Llama 3.3 70B, ~8x faster
+    2. Ollama (local fallback) - Llama 3.2 1B for offline use (CPU-friendly)
 
 All 10 AI agents route through this service instead of calling Anthropic directly.
 """
@@ -41,7 +41,7 @@ class UnifiedAIService:
 
     # Ollama configuration
     OLLAMA_DEFAULT_URL = "http://localhost:11434"
-    OLLAMA_DEFAULT_MODEL = "llama3.1:8b"
+    OLLAMA_DEFAULT_MODEL = "llama3.2:1b"
     OLLAMA_TIMEOUT = 60.0
 
     def __init__(
@@ -282,6 +282,8 @@ class UnifiedAIService:
             "options": {
                 "temperature": temperature,
                 "num_predict": max_tokens,
+                "num_gpu": 0,
+                "num_ctx": 512,
             },
         }
 
