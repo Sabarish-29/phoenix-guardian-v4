@@ -1,76 +1,73 @@
 """Base Agent Architecture for Phoenix Guardian AI Agents.
 
 This module provides the foundational abstract class for all Phoenix Guardian
-AI agents powered by Claude Sonnet 4.
+AI agents powered by the Unified AI Service (Groq + Ollama failover).
 """
 
 from abc import ABC, abstractmethod
-from anthropic import Anthropic
-import os
 from typing import Dict, Any
+
+from phoenix_guardian.services.ai_service import get_ai_service
 
 
 class BaseAgent(ABC):
     """Base class for all AI agents.
-    
-    Provides common functionality for Claude API interaction and establishes
-    the contract that all agents must implement.
-    
+
+    Provides common functionality for AI/LLM interaction via the Unified AI
+    Service (Groq primary + Ollama local fallback) and establishes the
+    contract that all agents must implement.
+
     Attributes:
-        client: Anthropic API client instance
-        model: Claude model identifier
+        ai: UnifiedAIService instance (shared singleton)
         max_tokens: Maximum tokens for API response
     """
-    
+
     def __init__(self):
-        """Initialize the base agent with Claude API client.
-        
-        Raises:
-            ValueError: If ANTHROPIC_API_KEY environment variable not set
-        """
-        api_key = os.getenv("ANTHROPIC_API_KEY")
-        if not api_key:
-            raise ValueError("ANTHROPIC_API_KEY environment variable not set")
-        self.client = Anthropic(api_key=api_key)
-        self.model = "claude-sonnet-4-20250514"
+        """Initialize the base agent with the Unified AI service."""
+        self.ai = get_ai_service()
         self.max_tokens = 4000
-    
+
     @abstractmethod
     async def process(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """Process input and return result.
-        
+
         Args:
             input_data: Dictionary with agent-specific input data
-            
+
         Returns:
             Dictionary with agent-specific output data
         """
         pass
-    
+
     async def _call_claude(self, prompt: str, system: str = "") -> str:
-        """Call Claude API with error handling.
-        
+        """Call AI service with error handling.
+
+        Maintained as ``_call_claude`` for backward compatibility — all child
+        agents call this method by name.  Internally delegates to the
+        UnifiedAIService (Groq → Ollama failover).
+
         Args:
-            prompt: User prompt to send to Claude
+            prompt: User prompt to send to the AI model
             system: Optional system prompt
-            
+
         Returns:
-            Claude's response text
-            
+            The model's response text
+
         Raises:
-            RuntimeError: If API call fails
+            RuntimeError: If all AI providers fail
         """
         try:
-            message_params = {
-                "model": self.model,
-                "max_tokens": self.max_tokens,
-                "messages": [{"role": "user", "content": prompt}]
-            }
-            
-            if system:
-                message_params["system"] = system
-            
-            response = self.client.messages.create(**message_params)
-            return response.content[0].text
+            # Auto-detect JSON mode: only use if the prompt mentions JSON
+            fmt = None
+            combined = (prompt + system).lower()
+            if "json" in combined:
+                fmt = "json"
+
+            return await self.ai.chat(
+                prompt=prompt,
+                system=system,
+                max_tokens=self.max_tokens,
+                response_format=fmt,
+            )
         except Exception as e:
-            raise RuntimeError(f"Claude API error: {e}")
+            raise RuntimeError(f"AI service error: {e}")

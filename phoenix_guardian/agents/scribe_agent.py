@@ -1,8 +1,9 @@
-"""ScribeAgent - Medical SOAP Note Generation using Claude API.
+"""ScribeAgent - Medical SOAP Note Generation using Unified AI Service.
 
 This module implements the ScribeAgent, the primary documentation component
 of Phoenix Guardian. It generates structured clinical SOAP notes from
-physician-patient encounter transcripts using Claude Sonnet 4.5.
+physician-patient encounter transcripts using the Unified AI Service
+(Groq primary + Ollama local fallback).
 
 The agent is designed with:
 - HIPAA-compliant error handling (no PHI leakage)
@@ -17,28 +18,27 @@ Classes:
 import os
 from typing import Any, Dict, List, Optional
 
-from anthropic import Anthropic, APIError, RateLimitError
-
 from phoenix_guardian.agents.base_agent import BaseAgent
+from phoenix_guardian.services.ai_service import get_ai_service, UnifiedAIService
 
 
 class ScribeAgent(BaseAgent):
     """Generates structured SOAP notes from encounter transcripts.
 
-    Uses Claude Sonnet 4.5 for medical documentation generation with:
+    Uses the Unified AI Service (Groq → Ollama failover) for medical
+    documentation generation with:
     - Specialized medical prompting
     - Clinical accuracy validation
     - Transparent reasoning trails
     - HIPAA-compliant error handling
 
     Attributes:
-        client: Anthropic API client instance
-        model: Claude model identifier (default: claude-sonnet-4-20250514)
+        ai: UnifiedAIService instance
         max_tokens: Maximum tokens for generation (default: 2000)
         temperature: Sampling temperature for consistency (default: 0.3)
 
     Example:
-        >>> agent = ScribeAgent(api_key="your-api-key")
+        >>> agent = ScribeAgent()
         >>> context = {
         ...     'transcript': 'Patient presents with...',
         ...     'patient_history': {'age': 45, 'conditions': ['HTN']}
@@ -55,35 +55,22 @@ class ScribeAgent(BaseAgent):
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = "claude-sonnet-4-20250514",
+        model: str = "llama-3.3-70b-versatile",
         max_tokens: int = 2000,
         temperature: float = 0.3,
     ) -> None:
-        """Initialize ScribeAgent with Claude API configuration.
+        """Initialize ScribeAgent with Unified AI Service.
 
         Args:
-            api_key: Anthropic API key. If not provided, uses
-                     ANTHROPIC_API_KEY environment variable.
-            model: Claude model identifier to use for generation.
+            api_key: Ignored (kept for backward compatibility).
+            model: Ignored (model controlled by UnifiedAIService config).
             max_tokens: Maximum tokens for API response.
             temperature: Sampling temperature (0.0-1.0). Lower values
                         produce more consistent outputs.
-
-        Raises:
-            ValueError: If API key is not provided and not in environment.
         """
         super().__init__(name="Scribe")
 
-        # Validate and set API key
-        resolved_api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
-        if not resolved_api_key:
-            raise ValueError(
-                "Anthropic API key required. Set ANTHROPIC_API_KEY "
-                "environment variable or pass api_key parameter."
-            )
-
-        self.client = Anthropic(api_key=resolved_api_key)
-        self.model = model
+        self.ai: UnifiedAIService = get_ai_service()
         self.max_tokens = max_tokens
         self.temperature = temperature
 
@@ -138,15 +125,18 @@ class ScribeAgent(BaseAgent):
         # Step 3: Build medical prompt
         prompt = self._build_prompt(transcript, patient_history)
 
-        # Step 4: Call Claude API with error handling
+        # Step 4: Call AI service with error handling
         try:
-            response = self._call_claude_api(prompt)
-        except (APIError, RateLimitError) as exc:
+            soap_note = await self.ai.chat(
+                prompt=prompt,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
+            )
+        except Exception as exc:
             # HIPAA: Never log transcript or patient data in errors
-            raise RuntimeError(f"Claude API unavailable: {type(exc).__name__}") from exc
+            raise RuntimeError(f"AI service unavailable: {type(exc).__name__}") from exc
 
         # Step 5: Parse response
-        soap_note = response.content[0].text
         sections = self._parse_soap_sections(soap_note)
         reasoning = self._extract_reasoning(soap_note)
 
@@ -156,10 +146,7 @@ class ScribeAgent(BaseAgent):
         return {
             "data": {
                 "soap_note": soap_note,
-                "model_used": self.model,
-                "token_count": (
-                    response.usage.input_tokens + response.usage.output_tokens
-                ),
+                "model_used": self.ai.groq_model,
                 "sections": sections,
             },
             "reasoning": reasoning,
@@ -222,27 +209,28 @@ class ScribeAgent(BaseAgent):
                     f"patient_history must be dict, got {type(history).__name__}"
                 )
 
-    def _call_claude_api(self, prompt: str) -> Any:
-        """Call Claude API for SOAP note generation.
+    def _call_claude_api(self, prompt: str) -> str:
+        """Call AI service for SOAP note generation (sync wrapper).
 
-        Uses synchronous client call wrapped in the async execute method.
-        Future enhancement: Add exponential backoff retry logic.
+        Kept for backward compatibility. Prefer using ``self.ai.chat()``
+        directly in async contexts.
 
         Args:
             prompt: Formatted medical scribe prompt
 
         Returns:
-            Claude API response object with content and usage
+            AI response text
 
         Raises:
-            APIError: If API call fails
-            RateLimitError: If rate limit exceeded
+            RuntimeError: If AI service call fails
         """
-        return self.client.messages.create(
-            model=self.model,
-            max_tokens=self.max_tokens,
-            temperature=self.temperature,
-            messages=[{"role": "user", "content": prompt}],
+        import asyncio
+        return asyncio.get_event_loop().run_until_complete(
+            self.ai.chat(
+                prompt=prompt,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
+            )
         )
 
     def _build_prompt(self, transcript: str, patient_history: Dict[str, Any]) -> str:

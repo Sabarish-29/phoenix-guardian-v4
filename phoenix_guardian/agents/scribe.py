@@ -54,7 +54,7 @@ Keep notes concise, professional, and medically accurate. Include relevant ICD-1
             "soap_note": soap_note,
             "icd_codes": icd_codes,
             "agent": "ScribeAgent",
-            "model": self.model
+            "model": self.ai.groq_model
         }
     
     def _build_prompt(self, data: Dict[str, Any]) -> str:

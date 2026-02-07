@@ -3,9 +3,12 @@
 # All versions pinned for reproducible builds
 
 # =============================================================================
-# Core AI/ML - Anthropic Claude ONLY (Never OpenAI)
+# Core AI/ML - Groq (primary) + Ollama (local fallback)
 # =============================================================================
+# Anthropic kept as optional dependency for backward compat
 anthropic==0.34.0
+# Groq uses OpenAI-compatible REST API via httpx (already included below)
+# Ollama uses REST API via httpx (no extra package needed)
 
 # =============================================================================
 # FastAPI Framework
