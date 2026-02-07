@@ -193,6 +193,35 @@ async def api_list_transcriptions(limit: int = 50) -> Dict[str, Any]:
     }
 
 
+@router.get("/providers", status_code=status.HTTP_200_OK)
+async def list_providers():
+    """
+    List available ASR providers and their status.
+
+    Returns which providers are installed and configured.
+    """
+    try:
+        from phoenix_guardian.services.voice_transcription import (
+            MultiProviderTranscriptionService,
+        )
+
+        service = MultiProviderTranscriptionService()
+        providers = service.get_available_providers()
+        return {
+            "status": "success",
+            "providers": [
+                {
+                    "provider": p["provider"].value,
+                    "available": p["available"],
+                    "description": p["description"],
+                }
+                for p in providers
+            ],
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/{transcription_id}", status_code=status.HTTP_200_OK)
 async def api_get_transcription(transcription_id: str) -> Dict[str, Any]:
     """Retrieve a stored transcription result by ID."""
@@ -271,32 +300,3 @@ async def upload_and_transcribe(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Configuration failed: {str(e)}")
-
-
-@router.get("/providers", status_code=status.HTTP_200_OK)
-async def list_providers():
-    """
-    List available ASR providers and their status.
-
-    Returns which providers are installed and configured.
-    """
-    try:
-        from phoenix_guardian.services.voice_transcription import (
-            MultiProviderTranscriptionService,
-        )
-
-        service = MultiProviderTranscriptionService()
-        providers = service.get_available_providers()
-        return {
-            "status": "success",
-            "providers": [
-                {
-                    "provider": p["provider"].value,
-                    "available": p["available"],
-                    "description": p["description"],
-                }
-                for p in providers
-            ],
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))

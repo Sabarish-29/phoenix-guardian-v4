@@ -101,18 +101,19 @@ async def encrypt_data(
     """
     try:
         from phoenix_guardian.security.pqc_encryption import (
-            encrypt_string,
+            encrypt_string, HybridPQCEncryption,
         )
         import json
         from datetime import datetime, timezone
 
-        encrypted = encrypt_string(request.plaintext)
+        encryptor = HybridPQCEncryption()
+        encrypted = encrypt_string(request.plaintext, encryptor)
 
         return EncryptResponse(
-            algorithm="Kyber1024-AES256GCM",
-            key_id=encrypted.metadata.get("key_id", "unknown"),
-            key_version=encrypted.metadata.get("key_version", 1),
-            ciphertext_b64=encrypted.to_base64(),
+            algorithm=encrypted.get("algorithm", "Kyber1024-AES256GCM"),
+            key_id=encrypted.get("metadata", {}).get("key_id", "unknown"),
+            key_version=encrypted.get("metadata", {}).get("key_version", 1),
+            ciphertext_b64=encrypted.get("ciphertext", ""),
             encrypted_at=datetime.now(timezone.utc).isoformat(),
         )
     except Exception as e:
