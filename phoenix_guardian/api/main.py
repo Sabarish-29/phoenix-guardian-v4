@@ -25,6 +25,7 @@ from phoenix_guardian.api.routes import agents, auth, encounters, health, patien
 from phoenix_guardian.api.routes import pqc as pqc_routes
 from phoenix_guardian.api.routes import learning as learning_routes
 from phoenix_guardian.api.routes import orchestration as orchestration_routes
+from phoenix_guardian.api.routes import security_console as security_console_routes
 from phoenix_guardian.api.utils.orchestrator import OrchestrationError
 from phoenix_guardian.database.connection import db
 
@@ -197,6 +198,12 @@ app.include_router(
     orchestration_routes.router,
     prefix="/api/v1",
     tags=["agent-orchestration"],
+)
+
+app.include_router(
+    security_console_routes.router,
+    prefix="/api/v1",
+    tags=["security-console"],
 )
 
 

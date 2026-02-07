@@ -76,6 +76,15 @@ export const Header: React.FC = () => {
                 Audit Logs
               </Link>
             )}
+
+            {user?.role === 'admin' && (
+              <Link
+                to="/admin/security"
+                className="text-red-600 hover:text-red-500 font-medium transition-colors"
+              >
+                🛡️ Security
+              </Link>
+            )}
           </nav>
           
           {/* User menu */}

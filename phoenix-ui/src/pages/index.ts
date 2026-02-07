@@ -10,3 +10,4 @@ export { EncountersListPage } from './EncountersListPage';
 export { SOAPGeneratorPage } from './SOAPGeneratorPage';
 export { UnauthorizedPage } from './UnauthorizedPage';
 export { NotFoundPage } from './NotFoundPage';
+export { AdminSecurityConsolePage } from './AdminSecurityConsolePage';

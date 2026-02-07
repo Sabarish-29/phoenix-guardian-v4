@@ -25,6 +25,7 @@ import {
   SOAPGeneratorPage,
   UnauthorizedPage,
   NotFoundPage,
+  AdminSecurityConsolePage,
 } from './pages';
 
 // Store
@@ -164,6 +165,16 @@ const App: React.FC = () => {
                 }
               />
               
+              {/* Admin Security Console - admin only */}
+              <Route
+                path="/admin/security"
+                element={
+                  <ProtectedRoute requiredRoles={['admin']}>
+                    <AdminSecurityConsolePage />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* Audit logs - auditors and admins only */}
               <Route
                 path="/audit"
