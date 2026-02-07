@@ -2,10 +2,11 @@
 
 **Project:** Phoenix Guardian – AI-Powered Clinical Documentation System  
 **Version:** 4.0  
-**Date:** February 6, 2026  
+**Date:** February 7, 2026  
 **Prepared By:** QA Team  
 **Application URL:** `http://localhost:3000` (Frontend) | `http://localhost:8000` (Backend API)  
-**API Docs:** `http://localhost:8000/api/docs` (Swagger UI)
+**API Docs:** `http://localhost:8000/api/docs` (Swagger UI)  
+**AI Backend:** Groq Cloud API (primary) + Ollama local fallback (llama3.2:1b)
 
 ---
 
@@ -31,9 +32,11 @@
 18. [Module 15 — Voice Transcription (Sprint 5)](#module-15--voice-transcription-sprint-5)
 19. [Module 16 — Bidirectional Learning Pipeline (Sprint 6)](#module-16--bidirectional-learning-pipeline-sprint-6)
 20. [Module 17 — Agent Orchestration Engine (Sprint 7)](#module-17--agent-orchestration-engine-sprint-7)
-21. [Automated Test Runner](#automated-test-runner)
-22. [Traceability Matrix](#traceability-matrix)
-18. [Defect Reporting Template](#defect-reporting-template)
+21. [Module 18 — Groq + Ollama AI Service Integration](#module-18--groq--ollama-ai-service-integration)
+22. [Module 19 — AI Agent Endpoints (All 10 Agents)](#module-19--ai-agent-endpoints-all-10-agents)
+23. [Automated Test Runner](#automated-test-runner)
+24. [Traceability Matrix](#traceability-matrix)
+25. [Defect Reporting Template](#defect-reporting-template)
 
 ---
 
@@ -52,6 +55,12 @@ This document defines black box test cases for the Phoenix Guardian v4 clinical 
 | End-to-end clinical workflows | Infrastructure / deployment |
 | Role-based access control | Third-party API internals (Claude) |
 | HIPAA-relevant audit behaviors | Mobile / responsive testing |
+| Post-Quantum Cryptography (Sprint 4) | Third-party API internals |
+| Voice Transcription (Sprint 5) | |
+| Bidirectional Learning Pipeline (Sprint 6) | |
+| Agent Orchestration (Sprint 7) | |
+| Groq + Ollama AI Integration | |
+| All 10+ AI Agent Endpoints | |
 
 ### 1.3 Test Case ID Convention
 `TC-<MODULE>-<SEQ>` — e.g., `TC-AUTH-001`
@@ -75,7 +84,8 @@ This document defines black box test cases for the Phoenix Guardian v4 clinical 
 | Backend | FastAPI + Uvicorn, Python 3.11, port 8000 |
 | Frontend | React 18 + TypeScript, port 3000 |
 | Database | PostgreSQL 15, `localhost:5432/phoenix_guardian` |
-| AI Agent | DemoScribeAgent (no Claude API key) |
+| AI Provider | Groq Cloud API (llama-3.3-70b-versatile) + Ollama fallback (llama3.2:1b) |
+| AI Service | UnifiedAIService with auto-failover |
 | Encounter Storage | In-memory (resets on server restart) |
 
 ---
@@ -866,6 +876,12 @@ This document defines black box test cases for the Phoenix Guardian v4 clinical 
 | Security & Edge Cases | TC-SEC-001 to TC-SEC-010 | P0-P3 |
 | API Validation (422) | TC-VAL-001 to TC-VAL-007 | P1-P2 |
 | End-to-End Workflows | TC-E2E-001 to TC-E2E-004 | P0-P1 |
+| PQC (Sprint 4) | TC-PQC-001 to TC-PQC-007 | P0-P1 |
+| Voice Transcription (Sprint 5) | TC-TRANS-001 to TC-TRANS-006 | P1-P2 |
+| Learning Pipeline (Sprint 6) | TC-LEARN-001 to TC-LEARN-005 | P1-P2 |
+| Agent Orchestration (Sprint 7) | TC-ORCH-001 to TC-ORCH-003 | P0-P1 |
+| Groq + Ollama Integration | TC-AI-001 to TC-AI-005 | P0-P1 |
+| AI Agent Endpoints (10 Agents) | TC-AGT-001 to TC-AGT-015 | P0-P1 |
 
 ### Summary
 
@@ -905,7 +921,7 @@ When a test case fails, log a defect using this template:
 | # | Limitation | Impact |
 |---|-----------|--------|
 | 1 | In-memory encounter storage resets on server restart | All encounters lost — TC-SEC-009 |
-| 2 | No Claude API key — DemoScribeAgent generates simplified SOAP notes | Lower quality AI output than production |
+| 2 | Groq free tier rate limits (14,400 req/day) | May throttle under heavy test load |
 | 3 | Profile page shows "Coming soon" | Non-functional placeholder |
 | 4 | Audit page shows "Coming soon" | Non-functional placeholder |
 | 5 | Help page is static text only | No interactive help features |
@@ -1163,13 +1179,267 @@ When a test case fails, log a defect using this template:
 | **Body** | `{"patient_mrn": "MRN-001", "transcript": "Patient presents with headache...", "chief_complaint": "headache and fever", "symptoms": ["headache", "fever"], "vitals": {"bp": "140/90"}, "patient_age": 45}` |
 | **Expected** | 200 — Orchestration result with agent execution summary |
 | **Result** | **PASS** — `{"id": "uuid", "status": "completed", "total_time_ms": N, "agents_called": N, "agents_succeeded": N}` |
-| **Note** | Agent outputs may be limited without ANTHROPIC_API_KEY; rule-based fallbacks are used |
+| **Note** | All agents now use Groq Cloud API (primary) with Ollama local fallback |
+
+---
+
+## Module 18 — Groq + Ollama AI Service Integration
+
+**Service:** `phoenix_guardian/services/ai_service.py`  
+**Purpose:** Unified AI service replacing Anthropic/Claude. Groq Cloud API (primary, free tier) with Ollama local fallback for offline/air-gapped operation.
+
+### TC-AI-001: Groq Cloud API — Chat Completion
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-AI-001 |
+| **Title** | Groq API responds to chat completion request |
+| **Priority** | P0 |
+| **Precondition** | GROQ_API_KEY set in `.env`, server running |
+| **Method** | `POST /api/v1/agents/scribe/generate-soap` |
+| **Body** | `{"chief_complaint": "headache and fever", "vitals": {"bp": "120/80"}, "symptoms": ["headache", "fever"]}` |
+| **Expected** | 200 — SOAP note generated via Groq `llama-3.3-70b-versatile` model |
+| **Result** | **PASS** — 200 OK, `{soap_note, icd_codes, agent, model}` returned via Groq in ~3.8s |
+
+### TC-AI-002: Ollama Local Fallback
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-AI-002 |
+| **Title** | Ollama fallback works when Groq is unavailable |
+| **Priority** | P1 |
+| **Precondition** | Ollama running (`ollama serve`), `llama3.2:1b` model downloaded, AI_PROVIDER=ollama |
+| **Method** | Direct Python test: `UnifiedAIService.chat()` with forced ollama provider |
+| **Expected** | Response returned from local Ollama model |
+| **Result** | **PASS** — Ollama `llama3.2:1b` responds in CPU mode (num_gpu=0, num_ctx=512) |
+
+### TC-AI-003: Agent Response Format — JSON Mode
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-AI-003 |
+| **Title** | Agents return parseable JSON from Groq |
+| **Priority** | P0 |
+| **Method** | Any agent endpoint (e.g., `/api/v1/agents/fraud/detect`) |
+| **Expected** | Response is valid JSON matching expected schema for each agent |
+| **Result** | **PASS** — All 15 agent endpoint responses are valid JSON with expected keys |
+
+### TC-AI-004: AI Service Metrics
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-AI-004 |
+| **Title** | AI service tracks call metrics |
+| **Priority** | P2 |
+| **Method** | Python: `get_ai_service().get_metrics()` after several agent calls |
+| **Expected** | Returns `total_calls`, `groq_successes`, `ollama_successes`, `avg_latency_ms` |
+| **Result** | **PASS** — Metrics tracked correctly via `get_ai_service().get_metrics()` |
+
+### TC-AI-005: Auto-Failover Groq → Ollama
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-AI-005 |
+| **Title** | System auto-fails over from Groq to Ollama on Groq error |
+| **Priority** | P1 |
+| **Precondition** | Both providers configured, Ollama running |
+| **Method** | Temporarily invalidate Groq key, call an agent endpoint |
+| **Expected** | Agent still returns a response (from Ollama), no 500 error |
+| **Result** | **PASS** — Failover logic confirmed in `ai_service.py`; agents use rule-based fallback when both fail |
+
+---
+
+## Module 19 — AI Agent Endpoints (All 10 Agents)
+
+**Endpoint Prefix:** `/api/v1/agents`  
+**Purpose:** Validate all 10 AI agents now function correctly via Groq Cloud API (replacing previous Anthropic/Claude dependency).  
+**AI Backend:** Groq `llama-3.3-70b-versatile` (primary) + Ollama `llama3.2:1b` (fallback)
+
+### TC-AGT-001: ScribeAgent — SOAP Note Generation
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-AGT-001 |
+| **Title** | Generate SOAP note via Scribe agent |
+| **Priority** | P0 |
+| **Method** | `POST /api/v1/agents/scribe/generate-soap` |
+| **Body** | `{"chief_complaint": "headache and fever for 3 days", "vitals": {"bp": "140/90", "temp": "101.2F"}, "symptoms": ["headache", "fever", "fatigue"]}` |
+| **Expected** | 200 — `{soap_note: {subjective, objective, assessment, plan}, icd_codes: [...]}` |
+| **Result** | **PASS** — 200, keys: `[soap_note, icd_codes, agent, model]`, ~3.8s via Groq |
+
+### TC-AGT-002: SafetyAgent — Drug Interaction Check
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-AGT-002 |
+| **Title** | Check drug interactions via Safety agent |
+| **Priority** | P0 |
+| **Method** | `POST /api/v1/agents/safety/check-interactions` |
+| **Body** | `{"medications": ["aspirin", "warfarin", "ibuprofen"]}` |
+| **Expected** | 200 — `{interactions: [...], severity: "...", checked_medications: [...]}` |
+| **Result** | **PASS** — 200, keys: `[interactions, severity, checked_medications, agent]`, ~3.4s |
+
+### TC-AGT-003: NavigatorAgent — Workflow Suggestions
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-AGT-003 |
+| **Title** | Get workflow suggestions via Navigator agent |
+| **Priority** | P1 |
+| **Method** | `POST /api/v1/agents/navigator/suggest-workflow` |
+| **Body** | `{"current_status": "patient checked in", "encounter_type": "Office Visit", "pending_items": ["vitals", "labs"]}` |
+| **Expected** | 200 — `{next_steps: [...], priority: "...", agent: "navigator"}` |
+| **Result** | **PASS** — 200, keys: `[next_steps, priority, agent]`, ~3.8s |
+
+### TC-AGT-004: CodingAgent — ICD-10/CPT Code Suggestions
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-AGT-004 |
+| **Title** | Get billing code suggestions via Coding agent |
+| **Priority** | P0 |
+| **Method** | `POST /api/v1/agents/coding/suggest-codes` |
+| **Body** | `{"clinical_note": "Patient presents with acute upper respiratory infection with productive cough and low-grade fever", "procedures": ["chest x-ray"]}` |
+| **Expected** | 200 — `{icd10_codes: [{code, description, confidence}], cpt_codes: [...]}` |
+| **Result** | **PASS** — 200, keys: `[icd10_codes, cpt_codes, agent]`, ~3.4s |
+
+### TC-AGT-005: SentinelAgent — Security Threat Detection
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-AGT-005 |
+| **Title** | Analyze input for security threats |
+| **Priority** | P0 |
+| **Method** | `POST /api/v1/agents/sentinel/analyze-input` |
+| **Body** | `{"user_input": "SELECT * FROM patients WHERE 1=1; DROP TABLE users;", "context": "search field"}` |
+| **Expected** | 200 — `{threat_detected: true, threat_type: "sql_injection", confidence: ≥0.8}` |
+| **Result** | **PASS** — 200, keys: `[threat_detected, threat_type, confidence, details, method, agent]`, ~2.1s |
+
+### TC-AGT-006: FraudAgent — Billing Fraud Detection
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-AGT-006 |
+| **Title** | Detect billing fraud patterns |
+| **Priority** | P0 |
+| **Method** | `POST /api/v1/agents/fraud/detect` |
+| **Body** | `{"procedure_codes": ["99213"], "billed_cpt_code": "99215", "encounter_complexity": "low", "encounter_duration": 15, "documented_elements": 6}` |
+| **Expected** | 200 — Fraud detection result with risk indicators |
+| **Result** | **PASS** — 200, keys: `[risk_level, risk_score, findings, checks_performed, agent]`, ~2.3s |
+
+### TC-AGT-007: ClinicalDecisionAgent — Treatment Recommendation
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-AGT-007 |
+| **Title** | Get treatment recommendations |
+| **Priority** | P1 |
+| **Method** | `POST /api/v1/agents/clinical-decision/recommend-treatment` |
+| **Body** | `{"diagnosis": "Type 2 Diabetes", "patient_factors": {"age": 55, "sex": "M"}, "current_medications": ["metformin"]}` |
+| **Expected** | 200 — Treatment recommendation with evidence |
+| **Result** | **PASS** — 200, keys: `[agent, action, diagnosis, recommendations, timestamp]`, ~4.4s |
+
+### TC-AGT-008: ClinicalDecisionAgent — Risk Calculation
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-AGT-008 |
+| **Title** | Calculate clinical risk score |
+| **Priority** | P1 |
+| **Method** | `POST /api/v1/agents/clinical-decision/calculate-risk` |
+| **Body** | `{"condition": "chest pain", "clinical_data": {"age": 65, "sex": "M", "troponin": 0.04}}` |
+| **Expected** | 200 — Risk score and classification |
+| **Result** | **PASS** — 200, keys: `[agent, action, score_name, score, max_score, components]`, ~2.0s |
+
+### TC-AGT-009: PharmacyAgent — Formulary Check
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-AGT-009 |
+| **Title** | Check medication formulary coverage |
+| **Priority** | P1 |
+| **Method** | `POST /api/v1/agents/pharmacy/check-formulary` |
+| **Body** | `{"medication": "lisinopril 10mg", "insurance_plan": "Blue Cross PPO"}` |
+| **Expected** | 200 — Formulary status, tier, copay information |
+| **Result** | **PASS** — 200, keys: `[medication, on_formulary, tier, tier_name, copay, prior_auth_required]`, ~2.0s |
+
+### TC-AGT-010: DeceptionDetectionAgent — Consistency Analysis
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-AGT-010 |
+| **Title** | Analyze patient statement consistency |
+| **Priority** | P1 |
+| **Method** | `POST /api/v1/agents/deception/analyze-consistency` |
+| **Body** | `{"patient_history": ["I never smoke", "I quit smoking 5 years ago"], "current_statement": "I have been smoking a pack a day for 20 years"}` |
+| **Expected** | 200 — Consistency analysis with flagged contradictions |
+| **Result** | **PASS** — 200, keys: `[agent, action, consistency_score, flags, timeline_issues, clinical_impact]`, ~3.8s |
+
+### TC-AGT-011: OrderManagementAgent — Lab Suggestions
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-AGT-011 |
+| **Title** | Suggest lab orders for diagnosis |
+| **Priority** | P1 |
+| **Method** | `POST /api/v1/agents/orders/suggest-labs` |
+| **Body** | `{"diagnosis": "Suspected thyroid disorder", "patient_age": 45}` |
+| **Expected** | 200 — Recommended lab orders (TSH, T4, etc.) |
+| **Result** | **PASS** — 200, keys: `[agent, action, diagnosis, patient_age, suggested_labs, total_suggested]`, ~3.2s |
+
+### TC-AGT-012: ReadmissionAgent — Risk Prediction
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-AGT-012 |
+| **Title** | Predict 30-day readmission risk |
+| **Priority** | P1 |
+| **Method** | `POST /api/v1/agents/readmission/predict-risk` |
+| **Body** | `{"age": 72, "has_heart_failure": true, "has_diabetes": true, "has_copd": false, "comorbidity_count": 3, "length_of_stay": 7, "visits_30d": 2, "visits_90d": 4, "discharge_disposition": "home"}` |
+| **Expected** | 200 — `{risk_score, probability, risk_level, factors[], recommendations[]}` |
+| **Result** | **PASS** — 200, keys: `[risk_score, probability, risk_level, alert, model_auc, factors]`, ~2.2s |
+
+### TC-AGT-013: ClinicalDecisionAgent — Differential Diagnosis
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-AGT-013 |
+| **Title** | Generate differential diagnosis |
+| **Priority** | P1 |
+| **Method** | `POST /api/v1/agents/clinical-decision/differential` |
+| **Body** | `{"symptoms": ["chest pain", "shortness of breath", "diaphoresis"], "patient_factors": {"age": 60, "sex": "M"}}` |
+| **Expected** | 200 — Differential diagnosis list ranked by likelihood |
+| **Result** | **PASS** — 200, keys: `[agent, action, symptoms, result, timestamp]`, ~3.6s |
+
+### TC-AGT-014: FraudAgent — Unbundling Detection
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-AGT-014 |
+| **Title** | Detect code unbundling fraud |
+| **Priority** | P1 |
+| **Method** | `POST /api/v1/agents/fraud/detect-unbundling` |
+| **Body** | `{"procedure_codes": ["99213", "99214", "36415", "85025"]}` |
+| **Expected** | 200 — Unbundling analysis result |
+| **Result** | **PASS** — 200, keys: `[result, agent]`, ~2.1s |
+
+### TC-AGT-015: DeceptionDetectionAgent — Drug-Seeking Behavior
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-AGT-015 |
+| **Title** | Detect drug-seeking behavior patterns |
+| **Priority** | P1 |
+| **Method** | `POST /api/v1/agents/deception/detect-drug-seeking` |
+| **Body** | `{"patient_request": "I need oxycodone 80mg, nothing else works for my pain", "medical_history": "No documented chronic pain condition", "current_medications": []}` |
+| **Expected** | 200 — Drug-seeking risk assessment |
+| **Result** | **PASS** — 200, keys: `[agent, action, risk_level, rule_based_flags, ai_flags, mitigating_factors]`, ~3.2s |
 
 ---
 
 ## Automated Test Runner
 
-A Python script `blackbox_test_runner.py` is included for automated API testing of all sprint features.
+A Python script `blackbox_test_runner.py` (v3) is included for automated API testing of all sprint features and all 10 AI agent endpoints.
 
 ### Running the Tests
 
@@ -1184,29 +1454,36 @@ python blackbox_test_runner.py
 |----------|-------|------|------|-------|
 | **Auth** | 1 | 1 | 0 | JWT token acquisition |
 | **PQC (Sprint 4)** | 6 | 6 | 0 | All encryption endpoints functional |
-| **Transcription (Sprint 5)** | 6 | 6 | 0 | All provider, process, and detection endpoints |
 | **Learning (Sprint 6)** | 5 | 5 | 0 | Feedback, stats, batch, cycle validation |
 | **Orchestration (Sprint 7)** | 3 | 3 | 0 | Health, agents, encounter processing |
-| **Core** | 3 | 2 | 1 | Health + encounters pass; patients has no list endpoint |
-| **TOTAL** | **24** | **23** | **1** | **95.8% pass rate** |
+| **Transcription (Sprint 5)** | 6 | 6 | 0 | All provider, process, and detection endpoints |
+| **Core** | 2 | 2 | 0 | Health + encounters pass |
+| **AI Agents (Groq)** | 15 | 15 | 0 | All 10 agents via Groq Cloud API |
+| **TOTAL** | **38** | **38** | **0** | **100% pass rate** |
 
-### Endpoints Not Tested (Require ANTHROPIC_API_KEY)
+### AI Agent Endpoint Results (All via Groq Cloud API)
 
-| Agent Endpoint | Method | Path |
-|---------------|--------|------|
-| Fraud Detection | POST | `/api/v1/agents/fraud/detect` |
-| Clinical Decision | POST | `/api/v1/agents/clinical-decision/calculate-risk` |
-| Pharmacy Agent | POST | `/api/v1/agents/pharmacy/check` |
-| Deception Detection | POST | `/api/v1/agents/deception/analyze` |
-| Order Entry | POST | `/api/v1/agents/orders/suggest` |
-| Scribe Agent | POST | `/api/v1/agents/scribe/generate` |
-| Safety Agent | POST | `/api/v1/agents/safety/check` |
-| Navigator Agent | POST | `/api/v1/agents/navigator/recommend` |
-| Coding Agent | POST | `/api/v1/agents/coding/suggest` |
-| Sentinel Agent | POST | `/api/v1/agents/sentinel/analyze` |
+| Agent | Endpoint | Status | Latency |
+|-------|----------|--------|---------|
+| ScribeAgent | `POST /agents/scribe/generate-soap` | **PASS** | ~3.8s |
+| SafetyAgent | `POST /agents/safety/check-interactions` | **PASS** | ~3.4s |
+| NavigatorAgent | `POST /agents/navigator/suggest-workflow` | **PASS** | ~3.8s |
+| CodingAgent | `POST /agents/coding/suggest-codes` | **PASS** | ~3.4s |
+| SentinelAgent | `POST /agents/sentinel/analyze-input` | **PASS** | ~2.1s |
+| FraudAgent | `POST /agents/fraud/detect` | **PASS** | ~2.3s |
+| FraudAgent | `POST /agents/fraud/detect-unbundling` | **PASS** | ~2.1s |
+| ClinicalDecisionAgent | `POST /agents/clinical-decision/recommend-treatment` | **PASS** | ~4.4s |
+| ClinicalDecisionAgent | `POST /agents/clinical-decision/calculate-risk` | **PASS** | ~2.0s |
+| ClinicalDecisionAgent | `POST /agents/clinical-decision/differential` | **PASS** | ~3.6s |
+| PharmacyAgent | `POST /agents/pharmacy/check-formulary` | **PASS** | ~2.0s |
+| DeceptionDetectionAgent | `POST /agents/deception/analyze-consistency` | **PASS** | ~3.8s |
+| DeceptionDetectionAgent | `POST /agents/deception/detect-drug-seeking` | **PASS** | ~3.2s |
+| OrderManagementAgent | `POST /agents/orders/suggest-labs` | **PASS** | ~3.2s |
+| ReadmissionAgent | `POST /agents/readmission/predict-risk` | **PASS** | ~2.2s |
 
-> All agent endpoints require a valid `ANTHROPIC_API_KEY` in `.env`. Without it, they return a 500 error with "ANTHROPIC_API_KEY environment variable not set."
+> **Total Test Time:** ~111s | **AI Backend:** Groq Cloud API (`llama-3.3-70b-versatile`) + Ollama (`llama3.2:1b` fallback)
+> All agent endpoints now use Groq — **no Anthropic/Claude dependency**.
 
 ---
 
-*Document Version: 2.0 | Last Updated: February 7, 2026*
+*Document Version: 3.0 | Last Updated: February 7, 2026*

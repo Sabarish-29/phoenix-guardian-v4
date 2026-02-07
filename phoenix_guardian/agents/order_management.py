@@ -338,7 +338,10 @@ Respond ONLY with valid JSON array:
 
         try:
             response = await self._call_claude(prompt)
-            return json.loads(response)
+            labs = json.loads(response)
+            if isinstance(labs, list):
+                return [l for l in labs if isinstance(l, dict)]
+            return []
         except Exception:
             return []
 
