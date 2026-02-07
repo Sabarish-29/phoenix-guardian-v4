@@ -7,6 +7,7 @@ All endpoints require authentication and proper role permissions.
 
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field
@@ -923,3 +924,176 @@ async def list_db_encounters(
         ))
     
     return result
+
+
+# =============================================================================
+# Temporal Workflow Endpoint
+# =============================================================================
+
+
+class WorkflowEncounterRequest(BaseModel):
+    """Request model for Temporal workflow-based encounter processing."""
+    patient_mrn: str = Field(..., min_length=1, description="Patient MRN")
+    transcript: str = Field(default="", description="Encounter transcript")
+    chief_complaint: str = Field(default="", description="Chief complaint")
+    symptoms: List[str] = Field(default_factory=list, description="Symptoms list")
+    vitals: Dict[str, str] = Field(default_factory=dict, description="Vital signs")
+    medications: List[str] = Field(default_factory=list, description="Current medications")
+    exam_findings: str = Field(default="", description="Physical exam findings")
+    patient_age: int = Field(default=0, description="Patient age")
+    diagnosis: str = Field(default="", description="Working diagnosis")
+    duration: int = Field(default=15, description="Encounter duration in minutes")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "patient_mrn": "MRN001",
+                "transcript": "Patient presents with chest pain...",
+                "chief_complaint": "Chest pain",
+                "symptoms": ["chest pain", "shortness of breath"],
+                "vitals": {"bp": "140/90", "hr": "92"},
+                "medications": ["aspirin", "metformin"],
+                "patient_age": 62,
+            }
+        }
+    )
+
+
+class WorkflowStatusResponse(BaseModel):
+    """Response returned when a workflow is started."""
+    workflow_id: str
+    run_id: str
+    status: str
+    message: str
+
+
+@router.post(
+    "/workflow",
+    response_model=WorkflowStatusResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def process_encounter_workflow(
+    request: WorkflowEncounterRequest,
+    current_user: User = Depends(require_physician),
+):
+    """
+    Process an encounter through the Temporal SAGA workflow.
+
+    Starts a durable, fault-tolerant encounter processing pipeline that
+    orchestrates all 10 AI agents with automatic compensation on failure.
+
+    **Requires:** PHYSICIAN role
+
+    **Workflow Steps:**
+    1. Validate encounter data
+    2. Generate SOAP note (Scribe Agent)
+    3. Check drug interactions (Safety Agent)
+    4. Suggest ICD-10/CPT codes (Coding Agent)
+    5. Predict readmission risk
+    6. Security threat check (Sentinel Agent)
+    7. Fraud detection (Fraud Agent)
+    8. Store encounter
+
+    **Returns:**
+    - workflow_id: Use to query workflow status/result
+
+    **Errors:**
+    - `503`: Temporal server unavailable
+    """
+    try:
+        from temporalio.client import Client
+        from phoenix_guardian.workflows.encounter_workflow import EncounterProcessingWorkflow
+        import os
+
+        temporal_host = os.getenv("TEMPORAL_HOST", "localhost:7233")
+        client = await Client.connect(temporal_host)
+
+        workflow_id = f"encounter-{uuid.uuid4()}"
+
+        handle = await client.start_workflow(
+            EncounterProcessingWorkflow.run,
+            request.model_dump(),
+            id=workflow_id,
+            task_queue=os.getenv("TASK_QUEUE", "phoenix-guardian-queue"),
+        )
+
+        return WorkflowStatusResponse(
+            workflow_id=workflow_id,
+            run_id=handle.result_run_id or "",
+            status="started",
+            message="Encounter processing workflow started successfully",
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Failed to start workflow: {str(e)}",
+        )
+
+
+@router.get("/workflow/{workflow_id}/status")
+async def get_workflow_status(
+    workflow_id: str,
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Query the status of a running encounter workflow.
+
+    **Requires:** Any authenticated user
+
+    **Path Parameters:**
+    - `workflow_id`: ID returned from POST /workflow
+
+    **Returns:**
+    - Current workflow status, step, and pending compensations
+    """
+    try:
+        from temporalio.client import Client
+        import os
+
+        temporal_host = os.getenv("TEMPORAL_HOST", "localhost:7233")
+        client = await Client.connect(temporal_host)
+        handle = client.get_workflow_handle(workflow_id)
+
+        status_info = await handle.query("get_status")
+        return status_info
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Workflow not found or query failed: {str(e)}",
+        )
+
+
+@router.get("/workflow/{workflow_id}/result")
+async def get_workflow_result(
+    workflow_id: str,
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Retrieve the result of a completed encounter workflow.
+
+    **Requires:** Any authenticated user
+
+    **Path Parameters:**
+    - `workflow_id`: ID returned from POST /workflow
+
+    **Returns:**
+    - Complete encounter processing result or error details
+    """
+    try:
+        from temporalio.client import Client
+        import os
+
+        temporal_host = os.getenv("TEMPORAL_HOST", "localhost:7233")
+        client = await Client.connect(temporal_host)
+        handle = client.get_workflow_handle(workflow_id)
+
+        result = await handle.result()
+        return result
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Workflow result not available: {str(e)}",
+        )

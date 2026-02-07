@@ -8,11 +8,14 @@
  * - Processing through AI pipeline
  */
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { encounterService, CreateEncounterRequest, SOAPNoteApiResponse } from '../api/services/encounterService';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { VoiceRecorder } from '../components/VoiceRecorder';
+import { TranscriptEditor } from '../components/TranscriptEditor';
+import type { TranscriptSegment, Correction } from '../types/transcription';
 
 type EncounterType = 
   | 'office_visit'
@@ -49,6 +52,38 @@ export const CreateEncounterPage: React.FC = () => {
   // UI state
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Voice recording state
+  type InputMode = 'type' | 'record';
+  const [inputMode, setInputMode] = useState<InputMode>('type');
+  const [recordingSegments, setRecordingSegments] = useState<TranscriptSegment[]>([]);
+  const [showEditor, setShowEditor] = useState(false);
+
+  // Voice recording callbacks
+  const handleTranscriptUpdate = useCallback((text: string) => {
+    setTranscriptText(text);
+  }, []);
+
+  const handleRecordingComplete = useCallback(
+    (_audioBlob: Blob | null, text: string, segments: TranscriptSegment[]) => {
+      setTranscriptText(text);
+      setRecordingSegments(segments);
+      setShowEditor(true);
+    },
+    []
+  );
+
+  const handleEditorSave = useCallback(
+    (correctedTranscript: string, _corrections: Correction[]) => {
+      setTranscriptText(correctedTranscript);
+      setShowEditor(false);
+    },
+    []
+  );
+
+  const handleEditorCancel = useCallback(() => {
+    setShowEditor(false);
+  }, []);
   
   // Create encounter mutation
   const createMutation = useMutation({
@@ -277,20 +312,56 @@ export const CreateEncounterPage: React.FC = () => {
         
         {/* Transcript Section */}
         <div className="card">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Encounter Transcript <span className="text-red-500">*</span>
-          </h2>
-          <p className="text-sm text-gray-500 mb-4">
-            Paste the patient-physician conversation transcript below. The AI will process this
-            to generate the SOAP note, suggest ICD/CPT codes, and check for safety concerns.
-          </p>
-          
-          <textarea
-            id="transcript"
-            value={transcriptText}
-            onChange={(e) => setTranscriptText(e.target.value)}
-            className="input-field min-h-[300px] font-mono text-sm"
-            placeholder={`Doctor: Good morning! What brings you in today?
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Encounter Transcript <span className="text-red-500">*</span>
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                {inputMode === 'type'
+                  ? 'Paste the patient-physician conversation transcript below.'
+                  : 'Use your microphone to transcribe the conversation in real time.'}
+              </p>
+            </div>
+
+            {/* Type / Record toggle */}
+            <div className="flex bg-gray-100 rounded-lg p-1">
+              <button
+                type="button"
+                onClick={() => setInputMode('type')}
+                className={`px-4 py-1.5 text-sm font-medium rounded-md transition ${
+                  inputMode === 'type'
+                    ? 'bg-white shadow text-blue-700'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                disabled={isSubmitting}
+              >
+                ⌨️ Type
+              </button>
+              <button
+                type="button"
+                onClick={() => setInputMode('record')}
+                className={`px-4 py-1.5 text-sm font-medium rounded-md transition ${
+                  inputMode === 'record'
+                    ? 'bg-white shadow text-blue-700'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                disabled={isSubmitting}
+              >
+                🎙️ Record
+              </button>
+            </div>
+          </div>
+
+          {/* Type mode — textarea */}
+          {inputMode === 'type' && (
+            <>
+              <textarea
+                id="transcript"
+                value={transcriptText}
+                onChange={(e) => setTranscriptText(e.target.value)}
+                className="input-field min-h-[300px] font-mono text-sm"
+                placeholder={`Doctor: Good morning! What brings you in today?
 
 Patient: I've been having chest pain for the past two days. It's a sharp pain on the left side.
 
@@ -303,14 +374,58 @@ Doctor: Any shortness of breath, dizziness, or nausea?
 Patient: Some shortness of breath, but no dizziness or nausea.
 
 ...`}
-            disabled={isSubmitting}
-            required
-          />
-          
-          <div className="mt-2 flex items-center justify-between text-sm text-gray-500">
-            <span>{transcriptText.length} characters</span>
-            <span>{transcriptText.split(/\s+/).filter(Boolean).length} words</span>
-          </div>
+                disabled={isSubmitting}
+                required={inputMode === 'type' && !transcriptText}
+              />
+              
+              <div className="mt-2 flex items-center justify-between text-sm text-gray-500">
+                <span>{transcriptText.length} characters</span>
+                <span>{transcriptText.split(/\s+/).filter(Boolean).length} words</span>
+              </div>
+            </>
+          )}
+
+          {/* Record mode — VoiceRecorder */}
+          {inputMode === 'record' && !showEditor && (
+            <VoiceRecorder
+              onTranscriptUpdate={handleTranscriptUpdate}
+              onRecordingComplete={handleRecordingComplete}
+              disabled={isSubmitting}
+            />
+          )}
+
+          {/* Post-recording editor */}
+          {inputMode === 'record' && showEditor && (
+            <TranscriptEditor
+              transcript={transcriptText}
+              segments={recordingSegments}
+              onSave={handleEditorSave}
+              onCancel={handleEditorCancel}
+            />
+          )}
+
+          {/* Show transcript preview when in record mode (after text is captured) */}
+          {inputMode === 'record' && transcriptText && !showEditor && (
+            <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-gray-500">
+                  Captured transcript ({transcriptText.split(/\s+/).filter(Boolean).length} words)
+                </span>
+                {recordingSegments.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowEditor(true)}
+                    className="text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    Review & Edit
+                  </button>
+                )}
+              </div>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-4">
+                {transcriptText}
+              </p>
+            </div>
+          )}
         </div>
         
         {/* Submit Section */}

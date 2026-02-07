@@ -21,7 +21,10 @@ try:
     from phoenix_guardian.agents.safety_agent import SecurityException
 except BaseException:
     SecurityException = Exception
-from phoenix_guardian.api.routes import agents, auth, encounters, health, patients
+from phoenix_guardian.api.routes import agents, auth, encounters, health, patients, transcription
+from phoenix_guardian.api.routes import pqc as pqc_routes
+from phoenix_guardian.api.routes import learning as learning_routes
+from phoenix_guardian.api.routes import orchestration as orchestration_routes
 from phoenix_guardian.api.utils.orchestrator import OrchestrationError
 from phoenix_guardian.database.connection import db
 
@@ -170,6 +173,30 @@ app.include_router(
     agents.router,
     prefix="/api/v1",
     tags=["agents"],
+)
+
+app.include_router(
+    transcription.router,
+    prefix="/api/v1/transcription",
+    tags=["transcription"],
+)
+
+app.include_router(
+    pqc_routes.router,
+    prefix="/api/v1",
+    tags=["post-quantum-cryptography"],
+)
+
+app.include_router(
+    learning_routes.router,
+    prefix="/api/v1",
+    tags=["bidirectional-learning"],
+)
+
+app.include_router(
+    orchestration_routes.router,
+    prefix="/api/v1",
+    tags=["agent-orchestration"],
 )
 
 

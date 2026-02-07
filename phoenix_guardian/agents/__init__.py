@@ -96,6 +96,13 @@ try:
 except BaseException:
     ReadmissionAgent = None
 
+# Sprint 1: Additional Agents (agents #6-#10)
+from phoenix_guardian.agents.fraud import FraudAgent
+from phoenix_guardian.agents.clinical_decision import ClinicalDecisionAgent
+from phoenix_guardian.agents.pharmacy import PharmacyAgent
+from phoenix_guardian.agents.deception_detection import DeceptionDetectionAgent
+from phoenix_guardian.agents.order_management import OrderManagementAgent
+
 __all__ = [
     # Base
     "AgentResult",
@@ -157,4 +164,10 @@ __all__ = [
     "Priority",
     # ML Agents (Week 3)
     "ReadmissionAgent",
+    # Sprint 1: Additional Agents (#6-#10)
+    "FraudAgent",
+    "ClinicalDecisionAgent",
+    "PharmacyAgent",
+    "DeceptionDetectionAgent",
+    "OrderManagementAgent",
 ]
