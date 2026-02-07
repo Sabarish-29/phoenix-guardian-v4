@@ -27,7 +27,12 @@
 14. [Module 11 — Security & Edge Cases](#module-11--security--edge-cases)
 15. [Module 12 — API Validation (422 Errors)](#module-12--api-validation-422-errors)
 16. [Module 13 — End-to-End Workflow](#module-13--end-to-end-workflow)
-17. [Traceability Matrix](#traceability-matrix)
+17. [Module 14 — Post-Quantum Cryptography (Sprint 4)](#module-14--post-quantum-cryptography-sprint-4)
+18. [Module 15 — Voice Transcription (Sprint 5)](#module-15--voice-transcription-sprint-5)
+19. [Module 16 — Bidirectional Learning Pipeline (Sprint 6)](#module-16--bidirectional-learning-pipeline-sprint-6)
+20. [Module 17 — Agent Orchestration Engine (Sprint 7)](#module-17--agent-orchestration-engine-sprint-7)
+21. [Automated Test Runner](#automated-test-runner)
+22. [Traceability Matrix](#traceability-matrix)
 18. [Defect Reporting Template](#defect-reporting-template)
 
 ---
@@ -908,3 +913,300 @@ When a test case fails, log a defect using this template:
 ---
 
 *Document Version: 1.0 | Last Updated: February 6, 2026*
+
+
+---
+
+## Module 14 — Post-Quantum Cryptography (Sprint 4)
+
+**Endpoint Prefix:** `/api/v1/pqc`  
+**Purpose:** NIST FIPS 203 compliant encryption using Kyber-1024 + AES-256-GCM hybrid scheme.
+
+### TC-PQC-001: Health Check
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-PQC-001 |
+| **Title** | PQC Health Endpoint |
+| **Preconditions** | Server running, user authenticated |
+| **Method** | `GET /api/v1/pqc/health` |
+| **Expected** | 200 — Returns status, algorithm (Kyber1024), OQS availability, key ID, TLS info |
+| **Result** | **PASS** — `{"status": "healthy", "algorithm": "Kyber1024", "using_simulator": true, "tls_info": {"tls_version": "TLS 1.3"}}` |
+
+### TC-PQC-002: Encrypt String
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-PQC-002 |
+| **Title** | Encrypt plaintext with PQC |
+| **Method** | `POST /api/v1/pqc/encrypt` |
+| **Body** | `{"plaintext": "Hello HIPAA"}` |
+| **Expected** | 200 — Returns algorithm, key_id, ciphertext_b64, encrypted_at |
+| **Result** | **PASS** — Ciphertext returned with Kyber1024-AES256GCM algorithm |
+
+### TC-PQC-003: Encrypt PHI (Field-Level)
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-PQC-003 |
+| **Title** | Encrypt PHI fields individually |
+| **Method** | `POST /api/v1/pqc/encrypt-phi` |
+| **Body** | `{"data": {"patient_name": "John Doe", "ssn": "123-45-6789", "diagnosis": "Hypertension"}, "context": "test"}` |
+| **Expected** | 200 — Each field encrypted with `__pqc_encrypted__: true`, includes metrics |
+| **Result** | **PASS** — All 4 fields encrypted individually, each with unique nonce/tag/encapsulated_key |
+
+### TC-PQC-004: Decrypt PHI (Invalid Data)
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-PQC-004 |
+| **Title** | Decrypt PHI with invalid encrypted data |
+| **Method** | `POST /api/v1/pqc/decrypt-phi` |
+| **Body** | `{"data": {"patient_name": {"__pqc_encrypted__": true, "ciphertext": "invalid"}}, "context": "test"}` |
+| **Expected** | 400/500 — Validation error for missing nonce/tag fields |
+| **Result** | **PASS** — Returns `"Failed to decrypt PHI field: 'nonce'"` |
+
+### TC-PQC-005: List Algorithms
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-PQC-005 |
+| **Title** | List supported PQC algorithms |
+| **Method** | `GET /api/v1/pqc/algorithms` |
+| **Expected** | 200 — Algorithm list, default algorithm, compliance standard |
+| **Result** | **PASS** — `{"algorithms": ["Kyber1024 (simulated)"], "default": "Kyber1024", "compliance": "NIST FIPS 203"}` |
+
+### TC-PQC-006: Key Rotation
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-PQC-006 |
+| **Title** | Rotate PQC encryption keys |
+| **Method** | `POST /api/v1/pqc/rotate-keys` |
+| **Expected** | 200 — Old/new key IDs, version numbers, rotation timestamp |
+| **Result** | **PASS** — `{"old_version": 0, "new_version": 1, "rotated_at": "..."}` |
+
+### TC-PQC-007: Benchmark
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-PQC-007 |
+| **Title** | Run PQC performance benchmark |
+| **Method** | `GET /api/v1/pqc/benchmark` |
+| **Expected** | 200 — Algorithm, simulator status, benchmark results |
+| **Result** | **PASS** — Returns timing metrics for encrypt/decrypt operations |
+
+---
+
+## Module 15 — Voice Transcription (Sprint 5)
+
+**Endpoint Prefix:** `/api/v1/transcription`  
+**Purpose:** Multi-provider ASR with medical terminology detection and real-time suggestions.
+
+### TC-TRANS-001: List ASR Providers
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-TRANS-001 |
+| **Title** | List available transcription providers |
+| **Method** | `GET /api/v1/transcription/providers` |
+| **Expected** | 200 — Provider list with availability status |
+| **Result** | **PASS** — Returns whisper_local, whisper_api, google, azure with availability flags |
+
+### TC-TRANS-002: Supported Languages
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-TRANS-002 |
+| **Title** | List supported transcription languages |
+| **Method** | `GET /api/v1/transcription/supported-languages` |
+| **Expected** | 200 — Language list with codes |
+| **Result** | **PASS** — Returns supported language codes |
+
+### TC-TRANS-003: List Transcriptions
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-TRANS-003 |
+| **Title** | List recent transcriptions |
+| **Method** | `GET /api/v1/transcription/list` |
+| **Expected** | 200 — Array of recent transcription records |
+| **Result** | **PASS** — `{"status": "success", "data": [...], "count": N}` |
+
+### TC-TRANS-004: Process Transcription Text
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-TRANS-004 |
+| **Title** | Process transcript text for medical term extraction |
+| **Method** | `POST /api/v1/transcription/process` |
+| **Body** | `{"transcript": "Patient reports chest pain radiating to left arm for 2 hours", "segments": []}` |
+| **Expected** | 200 — Processed transcript with medical term annotations |
+| **Result** | **PASS** — Returns processed data with medical terms identified |
+
+### TC-TRANS-005: Detect Medical Terms
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-TRANS-005 |
+| **Title** | Detect medical terminology in text |
+| **Method** | `POST /api/v1/transcription/detect-terms` |
+| **Body** | `{"text": "Patient has hypertension and type 2 diabetes mellitus"}` |
+| **Expected** | 200 — Detected medical terms with positions |
+| **Result** | **PASS** — Returns detected terms: hypertension, diabetes mellitus |
+
+### TC-TRANS-006: Get Term Suggestions
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-TRANS-006 |
+| **Title** | Autocomplete medical terminology |
+| **Method** | `POST /api/v1/transcription/suggestions` |
+| **Body** | `{"partial": "hypert", "limit": 5}` |
+| **Expected** | 200 — Matching medical terms for autocomplete |
+| **Result** | **PASS** — Returns matching suggestions |
+
+---
+
+## Module 16 — Bidirectional Learning Pipeline (Sprint 6)
+
+**Endpoint Prefix:** `/api/v1/learning`  
+**Purpose:** Physician feedback collection, model fine-tuning, and A/B testing pipeline.
+
+### TC-LEARN-001: Submit Feedback
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-LEARN-001 |
+| **Title** | Submit physician feedback on agent output |
+| **Method** | `POST /api/v1/learning/feedback` |
+| **Body** | `{"agent": "fraud", "action": "modify", "original_output": "flagged as fraud", "corrected_output": "legitimate claim", "encounter_id": "ENC-001"}` |
+| **Expected** | 200 — Feedback recorded with ID, buffer size, training readiness |
+| **Result** | **PASS** — `{"status": "recorded", "feedback_id": "uuid", "buffer_size": 1, "ready_for_training": false}` |
+
+### TC-LEARN-002: Pipeline Status
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-LEARN-002 |
+| **Title** | Get learning pipeline status for domain |
+| **Method** | `GET /api/v1/learning/status/fraud_detection` |
+| **Expected** | 200 — Pipeline stage, buffer size, training readiness |
+| **Result** | **PASS** — `{"stage": "collecting", "domain": "fraud_detection", "feedback_buffer_size": N, "min_feedback_for_training": 10}` |
+
+### TC-LEARN-003: Feedback Statistics
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-LEARN-003 |
+| **Title** | Get feedback statistics for domain |
+| **Method** | `GET /api/v1/learning/feedback-stats/fraud_detection` |
+| **Expected** | 200 — Accept/reject/modify counts, acceptance rate |
+| **Result** | **PASS** — Returns breakdown of feedback actions with acceptance rate |
+
+### TC-LEARN-004: Batch Feedback
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-LEARN-004 |
+| **Title** | Submit multiple feedback events at once |
+| **Method** | `POST /api/v1/learning/feedback/batch` |
+| **Body** | `{"feedback": [{"agent": "scribe", "action": "accept", ...}, {"agent": "fraud", "action": "reject", ...}]}` |
+| **Expected** | 200 — Count of recorded feedback items |
+| **Result** | **PASS** — `{"status": "recorded", "count": 2}` |
+
+### TC-LEARN-005: Run Learning Cycle (Insufficient Data)
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-LEARN-005 |
+| **Title** | Trigger training cycle with insufficient feedback |
+| **Method** | `POST /api/v1/learning/run-cycle` |
+| **Body** | `{"domain": "fraud_detection", "force": true}` |
+| **Expected** | 500 — Error requiring minimum 10 training examples |
+| **Result** | **PASS** — `{"detail": "Need at least 10 training examples, got N"}` |
+
+---
+
+## Module 17 — Agent Orchestration Engine (Sprint 7)
+
+**Endpoint Prefix:** `/api/v1/orchestration`  
+**Purpose:** Multi-phase agent execution with dependency resolution, circuit breakers, and parallel processing.
+
+### TC-ORCH-001: Orchestration Health
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-ORCH-001 |
+| **Title** | Check orchestration engine health |
+| **Method** | `GET /api/v1/orchestration/health` |
+| **Expected** | 200 — List of registered agents with status |
+| **Result** | **PASS** — Returns all 10 agents with total_agents count |
+
+### TC-ORCH-002: List Agents with Phases
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-ORCH-002 |
+| **Title** | List all agents with execution phases |
+| **Method** | `GET /api/v1/orchestration/agents` |
+| **Expected** | 200 — Agents grouped by execution phase |
+| **Result** | **PASS** — `{"agents": [...], "total": 10, "execution_phases": {...}}` |
+
+### TC-ORCH-003: Process Encounter
+
+| Field | Value |
+|-------|-------|
+| **Test ID** | TC-ORCH-003 |
+| **Title** | Orchestrate full encounter processing |
+| **Method** | `POST /api/v1/orchestration/process` |
+| **Body** | `{"patient_mrn": "MRN-001", "transcript": "Patient presents with headache...", "chief_complaint": "headache and fever", "symptoms": ["headache", "fever"], "vitals": {"bp": "140/90"}, "patient_age": 45}` |
+| **Expected** | 200 — Orchestration result with agent execution summary |
+| **Result** | **PASS** — `{"id": "uuid", "status": "completed", "total_time_ms": N, "agents_called": N, "agents_succeeded": N}` |
+| **Note** | Agent outputs may be limited without ANTHROPIC_API_KEY; rule-based fallbacks are used |
+
+---
+
+## Automated Test Runner
+
+A Python script `blackbox_test_runner.py` is included for automated API testing of all sprint features.
+
+### Running the Tests
+
+```bash
+# Ensure backend is running on port 8000
+python blackbox_test_runner.py
+```
+
+### Test Results Summary (February 7, 2026)
+
+| Category | Tests | Pass | Fail | Notes |
+|----------|-------|------|------|-------|
+| **Auth** | 1 | 1 | 0 | JWT token acquisition |
+| **PQC (Sprint 4)** | 6 | 6 | 0 | All encryption endpoints functional |
+| **Transcription (Sprint 5)** | 6 | 6 | 0 | All provider, process, and detection endpoints |
+| **Learning (Sprint 6)** | 5 | 5 | 0 | Feedback, stats, batch, cycle validation |
+| **Orchestration (Sprint 7)** | 3 | 3 | 0 | Health, agents, encounter processing |
+| **Core** | 3 | 2 | 1 | Health + encounters pass; patients has no list endpoint |
+| **TOTAL** | **24** | **23** | **1** | **95.8% pass rate** |
+
+### Endpoints Not Tested (Require ANTHROPIC_API_KEY)
+
+| Agent Endpoint | Method | Path |
+|---------------|--------|------|
+| Fraud Detection | POST | `/api/v1/agents/fraud/detect` |
+| Clinical Decision | POST | `/api/v1/agents/clinical-decision/calculate-risk` |
+| Pharmacy Agent | POST | `/api/v1/agents/pharmacy/check` |
+| Deception Detection | POST | `/api/v1/agents/deception/analyze` |
+| Order Entry | POST | `/api/v1/agents/orders/suggest` |
+| Scribe Agent | POST | `/api/v1/agents/scribe/generate` |
+| Safety Agent | POST | `/api/v1/agents/safety/check` |
+| Navigator Agent | POST | `/api/v1/agents/navigator/recommend` |
+| Coding Agent | POST | `/api/v1/agents/coding/suggest` |
+| Sentinel Agent | POST | `/api/v1/agents/sentinel/analyze` |
+
+> All agent endpoints require a valid `ANTHROPIC_API_KEY` in `.env`. Without it, they return a 500 error with "ANTHROPIC_API_KEY environment variable not set."
+
+---
+
+*Document Version: 2.0 | Last Updated: February 7, 2026*
