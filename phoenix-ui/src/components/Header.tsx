@@ -5,6 +5,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
+import logoImg from '../assets/logo.png';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ export const Header: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link to="/" className="flex items-center space-x-2">
-              <span className="text-2xl">🏥</span>
+              <img src={logoImg} alt="Phoenix Guardian" className="h-8 w-8 object-contain" />
               <span className="font-bold text-xl text-primary-700">Phoenix Guardian</span>
             </Link>
             <Link to="/login" className="btn-primary">
@@ -39,7 +40,7 @@ export const Header: React.FC = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo — links to role-appropriate home */}
           <Link to={user?.role === 'admin' ? '/admin' : '/dashboard'} className="flex items-center space-x-2">
-            <span className="text-2xl">🏥</span>
+            <img src={logoImg} alt="Phoenix Guardian" className="h-8 w-8 object-contain" />
             <span className="font-bold text-xl text-primary-700">Phoenix Guardian</span>
           </Link>
           

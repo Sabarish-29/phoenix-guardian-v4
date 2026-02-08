@@ -11,6 +11,7 @@ import { useMutation } from '@tanstack/react-query';
 import { authService, transformUserResponse } from '../api/services/authService';
 import { useAuthStore } from '../stores/authStore';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import logoImg from '../assets/logo.png';
 
 interface LocationState {
   from?: { pathname: string };
@@ -89,7 +90,7 @@ export const LoginPage: React.FC = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <span className="text-6xl">🏥</span>
+            <img src={logoImg} alt="Phoenix Guardian" className="h-20 w-20 object-contain drop-shadow-lg" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900">Phoenix Guardian</h1>
           <p className="mt-2 text-gray-600">AI-Powered Medical Documentation</p>
@@ -170,17 +171,33 @@ export const LoginPage: React.FC = () => {
           </div>
         </div>
         
-        {/* Demo credentials (for development) */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-sm font-medium text-yellow-800 mb-2">Demo Credentials:</p>
-            <p className="text-xs text-yellow-700">
-              <strong>Admin:</strong> admin@phoenixguardian.health / Admin123!<br />
-              <strong>Physician:</strong> dr.smith@phoenixguardian.health / Doctor123!<br />
+        {/* Demo credentials — click to auto-fill */}
+        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-sm font-medium text-yellow-800 mb-2">Demo Credentials <span className="text-xs font-normal">(click to fill)</span></p>
+          <div className="space-y-1.5">
+            <button
+              type="button"
+              onClick={() => { setEmail('admin@phoenixguardian.health'); setPassword('Admin123!'); }}
+              className="w-full text-left text-xs text-yellow-700 hover:bg-yellow-100 rounded px-2 py-1 transition-colors"
+            >
+              <strong>Admin:</strong> admin@phoenixguardian.health / Admin123!
+            </button>
+            <button
+              type="button"
+              onClick={() => { setEmail('dr.smith@phoenixguardian.health'); setPassword('Doctor123!'); }}
+              className="w-full text-left text-xs text-yellow-700 hover:bg-yellow-100 rounded px-2 py-1 transition-colors"
+            >
+              <strong>Physician:</strong> dr.smith@phoenixguardian.health / Doctor123!
+            </button>
+            <button
+              type="button"
+              onClick={() => { setEmail('nurse.jones@phoenixguardian.health'); setPassword('Nurse123!'); }}
+              className="w-full text-left text-xs text-yellow-700 hover:bg-yellow-100 rounded px-2 py-1 transition-colors"
+            >
               <strong>Nurse:</strong> nurse.jones@phoenixguardian.health / Nurse123!
-            </p>
+            </button>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

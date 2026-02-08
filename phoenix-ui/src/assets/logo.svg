@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="shieldMain" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#60BFFF"/>
+      <stop offset="100%" stop-color="#1a5fc7"/>
+    </linearGradient>
+    <linearGradient id="shieldEdge" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b8ee8"/>
+      <stop offset="100%" stop-color="#0e3a8a"/>
+    </linearGradient>
+    <linearGradient id="phoenix" x1="30%" y1="0%" x2="80%" y2="80%">
+      <stop offset="0%" stop-color="#FFD54F"/>
+      <stop offset="40%" stop-color="#FF9800"/>
+      <stop offset="100%" stop-color="#E65100"/>
+    </linearGradient>
+    <linearGradient id="phoenixWing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFAB40"/>
+      <stop offset="100%" stop-color="#E65100"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Outer shield shape -->
+  <path d="M256 480 C256 480 60 360 60 200 L60 120 L256 50 L452 120 L452 200 C452 360 256 480 256 480Z"
+        fill="url(#shieldEdge)" />
+
+  <!-- Inner shield -->
+  <path d="M256 455 C256 455 85 345 85 200 L85 138 L256 75 L427 138 L427 200 C427 345 256 455 256 455Z"
+        fill="white" />
+
+  <!-- Blue shield face -->
+  <path d="M256 435 C256 435 105 330 105 205 L105 152 L256 95 L407 152 L407 205 C407 330 256 435 256 435Z"
+        fill="url(#shieldMain)" />
+
+  <!-- Medical cross -->
+  <rect x="224" y="210" width="64" height="160" rx="8" fill="white" opacity="0.95"/>
+  <rect x="176" y="258" width="160" height="64" rx="8" fill="white" opacity="0.95"/>
+
+  <!-- Phoenix bird - left wing -->
+  <path d="M130 220 C100 140 150 60 200 40 C160 90 155 140 180 180 C190 160 200 135 220 120 C195 170 195 200 210 220 Z"
+        fill="url(#phoenixWing)" />
+
+  <!-- Phoenix bird - body and head -->
+  <path d="M210 220 C220 180 240 140 256 100 C272 140 292 180 302 220 C290 200 270 180 256 170 C242 180 222 200 210 220Z"
+        fill="url(#phoenix)" />
+
+  <!-- Phoenix bird - right wing -->
+  <path d="M382 220 C412 140 362 60 312 40 C352 90 357 140 332 180 C322 160 312 135 292 120 C317 170 317 200 302 220 Z"
+        fill="url(#phoenixWing)" />
+
+  <!-- Phoenix head detail -->
+  <path d="M256 100 C250 80 248 60 255 35 C258 55 262 75 256 100Z"
+        fill="#FFD54F" />
+
+  <!-- Phoenix eye -->
+  <circle cx="250" cy="108" r="4" fill="#4A2800"/>
+  <circle cx="262" cy="108" r="4" fill="#4A2800"/>
+</svg>
