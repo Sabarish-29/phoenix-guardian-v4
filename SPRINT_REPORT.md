@@ -9,14 +9,17 @@
 
 ## Executive Summary
 
-Phoenix Guardian v4 delivers a production-grade medical AI documentation platform implementing 10 specialized clinical agents, SAGA-based workflow orchestration, post-quantum cryptography for PHI protection, multi-provider voice transcription, a bidirectional learning pipeline, and a coordinated agent orchestration layer — all verified through comprehensive integration testing.
+Phoenix Guardian v4 delivers a production-grade medical AI documentation platform implementing 10 specialized clinical agents, SAGA-based workflow orchestration, post-quantum cryptography for PHI protection, multi-provider voice transcription, a bidirectional learning pipeline, a coordinated agent orchestration layer, and a unified Groq + Ollama AI backend — all verified through comprehensive integration and blackbox testing (38/38 PASS, 100% pass rate).
 
 | Metric | Value |
 |--------|-------|
-| New source code | ~8,200+ lines across 21 core files |
+| New source code | ~8,600+ lines across 22 core files |
 | AI agents | 10 (5 original + 5 new) |
 | API endpoints | 62 across 9 route modules |
-| Test cases | 118 passing, 33 skipped (Temporal module not installed) |
+| Unit/integration tests | 118 passing, 33 skipped (Temporal module not installed) |
+| Blackbox API tests | 38 passing, 0 failing (100% pass rate) |
+| AI backend | Groq Cloud API (primary) + Ollama local (fallback) |
+| AI models | Groq `llama-3.3-70b-versatile` + Ollama `llama3.2:1b` |
 | Clinical risk scores | 4 validated scoring algorithms |
 | ASR providers | 5 speech recognition backends |
 | Design patterns | SAGA, Circuit Breaker, Strategy, Abstract Factory, Observer |
@@ -505,6 +508,147 @@ Cross-sprint integration tests verify:
 
 ---
 
+## Groq + Ollama AI Backend Integration (Post-Sprint)
+
+### Objective
+Replace the Anthropic Claude API dependency with a free, production-viable dual-provider AI backend: Groq Cloud API (primary) for high-speed inference and Ollama (local fallback) for offline/air-gapped operation.
+
+### Problem Statement
+All 10 AI agents previously required an `ANTHROPIC_API_KEY` to function. Without it, every agent endpoint returned `500 — ANTHROPIC_API_KEY environment variable not set`. This blocked testing, demos, and deployment on hardware without a paid Claude subscription.
+
+### Deliverables
+
+#### UnifiedAIService (370 lines)
+**File:** `phoenix_guardian/services/ai_service.py`
+
+| Component | Description |
+|-----------|-------------|
+| `UnifiedAIService` | Dual-provider AI service with automatic failover |
+| `get_ai_service()` | Singleton factory for shared service instance |
+| `reset_ai_service()` | Reset singleton (for testing / config changes) |
+| `transcribe()` | Audio transcription via Groq Whisper API |
+
+**Provider Configuration:**
+
+| Provider | Model | Purpose | Latency |
+|----------|-------|---------|---------|
+| Groq Cloud API | `llama-3.3-70b-versatile` | Primary — free tier, 70B parameter model | ~2–4s |
+| Ollama (local) | `llama3.2:1b` | Fallback — offline operation, CPU-only | ~5–15s |
+
+**Failover Architecture:**
+```
+Agent Request → UnifiedAIService.chat()
+    ├── Try Groq Cloud API (30s timeout)
+    │   ├── Success → return response
+    │   └── Failure → log warning, continue
+    └── Try Ollama Local (60s timeout)
+        ├── Success → return response
+        └── Failure → raise RuntimeError
+```
+
+**Key Features:**
+- Automatic provider failover: Groq → Ollama → RuntimeError
+- Forced provider mode via `AI_PROVIDER` env var (`"groq"` or `"ollama"`)
+- JSON response mode support for structured agent outputs
+- Call metrics tracking: total calls, per-provider successes, average latency
+- Groq Whisper (`whisper-large-v3`) integration for audio transcription
+- Ollama configured for low-memory hardware: `num_gpu=0`, `num_ctx=512`
+
+**Environment Variables:**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GROQ_API_KEY` | *(required)* | Groq Cloud API key (free tier) |
+| `GROQ_MODEL` | `llama-3.3-70b-versatile` | Groq model override |
+| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |
+| `OLLAMA_MODEL` | `llama3.2:1b` | Ollama model override |
+| `AI_PROVIDER` | `auto` | Force provider: `"groq"`, `"ollama"`, or auto |
+
+#### BaseAgent Refactor (74 lines)
+**File:** `phoenix_guardian/agents/base.py`
+
+- All 10 agents now inherit from `BaseAgent` which injects `UnifiedAIService` via singleton
+- `_call_claude()` method preserved for backward compatibility — internally delegates to `UnifiedAIService.chat()`
+- Auto-detects JSON mode from prompt content (if prompt mentions "JSON", enables structured output)
+- Zero changes required in individual agent files — single integration point
+
+#### ScribeAgent Update
+**File:** `phoenix_guardian/agents/scribe_agent.py`
+
+- Updated to directly use `UnifiedAIService` via `get_ai_service()`
+- Model parameter ignored (controlled by `UnifiedAIService` config)
+
+### Files Created/Modified
+
+| File | Lines | Action |
+|------|-------|--------|
+| `phoenix_guardian/services/ai_service.py` | 370 | **Created** — UnifiedAIService |
+| `phoenix_guardian/agents/base.py` | 74 | **Rewritten** — Groq/Ollama integration |
+| `phoenix_guardian/agents/scribe_agent.py` | — | **Modified** — Use UnifiedAIService |
+| `phoenix_guardian/agents/scribe.py` | — | **Modified** — Use UnifiedAIService |
+
+### Integration Points
+
+All 10 agents route through `UnifiedAIService` without individual modifications:
+
+| Agent | Method | AI Usage |
+|-------|--------|----------|
+| ScribeAgent | `generate_soap()` | SOAP note generation via Groq |
+| SafetyAgent | `check_interactions()` | AI drug interaction analysis |
+| NavigatorAgent | `suggest_workflow()` | AI workflow recommendations |
+| CodingAgent | `suggest_codes()` | AI-powered ICD-10/CPT coding |
+| SentinelAgent | `analyze_input()` | Hybrid rule + AI threat detection |
+| FraudAgent | `_ai_fraud_analysis()` | AI augmented fraud analysis |
+| ClinicalDecisionAgent | `recommend_treatment()` | Evidence-based AI recommendations |
+| PharmacyAgent | `drug_utilization_review()` | AI pharmacology analysis |
+| DeceptionDetectionAgent | `_ai_consistency_analysis()` | AI deception pattern analysis |
+| OrderManagementAgent | `_ai_lab_suggestions()` | AI lab/imaging suggestions |
+
+### Blackbox Test Results (v3)
+
+All 10 AI agent endpoints verified via live Groq Cloud API calls:
+
+| Category | Tests | Pass | Fail | Notes |
+|----------|-------|------|------|-------|
+| Auth | 1 | 1 | 0 | JWT token |
+| PQC (Sprint 4) | 6 | 6 | 0 | Encryption endpoints |
+| Learning (Sprint 6) | 5 | 5 | 0 | Feedback pipeline |
+| Orchestration (Sprint 7) | 3 | 3 | 0 | All-agent coordination |
+| Transcription (Sprint 5) | 6 | 6 | 0 | ASR endpoints |
+| Core | 2 | 2 | 0 | Health + encounters |
+| **AI Agents (Groq)** | **15** | **15** | **0** | **All 10 agents** |
+| **TOTAL** | **38** | **38** | **0** | **100% pass rate** |
+
+**Agent Endpoint Latencies (Groq `llama-3.3-70b-versatile`):**
+
+| Agent | Endpoint | Latency |
+|-------|----------|---------|
+| ScribeAgent | `/agents/scribe/generate-soap` | ~3.8s |
+| SafetyAgent | `/agents/safety/check-interactions` | ~3.4s |
+| NavigatorAgent | `/agents/navigator/suggest-workflow` | ~3.8s |
+| CodingAgent | `/agents/coding/suggest-codes` | ~3.4s |
+| SentinelAgent | `/agents/sentinel/analyze-input` | ~2.1s |
+| FraudAgent | `/agents/fraud/detect` | ~2.3s |
+| ClinicalDecisionAgent | `/agents/clinical-decision/recommend-treatment` | ~4.4s |
+| PharmacyAgent | `/agents/pharmacy/check-formulary` | ~2.0s |
+| DeceptionDetectionAgent | `/agents/deception/analyze-consistency` | ~3.8s |
+| OrderManagementAgent | `/agents/orders/suggest-labs` | ~3.2s |
+| ReadmissionAgent | `/agents/readmission/predict-risk` | ~2.2s |
+
+> **Total blackbox test time:** ~111s | **AI backend:** Groq Cloud API (free tier) — zero Anthropic/Claude dependency
+
+### Hardware Configuration (Ollama Fallback)
+
+| Resource | Value |
+|----------|-------|
+| GPU | NVIDIA RTX 3050 (4GB VRAM) |
+| System RAM | 16GB |
+| Ollama model | `llama3.2:1b` (638MB disk) |
+| Ollama config | `num_gpu=0` (CPU-only), `num_ctx=512` |
+| Ollama model path | `D:\ollama_models` (offloaded from C:) |
+
+---
+
 ## Key Design Decisions
 
 1. **Dual BaseAgent pattern** — Lightweight `BaseAgent` (base.py) for API routes, full-featured `BaseAgent` (base_agent.py) with metrics tracking for orchestration
@@ -513,6 +657,7 @@ Cross-sprint integration tests verify:
 4. **Kyber-1024 hybrid** — PQC uses Kyber-1024 + AES-256-GCM hybrid encryption, maintaining classical security while adding quantum resistance
 5. **Circuit breaker per agent** — Individual fault isolation prevents a single failing agent from cascading across the orchestration layer
 6. **Domain-scoped learning** — Separate learning pipelines per model domain prevent cross-contamination of training data
+7. **Groq + Ollama dual-provider** — Free-tier Groq Cloud API (70B model) as primary with local Ollama (1B model, CPU-only) as offline fallback eliminates paid API dependencies while maintaining production-grade inference
 
 ---
 

@@ -14,6 +14,7 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRole?: UserRole;
   requiredRoles?: UserRole[];
+  excludeRoles?: UserRole[];
   fallbackPath?: string;
 }
 
@@ -23,16 +24,18 @@ interface ProtectedRouteProps {
  * @param children - The protected content to render
  * @param requiredRole - Single role required (uses hasRole which checks hierarchy)
  * @param requiredRoles - Multiple roles, user must have at least one
+ * @param excludeRoles - Roles that are explicitly denied access (exact match, bypasses hierarchy)
  * @param fallbackPath - Where to redirect if unauthorized (default: /unauthorized)
  */
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requiredRole,
   requiredRoles,
+  excludeRoles,
   fallbackPath = '/unauthorized',
 }) => {
   const location = useLocation();
-  const { isAuthenticated, hasRole, hasAnyRole, isLoading } = useAuthStore();
+  const { isAuthenticated, user, hasRole, hasAnyRole, isLoading } = useAuthStore();
   
   // Show loading state while checking auth
   if (isLoading) {
@@ -50,6 +53,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   if (!isAuthenticated) {
     // Save the attempted location for redirect after login
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  
+  // Explicitly deny excluded roles (bypasses hierarchy, exact role match)
+  if (excludeRoles && user?.role && excludeRoles.includes(user.role)) {
+    return <Navigate to={fallbackPath} replace />;
   }
   
   // Check role permissions if specified

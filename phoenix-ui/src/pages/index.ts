@@ -11,3 +11,7 @@ export { SOAPGeneratorPage } from './SOAPGeneratorPage';
 export { UnauthorizedPage } from './UnauthorizedPage';
 export { NotFoundPage } from './NotFoundPage';
 export { AdminSecurityConsolePage } from './AdminSecurityConsolePage';
+export { AdminHomePage } from './AdminHomePage';
+export { AdminReportsPage } from './AdminReportsPage';
+export { AdminUsersPage } from './AdminUsersPage';
+export { AdminAuditLogsPage } from './AdminAuditLogsPage';

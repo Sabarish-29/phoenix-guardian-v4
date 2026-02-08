@@ -26,15 +26,12 @@ import {
 interface SecuritySummary {
   total_events: number;
   blocked: number;
-  investigating: number;
-  logged: number;
-  block_rate_pct: number;
-  avg_detection_ms: number;
-  critical_count: number;
-  high_count: number;
-  medium_count: number;
-  low_count: number;
-  unique_attackers: number;
+  block_rate: number;
+  honeytoken_triggers: number;
+  active_attackers: number;
+  avg_detection_time_ms: number;
+  severity_distribution: Record<string, number>;
+  threat_type_distribution: Record<string, number>;
 }
 
 export const AdminSecurityConsolePage: React.FC = () => {
@@ -80,10 +77,10 @@ export const AdminSecurityConsolePage: React.FC = () => {
         <div className="grid grid-cols-6 gap-3 mb-6">
           <MetricCard label="Total Events" value={summary.total_events} color="text-gray-200" />
           <MetricCard label="Blocked" value={summary.blocked} color="text-red-400" />
-          <MetricCard label="Block Rate" value={`${summary.block_rate_pct.toFixed(1)}%`} color="text-green-400" />
-          <MetricCard label="Avg Detection" value={`${summary.avg_detection_ms.toFixed(0)}ms`} color="text-cyan-400" />
-          <MetricCard label="Critical" value={summary.critical_count} color="text-red-400" />
-          <MetricCard label="Unique Attackers" value={summary.unique_attackers} color="text-amber-400" />
+          <MetricCard label="Block Rate" value={`${summary.block_rate.toFixed(1)}%`} color="text-green-400" />
+          <MetricCard label="Avg Detection" value={`${summary.avg_detection_time_ms.toFixed(0)}ms`} color="text-cyan-400" />
+          <MetricCard label="Critical" value={summary.severity_distribution?.CRITICAL || 0} color="text-red-400" />
+          <MetricCard label="Attackers" value={summary.active_attackers} color="text-amber-400" />
         </div>
       )}
 

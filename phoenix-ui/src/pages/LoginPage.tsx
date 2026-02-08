@@ -19,21 +19,36 @@ interface LocationState {
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isAuthenticated } = useAuthStore();
+  const { login, isAuthenticated, user: currentUser } = useAuthStore();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   
   // Get the page user tried to visit before being redirected to login
-  const from = (location.state as LocationState)?.from?.pathname || '/dashboard';
+  const explicitFrom = (location.state as LocationState)?.from?.pathname;
+
+  /**
+   * Compute role-aware default redirect.
+   * If the user was trying to reach a specific page, honour that (unless it's a
+   * cross-role path). Otherwise redirect admin→/admin, others→/dashboard.
+   */
+  const getRedirectPath = (role: string) => {
+    if (explicitFrom && explicitFrom !== '/') {
+      // Don't send admin to clinical routes, or physician to admin routes
+      if (role === 'admin' && !explicitFrom.startsWith('/admin')) return '/admin';
+      if (role !== 'admin' && explicitFrom.startsWith('/admin')) return '/dashboard';
+      return explicitFrom;
+    }
+    return role === 'admin' ? '/admin' : '/dashboard';
+  };
   
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate(from, { replace: true });
+    if (isAuthenticated && currentUser) {
+      navigate(getRedirectPath(currentUser.role), { replace: true });
     }
-  }, [isAuthenticated, navigate, from]);
+  }, [isAuthenticated, currentUser, navigate]);
   
   // Login mutation
   const loginMutation = useMutation({
@@ -41,7 +56,7 @@ export const LoginPage: React.FC = () => {
     onSuccess: (data) => {
       const user = transformUserResponse(data.user);
       login(data.access_token, data.refresh_token, user);
-      navigate(from, { replace: true });
+      navigate(getRedirectPath(user.role), { replace: true });
     },
     onError: (err: Error & { response?: { data?: { detail?: string | Array<{msg: string}> } } }) => {
       const detail = err.response?.data?.detail;

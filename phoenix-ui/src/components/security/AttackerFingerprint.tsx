@@ -50,7 +50,12 @@ export const AttackerFingerprint: React.FC = () => {
     const fetch = async () => {
       try {
         const res = await apiClient.get('/security-console/attackers');
-        setAttackers(res.data.attackers || []);
+        const list = res.data.attackers || [];
+        setAttackers(list);
+        // Auto-select first attacker if none selected
+        if (!selected && list.length > 0) {
+          setSelected(list[0]);
+        }
       } catch (err) {
         console.error('Failed to fetch attackers', err);
       } finally {

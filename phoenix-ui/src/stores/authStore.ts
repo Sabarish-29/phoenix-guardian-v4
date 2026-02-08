@@ -183,10 +183,11 @@ export const useAuthStore = create<AuthState>()(
       },
       
       /**
-       * Check if user can create new encounters (physician, admin)
+       * Check if user can create new encounters (physician only — admins are restricted to admin panel)
        */
       canCreateEncounters: () => {
-        return get().hasAnyRole(['physician', 'admin']);
+        const role = get().user?.role;
+        return role === 'physician';
       },
       
       /**

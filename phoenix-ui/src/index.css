@@ -90,3 +90,19 @@ code {
 .soap-plan {
   @apply border-purple-500 bg-purple-50;
 }
+
+/* Dark scrollbar for security console and admin panels */
+.dark-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.dark-scrollbar::-webkit-scrollbar-track {
+  background: #1a1f29;
+}
+.dark-scrollbar::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 3px;
+}
+.dark-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}

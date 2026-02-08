@@ -7,24 +7,25 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
 import apiClient from '../../api/client';
 
 interface LearningImpact {
-  metric_name: string;
-  category: string;
-  before_f1: number;
-  after_f1: number;
+  security_signal: string;
+  clinical_model: string;
+  baseline_f1: number;
+  enhanced_f1: number;
   improvement_pct: number;
-  sample_count: number;
-  last_updated: string;
+  statistical_significance: boolean;
+  p_value: number;
+  sample_size: number;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  'threat-detection': '#f87171',
+  'fraud-detection': '#f87171',
   'deception-detection': '#fbbf24',
-  'insider-threat': '#a78bfa',
-  'input-validation': '#34d399',
+  'insider-threat-model': '#a78bfa',
+  'input-validation-model': '#34d399',
   'content-sanitization': '#60a5fa',
 };
 
@@ -47,10 +48,10 @@ export const LearningImpactPanel: React.FC = () => {
   }, []);
 
   const chartData = impacts.map((i) => ({
-    name: i.metric_name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
-    category: i.category,
-    before: +(i.before_f1 * 100).toFixed(1),
-    after: +(i.after_f1 * 100).toFixed(1),
+    name: i.security_signal.replace(/_/g, ' '),
+    category: i.clinical_model.toLowerCase().replace(/\s+/g, '-'),
+    before: +(i.baseline_f1 * 100).toFixed(1),
+    after: +(i.enhanced_f1 * 100).toFixed(1),
     improvement: +i.improvement_pct.toFixed(1),
   }));
 
@@ -83,11 +84,14 @@ export const LearningImpactPanel: React.FC = () => {
                     contentStyle={{ background: '#1a1f29', border: '1px solid #2d3748', borderRadius: 6, fontSize: 11 }}
                     labelStyle={{ color: '#e5e7eb' }}
                   />
-                  <Bar dataKey="before" name="Before (F1%)" fill="#4b5563" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="before" name="Before (F1%)" fill="#4b5563" radius={[2, 2, 0, 0]}>
+                    <LabelList dataKey="before" position="top" fill="#9ca3af" fontSize={9} />
+                  </Bar>
                   <Bar dataKey="after" name="After (F1%)" radius={[2, 2, 0, 0]}>
                     {chartData.map((entry, idx) => (
                       <Cell key={idx} fill={CATEGORY_COLORS[entry.category] || '#60a5fa'} />
                     ))}
+                    <LabelList dataKey="after" position="top" fill="#e5e7eb" fontSize={9} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -96,15 +100,15 @@ export const LearningImpactPanel: React.FC = () => {
             {/* Metrics table */}
             <div className="mt-3 space-y-1">
               {impacts.map((i) => (
-                <div key={i.metric_name} className="flex items-center justify-between text-[10px] px-2 py-1 rounded hover:bg-[#232a36]">
+                <div key={i.security_signal} className="flex items-center justify-between text-[10px] px-2 py-1 rounded hover:bg-[#232a36]">
                   <div className="flex items-center gap-2">
-                    <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[i.category] || '#60a5fa' }} />
-                    <span className="text-gray-300">{i.metric_name.replace(/_/g, ' ')}</span>
+                    <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[i.clinical_model.toLowerCase().replace(/\s+/g, '-')] || '#60a5fa' }} />
+                    <span className="text-gray-300">{i.security_signal}</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-gray-500">{(i.before_f1 * 100).toFixed(1)}%</span>
+                    <span className="text-gray-500">{(i.baseline_f1 * 100).toFixed(1)}%</span>
                     <span className="text-gray-400">→</span>
-                    <span className="text-gray-200 font-bold">{(i.after_f1 * 100).toFixed(1)}%</span>
+                    <span className="text-gray-200 font-bold">{(i.enhanced_f1 * 100).toFixed(1)}%</span>
                     <span className="text-green-400 font-bold">+{i.improvement_pct.toFixed(1)}%</span>
                   </div>
                 </div>

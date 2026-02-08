@@ -26,6 +26,10 @@ import {
   UnauthorizedPage,
   NotFoundPage,
   AdminSecurityConsolePage,
+  AdminHomePage,
+  AdminReportsPage,
+  AdminUsersPage,
+  AdminAuditLogsPage,
 } from './pages';
 
 // Store
@@ -80,6 +84,17 @@ const AuthInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) 
 };
 
 /**
+ * Role-aware root redirect component.
+ * Admin users go to /admin, everyone else goes to /dashboard.
+ */
+const RootRedirect: React.FC = () => {
+  const { user, isAuthenticated } = useAuthStore();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.role === 'admin') return <Navigate to="/admin" replace />;
+  return <Navigate to="/dashboard" replace />;
+};
+
+/**
  * Main App component
  */
 const App: React.FC = () => {
@@ -91,22 +106,22 @@ const App: React.FC = () => {
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
             
-            {/* Protected routes with Layout */}
+            {/* ───── Clinical routes (physician, nurse — NOT admin) ───── */}
             <Route
               element={
-                <ProtectedRoute>
+                <ProtectedRoute excludeRoles={['admin']}>
                   <Layout />
                 </ProtectedRoute>
               }
             >
-              {/* Dashboard - accessible to all authenticated users */}
+              {/* Dashboard - clinical users only */}
               <Route path="/dashboard" element={<DashboardPage />} />
               
-              {/* SOAP Generator - physicians and admins */}
+              {/* SOAP Generator - physicians only */}
               <Route
                 path="/soap-generator"
                 element={
-                  <ProtectedRoute requiredRoles={['physician', 'admin']}>
+                  <ProtectedRoute requiredRoles={['physician']}>
                     <SOAPGeneratorPage />
                   </ProtectedRoute>
                 }
@@ -115,11 +130,11 @@ const App: React.FC = () => {
               {/* Encounters list */}
               <Route path="/encounters" element={<EncountersListPage />} />
               
-              {/* Create encounter - physicians and admins only */}
+              {/* Create encounter - physicians only */}
               <Route
                 path="/encounters/new"
                 element={
-                  <ProtectedRoute requiredRoles={['physician', 'admin']}>
+                  <ProtectedRoute requiredRoles={['physician']}>
                     <CreateEncounterPage />
                   </ProtectedRoute>
                 }
@@ -128,16 +143,49 @@ const App: React.FC = () => {
               {/* View encounter */}
               <Route path="/encounters/:uuid" element={<ReviewSOAPNotePage />} />
               
-              {/* Review SOAP note - physicians and admins only */}
+              {/* Review SOAP note - physicians only */}
               <Route
                 path="/encounters/:uuid/review"
                 element={
-                  <ProtectedRoute requiredRoles={['physician', 'admin']}>
+                  <ProtectedRoute requiredRoles={['physician']}>
                     <ReviewSOAPNotePage />
                   </ProtectedRoute>
                 }
               />
+            </Route>
+
+            {/* ───── Admin routes (admin only) ───── */}
+            <Route
+              element={
+                <ProtectedRoute requiredRoles={['admin']}>
+                  <Layout />
+                </ProtectedRoute>
+              }
+            >
+              {/* Admin home */}
+              <Route path="/admin" element={<AdminHomePage />} />
               
+              {/* Security console */}
+              <Route path="/admin/security" element={<AdminSecurityConsolePage />} />
+              
+              {/* Reports */}
+              <Route path="/admin/reports" element={<AdminReportsPage />} />
+              
+              {/* User management */}
+              <Route path="/admin/users" element={<AdminUsersPage />} />
+              
+              {/* Audit logs */}
+              <Route path="/admin/audit-logs" element={<AdminAuditLogsPage />} />
+            </Route>
+
+            {/* ───── Shared routes (all authenticated users) ───── */}
+            <Route
+              element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }
+            >
               {/* Unauthorized page */}
               <Route path="/unauthorized" element={<UnauthorizedPage />} />
               
@@ -164,33 +212,10 @@ const App: React.FC = () => {
                   </div>
                 }
               />
-              
-              {/* Admin Security Console - admin only */}
-              <Route
-                path="/admin/security"
-                element={
-                  <ProtectedRoute requiredRoles={['admin']}>
-                    <AdminSecurityConsolePage />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Audit logs - auditors and admins only */}
-              <Route
-                path="/audit"
-                element={
-                  <ProtectedRoute requiredRoles={['auditor', 'admin']}>
-                    <div className="card">
-                      <h1 className="text-2xl font-bold text-gray-900 mb-4">Audit Logs</h1>
-                      <p className="text-gray-500">Audit log viewer coming soon.</p>
-                    </div>
-                  </ProtectedRoute>
-                }
-              />
             </Route>
             
-            {/* Root redirect */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            {/* Role-aware root redirect */}
+            <Route path="/" element={<RootRedirect />} />
             
             {/* 404 Not Found */}
             <Route path="*" element={<NotFoundPage />} />

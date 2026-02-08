@@ -8,7 +8,7 @@ import { useAuthStore } from '../stores/authStore';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, user, logout, getFullName, canCreateEncounters, canViewAuditLogs } = useAuthStore();
+  const { isAuthenticated, user, logout, getFullName, canCreateEncounters } = useAuthStore();
   
   const handleLogout = () => {
     logout();
@@ -37,53 +37,48 @@ export const Header: React.FC = () => {
     <header className="bg-white shadow-sm border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link to="/dashboard" className="flex items-center space-x-2">
+          {/* Logo — links to role-appropriate home */}
+          <Link to={user?.role === 'admin' ? '/admin' : '/dashboard'} className="flex items-center space-x-2">
             <span className="text-2xl">🏥</span>
             <span className="font-bold text-xl text-primary-700">Phoenix Guardian</span>
           </Link>
           
-          {/* Navigation */}
+          {/* Navigation — role-based */}
           <nav className="hidden md:flex items-center space-x-6">
-            <Link
-              to="/dashboard"
-              className="text-gray-600 hover:text-primary-600 font-medium transition-colors"
-            >
-              Dashboard
-            </Link>
-            
-            {canCreateEncounters() && (
-              <Link
-                to="/encounters/new"
-                className="text-gray-600 hover:text-primary-600 font-medium transition-colors"
-              >
-                New Encounter
-              </Link>
-            )}
-            
-            <Link
-              to="/encounters"
-              className="text-gray-600 hover:text-primary-600 font-medium transition-colors"
-            >
-              Encounters
-            </Link>
-            
-            {canViewAuditLogs() && (
-              <Link
-                to="/audit"
-                className="text-gray-600 hover:text-primary-600 font-medium transition-colors"
-              >
-                Audit Logs
-              </Link>
-            )}
+            {user?.role === 'admin' ? (
+              <>
+                <Link to="/admin" className="text-gray-600 hover:text-primary-600 font-medium transition-colors">
+                  Home
+                </Link>
+                <Link to="/admin/security" className="text-red-600 hover:text-red-500 font-medium transition-colors">
+                  🛡️ Security
+                </Link>
+                <Link to="/admin/reports" className="text-gray-600 hover:text-primary-600 font-medium transition-colors">
+                  Reports
+                </Link>
+                <Link to="/admin/users" className="text-gray-600 hover:text-primary-600 font-medium transition-colors">
+                  Users
+                </Link>
+                <Link to="/admin/audit-logs" className="text-gray-600 hover:text-primary-600 font-medium transition-colors">
+                  Audit Logs
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/dashboard" className="text-gray-600 hover:text-primary-600 font-medium transition-colors">
+                  Dashboard
+                </Link>
 
-            {user?.role === 'admin' && (
-              <Link
-                to="/admin/security"
-                className="text-red-600 hover:text-red-500 font-medium transition-colors"
-              >
-                🛡️ Security
-              </Link>
+                {canCreateEncounters() && (
+                  <Link to="/encounters/new" className="text-gray-600 hover:text-primary-600 font-medium transition-colors">
+                    New Encounter
+                  </Link>
+                )}
+
+                <Link to="/encounters" className="text-gray-600 hover:text-primary-600 font-medium transition-colors">
+                  Encounters
+                </Link>
+              </>
             )}
           </nav>
           
