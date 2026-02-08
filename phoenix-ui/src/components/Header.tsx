@@ -20,10 +20,10 @@ export const Header: React.FC = () => {
     return (
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link to="/" className="flex items-center space-x-2">
-              <img src={logoImg} alt="Phoenix Guardian" className="h-12 w-12 object-contain" />
-              <span className="font-bold text-xl text-primary-700">Phoenix Guardian</span>
+          <div className="flex justify-between items-center h-20">
+            <Link to="/" className="flex items-center space-x-3">
+              <img src={logoImg} alt="Phoenix Guardian" className="h-16 w-16 object-contain" />
+              <span className="font-bold text-2xl text-primary-700">Phoenix Guardian</span>
             </Link>
             <Link to="/login" className="btn-primary">
               Sign In
@@ -37,11 +37,11 @@ export const Header: React.FC = () => {
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-20">
           {/* Logo — links to role-appropriate home */}
-          <Link to={user?.role === 'admin' ? '/admin' : '/dashboard'} className="flex items-center space-x-2">
-            <img src={logoImg} alt="Phoenix Guardian" className="h-12 w-12 object-contain" />
-            <span className="font-bold text-xl text-primary-700">Phoenix Guardian</span>
+          <Link to={user?.role === 'admin' ? '/admin' : '/dashboard'} className="flex items-center space-x-3">
+            <img src={logoImg} alt="Phoenix Guardian" className="h-16 w-16 object-contain" />
+            <span className="font-bold text-2xl text-primary-700">Phoenix Guardian</span>
           </Link>
           
           {/* Navigation — role-based */}
