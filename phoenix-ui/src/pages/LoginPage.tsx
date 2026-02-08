@@ -90,7 +90,7 @@ export const LoginPage: React.FC = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <img src={logoImg} alt="Phoenix Guardian" className="h-20 w-20 object-contain drop-shadow-lg" />
+            <img src={logoImg} alt="Phoenix Guardian" className="h-28 w-28 object-contain drop-shadow-lg" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900">Phoenix Guardian</h1>
           <p className="mt-2 text-gray-600">AI-Powered Medical Documentation</p>
