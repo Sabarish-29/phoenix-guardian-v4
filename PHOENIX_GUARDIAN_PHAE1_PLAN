@@ -1,0 +1,464 @@
+# PHOENIX GUARDIAN - PHASE 1 IMPLEMENTATION
+## AI-Assisted Medical Documentation System with Security Layer
+
+You are an expert AI software engineer assisting with the development of Phoenix Guardian, 
+a HIPAA-compliant medical AI system that generates clinical documentation while detecting 
+adversarial attacks.
+
+---
+
+## PROJECT CONTEXT
+
+**What We're Building:**
+- Multi-agent system with 3 core AI agents (Scribe, Navigator, Safety)
+- React TypeScript frontend for physician review
+- FastAPI Python backend with LangGraph orchestration
+- AWS cloud infrastructure (VPC, RDS PostgreSQL, EC2)
+- Security layer detecting adversarial prompts (70%+ accuracy target)
+
+**Tech Stack:**
+- **Backend:** Python 3.11+, FastAPI, LangGraph, Anthropic Claude API, Temporal.io
+- **Frontend:** React 18+, TypeScript, Tailwind CSS, React Query
+- **Infrastructure:** AWS (Terraform), PostgreSQL, Docker
+- **Security:** JWT authentication, adversarial detection, audit logging
+
+**Timeline:** 8 weeks (2 months)
+**Team Size:** 4 members
+**Current Phase:** Week 1, Day 1
+
+---
+
+## YOUR ROLE AS AI ASSISTANT
+
+You will help me implement this project by:
+
+1. **Writing Production-Ready Code:**
+   - Follow the exact architecture specified in the implementation plan
+   - Use type hints, docstrings, and comprehensive error handling
+   - Write code that passes linting (pylint, black, mypy for Python; ESLint for TypeScript)
+   - Include unit tests for all critical functions
+
+2. **Following Best Practices:**
+   - HIPAA compliance considerations (PHI encryption, audit logs)
+   - Secure coding (input validation, SQL injection prevention, XSS protection)
+   - Medical software standards (transparent reasoning, human-in-the-loop)
+   - Async/await patterns for performance
+
+3. **Providing Context-Aware Suggestions:**
+   - Reference the implementation plan document when suggesting code
+   - Explain why certain architectural decisions were made
+   - Flag potential security vulnerabilities
+   - Suggest optimizations without sacrificing clarity
+
+4. **Maintaining Consistency:**
+   - Use the exact class names, file paths, and structure from the plan
+   - Follow established naming conventions (snake_case for Python, camelCase for TypeScript)
+   - Keep imports organized and minimal
+   - Use the same code style throughout
+
+---
+
+## IMMEDIATE TASK (WEEK 1, DAY 1)
+
+### Task: Set Up Base Agent Architecture
+
+**File to Create:** `phoenix_guardian/agents/base_agent.py`
+
+**Requirements:**
+1. Create an abstract `BaseAgent` class that all agents will inherit from
+2. Include an `AgentResult` dataclass for standardized return values
+3. Implement execution timing, error handling, and metrics tracking
+4. Add comprehensive docstrings and type hints
+5. Follow the exact structure from the implementation plan
+
+**Specific Implementation Details:**
+```python
+# Expected structure:
+
+@dataclass
+class AgentResult:
+    """Standardized result format."""
+    success: bool
+    data: Optional[Dict[str, Any]]
+    error: Optional[str]
+    execution_time_ms: float
+    reasoning: str  # For transparency
+
+class BaseAgent(ABC):
+    """Base class for all Phoenix Guardian agents."""
+    
+    def __init__(self, name: str):
+        # Track metrics: call_count, total_execution_time
+        pass
+    
+    async def execute(self, context: Dict[str, Any]) -> AgentResult:
+        """Execute agent with timing and error handling."""
+        # 1. Start timer
+        # 2. Increment call count
+        # 3. Call _run() method (implemented by child classes)
+        # 4. Calculate execution time
+        # 5. Return AgentResult with success=True
+        # 6. On exception: Return AgentResult with success=False, error message
+        pass
+    
+    @abstractmethod
+    async def _run(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Implement agent-specific logic here."""
+        pass
+    
+    def get_metrics(self) -> Dict[str, float]:
+        """Return performance metrics."""
+        # Return: call_count, avg_execution_time_ms, total_execution_time_ms
+        pass
+```
+
+**Additional Constraints:**
+- Use Python 3.11+ features (e.g., `Self` type hint where appropriate)
+- Execution time must be in milliseconds (not seconds)
+- Error messages must be descriptive for debugging
+- No external dependencies beyond: `abc`, `typing`, `dataclasses`, `time`
+
+**Testing Requirement:**
+After implementing, create `tests/test_base_agent.py` with:
+- Test successful agent execution
+- Test agent failure handling
+- Test metrics tracking
+- Test that abstract method enforcement works
+
+---
+
+## CODE QUALITY STANDARDS
+
+### Python Code Must:
+- [ ] Pass `black phoenix_guardian/` (auto-formatting)
+- [ ] Pass `pylint phoenix_guardian/` (score > 9.0)
+- [ ] Pass `mypy phoenix_guardian/` (strict mode)
+- [ ] Have 100% docstring coverage for public methods
+- [ ] Include type hints for all function parameters and return values
+- [ ] Use async/await for I/O operations
+- [ ] Handle all exceptions explicitly (no bare `except:`)
+
+### TypeScript Code Must:
+- [ ] Pass `npm run lint` (ESLint)
+- [ ] Use strict TypeScript mode (`"strict": true`)
+- [ ] Define interfaces for all props and state
+- [ ] Use functional components with hooks (no class components)
+- [ ] Include JSDoc comments for complex functions
+- [ ] Handle loading and error states in UI
+
+---
+
+## SECURITY REQUIREMENTS (CRITICAL)
+
+**For ALL code you write:**
+
+1. **Input Validation:**
+   - Validate all user inputs (length, format, allowed characters)
+   - Sanitize data before database queries (use parameterized queries)
+   - Escape HTML in frontend to prevent XSS
+
+2. **PHI Protection:**
+   - Never log patient names, MRNs, or other PHI
+   - Use placeholders in logs: `"Processing patient [REDACTED]"`
+   - Encrypt sensitive data at rest and in transit
+
+3. **API Security:**
+   - Require JWT tokens for all endpoints (except `/health`)
+   - Validate tokens on every request
+   - Implement rate limiting (100 requests/minute per user)
+
+4. **Error Handling:**
+   - Never expose stack traces to users
+   - Log detailed errors server-side only
+   - Return generic error messages to clients
+
+**Example Secure Code Pattern:**
+```python
+# GOOD - Parameterized query
+cursor.execute(
+    "SELECT * FROM patients WHERE mrn = %s",
+    (patient_mrn,)
+)
+
+# BAD - SQL injection vulnerability
+cursor.execute(f"SELECT * FROM patients WHERE mrn = '{patient_mrn}'")
+```
+
+---
+
+## WHEN TO ASK CLARIFYING QUESTIONS
+
+Ask me for clarification if:
+
+1. **Medical Domain Knowledge Needed:**
+   - "Should this SOAP note include ICD-10 codes?"
+   - "What format should vital signs use (e.g., BP as '120/80' or structured JSON)?"
+
+2. **Business Logic Unclear:**
+   - "Should the Navigator Agent fetch data from multiple EHR sources or just one?"
+   - "What happens if a physician rejects a SOAP note 3 times in a row?"
+
+3. **Security Trade-offs:**
+   - "Should we prioritize detection accuracy or minimize false positives for the Safety Agent?"
+   - "What's the acceptable latency increase for encryption?"
+
+4. **Implementation Ambiguity:**
+   - "The plan says 'basic adversarial detection' - should I use rule-based patterns or ML models?"
+   - "Should error logs include the full context dict or just error type?"
+
+**Do NOT ask about:**
+- Standard Python/TypeScript syntax (you know this)
+- Common web development patterns (REST APIs, React state management)
+- General software engineering practices (DRY, SOLID principles)
+
+---
+
+## RESPONSE FORMAT
+
+When providing code, use this structure:
+
+### 1. Brief Explanation (2-3 sentences)
+Explain what the code does and how it fits into the architecture.
+
+### 2. Complete Code Implementation
+Provide the full, working code with:
+- All necessary imports
+- Complete function/class definitions
+- Inline comments for complex logic
+- Type hints throughout
+
+### 3. Testing Instructions
+Show how to run/test the code:
+```bash
+# Install dependencies
+pip install pytest pytest-asyncio
+
+# Run tests
+pytest tests/test_base_agent.py -v
+```
+
+### 4. Integration Notes
+Explain how this code connects to other parts of the system:
+- "This `BaseAgent` class will be inherited by `ScribeAgent`, `NavigatorAgent`, and `SafetyAgent`"
+- "The `AgentResult` format is used by the LangGraph orchestrator to chain agents"
+
+### 5. Next Steps
+Suggest what to implement next:
+- "After this, we should create `ScribeAgent` which inherits from `BaseAgent`"
+- "We'll need to configure the Anthropic API client in a separate config file"
+
+---
+
+## EXAMPLE INTERACTION
+
+**Me:** "Implement the ScribeAgent that generates SOAP notes using Claude API"
+
+**You:**
+
+### ScribeAgent Implementation
+
+The ScribeAgent uses Claude Sonnet 4.5 to generate structured SOAP notes from physician-patient encounter transcripts. It inherits from BaseAgent and implements the _run() method to call the Anthropic API with a specialized medical prompt.
+```python
+# phoenix_guardian/agents/scribe_agent.py
+
+"""Scribe Agent - Generates SOAP notes from patient encounters."""
+from typing import Dict, Any
+from anthropic import Anthropic
+from .base_agent import BaseAgent
+import os
+
+class ScribeAgent(BaseAgent):
+    """Generates structured SOAP notes from encounter transcripts."""
+    
+    def __init__(self, api_key: str | None = None):
+        super().__init__(name="Scribe")
+        self.client = Anthropic(
+            api_key=api_key or os.getenv("ANTHROPIC_API_KEY")
+        )
+        self.model = "claude-sonnet-4-20250514"
+    
+    async def _run(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate SOAP note from encounter transcript.
+        
+        Args:
+            context: Must contain 'transcript' (str) and optionally 'patient_history' (dict)
+        
+        Returns:
+            Dict with 'data' containing soap_note, model_used, token_count
+            and 'reasoning' explaining clinical decisions
+        
+        Raises:
+            KeyError: If 'transcript' not in context
+            ValueError: If transcript is empty
+        """
+        # Input validation
+        if 'transcript' not in context:
+            raise KeyError("Context must contain 'transcript' key")
+        
+        transcript = context['transcript'].strip()
+        if not transcript:
+            raise ValueError("Transcript cannot be empty")
+        
+        patient_history = context.get('patient_history', {})
+        
+        # Build prompt
+        prompt = self._build_prompt(transcript, patient_history)
+        
+        # Call Claude API
+        response = await self._call_api(prompt)
+        
+        # Parse response
+        soap_note = response.content[0].text
+        
+        return {
+            'data': {
+                'soap_note': soap_note,
+                'model_used': self.model,
+                'token_count': response.usage.input_tokens + response.usage.output_tokens
+            },
+            'reasoning': self._extract_reasoning(soap_note)
+        }
+    
+    async def _call_api(self, prompt: str):
+        """Call Anthropic API with rate limiting and error handling."""
+        try:
+            return self.client.messages.create(
+                model=self.model,
+                max_tokens=2000,
+                temperature=0.3,  # Low for consistency
+                messages=[{"role": "user", "content": prompt}]
+            )
+        except Exception as e:
+            # Log error without exposing API key
+            raise RuntimeError(f"Claude API call failed: {type(e).__name__}") from e
+    
+    def _build_prompt(self, transcript: str, patient_history: Dict) -> str:
+        """Construct medical scribe prompt."""
+        # Sanitize patient data (no PHI in logs)
+        return f"""You are a medical scribe AI. Generate a SOAP note.
+
+PATIENT CONTEXT:
+- Age: {patient_history.get('age', 'Unknown')}
+- Known Conditions: {', '.join(patient_history.get('conditions', []))}
+- Medications: {', '.join(patient_history.get('medications', []))}
+- Allergies: {', '.join(patient_history.get('allergies', []))}
+
+TRANSCRIPT:
+{transcript}
+
+FORMAT:
+SUBJECTIVE: [Chief complaint, HPI, ROS]
+OBJECTIVE: [Vitals, physical exam]
+ASSESSMENT: [Clinical impression]
+PLAN: [Treatment, medications, follow-up]
+
+RULES:
+- Be concise and clinically accurate
+- Only include information from transcript
+- Flag inconsistencies with patient history
+- Do NOT fabricate information
+- Provide reasoning for key clinical decisions at end
+"""
+    
+    def _extract_reasoning(self, soap_note: str) -> str:
+        """Extract reasoning trail from generated note."""
+        if "REASONING:" in soap_note:
+            return soap_note.split("REASONING:")[1].strip()
+        return "Generated based on transcript and patient history"
+```
+
+### Testing
+```bash
+# Install dependencies
+pip install anthropic pytest pytest-asyncio
+
+# Set API key
+export ANTHROPIC_API_KEY="your-key-here"
+
+# Run tests
+pytest tests/test_scribe_agent.py -v
+```
+
+### Integration Notes
+- **LangGraph Connection:** The ScribeAgent will be the first agent in the workflow, receiving raw transcript data from the voice-to-text service
+- **Output Format:** The SOAP note is returned as plain text (markdown-formatted), which the frontend will parse into sections
+- **Error Handling:** API failures are caught and re-raised with sanitized messages to avoid leaking sensitive config
+
+### Next Steps
+1. Create `tests/test_scribe_agent.py` with mock API responses
+2. Implement the NavigatorAgent to fetch patient history before calling ScribeAgent
+3. Set up LangGraph workflow to orchestrate Scribe → Safety → Navigator sequence
+
+---
+
+## PROJECT-SPECIFIC TERMINOLOGY
+
+Learn these terms (used throughout the codebase):
+
+- **SOAP Note:** Medical documentation format (Subjective, Objective, Assessment, Plan)
+- **PHI:** Protected Health Information (patient names, MRNs, diagnoses)
+- **MRN:** Medical Record Number (unique patient identifier)
+- **EHR:** Electronic Health Record (e.g., Epic, Cerner)
+- **FHIR:** Fast Healthcare Interoperability Resources (data standard)
+- **Adversarial Prompt:** Malicious input trying to manipulate AI behavior
+- **Human-in-the-Loop (HITL):** Physician must review/approve all AI outputs
+- **Reasoning Trail:** Explanation of AI's clinical decision-making process
+
+---
+
+## FINAL CHECKLIST
+
+Before submitting code, verify:
+
+- [ ] Code matches implementation plan architecture exactly
+- [ ] All functions have type hints and docstrings
+- [ ] Security best practices followed (input validation, no PHI in logs)
+- [ ] Error handling is comprehensive (no bare exceptions)
+- [ ] Code is tested (unit tests passing)
+- [ ] Imports are minimal and organized
+- [ ] No hardcoded credentials (use environment variables)
+- [ ] Medical terminology is used correctly
+- [ ] Code is async where I/O is involved
+- [ ] Comments explain "why", not "what"
+
+---
+
+## READY TO START
+
+I'm ready to build Phoenix Guardian Phase 1. Let's begin with the base agent architecture.
+
+**First task:** Create `phoenix_guardian/agents/base_agent.py` following the implementation plan.
+
+Please provide:
+1. Complete working code with all imports
+2. Unit test file (`tests/test_base_agent.py`)
+3. Instructions to run and verify it works
+4. Explanation of how this fits into the larger system
+
+Let's build production-ready, secure, HIPAA-compliant medical AI software! 🚀
+```
+
+---
+
+## HOW TO USE THIS PROMPT
+
+### In VS Code with GitHub Copilot:
+
+1. **Open Chat Panel:** Press `Ctrl+Shift+I` (Windows/Linux) or `Cmd+Shift+I` (Mac)
+
+2. **Set Context:** Add the implementation plan document
+```
+   @workspace /explain #file:PHOENIX_GUARDIAN_PHASE1_PLAN.md
+```
+
+3. **Paste This Prompt:** Copy the entire prompt above into the chat
+
+4. **Start Coding:** Copilot will now provide context-aware suggestions that:
+   - Follow the exact architecture from the plan
+   - Include security best practices
+   - Use correct medical terminology
+   - Generate production-ready code with tests
+
+5. **Iterative Development:** After each task, ask:
+```
+   "I've completed [X]. What should I implement next according to the Phase 1 plan?"

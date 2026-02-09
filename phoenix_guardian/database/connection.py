@@ -143,6 +143,7 @@ class Database:
             max_overflow=self.config.max_overflow,
             pool_timeout=self.config.pool_timeout,
             pool_pre_ping=True,  # Check connections before using
+            pool_recycle=300,  # Recycle connections every 5 minutes
             echo=self.config.echo,
         )
 
