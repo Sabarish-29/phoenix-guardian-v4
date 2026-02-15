@@ -1,0 +1,21 @@
+# Netlify configuration for Phoenix Guardian
+# Only deploys the React frontend — Python backend is NOT hosted on Netlify
+
+[build]
+  # Build the React frontend from the phoenix-ui subdirectory
+  base = "phoenix-ui"
+  command = "npm ci && npm run build"
+  publish = "build"
+
+[build.environment]
+  # Prevent Netlify from auto-installing Python dependencies
+  # (requirements.txt at repo root is for the backend, not for Netlify)
+  PYTHON_VERSION = "3.11"
+  PIP_NO_CACHE_DIR = "1"
+  NODE_VERSION = "18"
+
+# SPA routing — send all paths to index.html for React Router
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
