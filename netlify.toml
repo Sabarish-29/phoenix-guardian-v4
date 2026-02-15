@@ -4,7 +4,7 @@
 [build]
   # Build the React frontend from the phoenix-ui subdirectory
   base = "phoenix-ui"
-  command = "npm ci && npm run build"
+  command = "npm install --legacy-peer-deps && npm run build"
   publish = "build"
 
 [build.environment]
