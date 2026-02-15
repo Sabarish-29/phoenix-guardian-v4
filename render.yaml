@@ -1,0 +1,28 @@
+# render.yaml - Render Infrastructure as Code
+# Deploy: Connect this repo to Render and it auto-detects this file
+
+services:
+  # FastAPI Backend
+  - type: web
+    name: phoenix-guardian-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: phoenix-db
+          property: connectionString
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: production
+      - key: GROQ_API_KEY
+        sync: false  # Set manually in Render dashboard
+    healthCheckPath: /api/v1/health
+
+databases:
+  - name: phoenix-db
+    plan: free
+    databaseName: phoenix_guardian
+    user: phoenix

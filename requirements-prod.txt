@@ -1,0 +1,51 @@
+# Phoenix Guardian - Production Requirements (Render deployment)
+# Excludes heavy ML packages (torch, transformers) for lightweight deploy
+# Python 3.11+
+
+# Core Framework
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+gunicorn==21.2.0
+pydantic==2.9.2
+
+# Authentication & Security
+PyJWT==2.9.0
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+python-multipart==0.0.9
+
+# Database
+psycopg2-binary==2.9.9
+sqlalchemy==2.0.35
+alembic==1.13.2
+
+# HTTP Clients
+requests==2.32.3
+httpx==0.27.2
+
+# ML (lightweight only)
+numpy==2.0.2
+scipy==1.14.1
+scikit-learn==1.5.2
+
+# Structured Logging
+structlog==24.4.0
+
+# Email Validation
+email-validator==2.2.0
+
+# Caching
+cachetools==5.5.0
+
+# Redis
+redis==5.0.8
+
+# Environment
+python-dotenv==1.0.1
+
+# HIPAA Compliance
+cryptography==43.0.1
+
+# AI Provider (Groq uses httpx, Anthropic kept for compat)
+anthropic==0.34.0

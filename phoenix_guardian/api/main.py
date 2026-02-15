@@ -42,9 +42,57 @@ app = FastAPI(
 # Startup and shutdown events
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database connection on startup."""
+    """Initialize database connection and seed demo users on startup."""
     db.connect()
+    db.create_tables()
     print(f"Database connected: {db.config.host}:{db.config.port}/{db.config.name}")
+
+    # Seed demo users if the DB is empty (first deploy)
+    _seed_demo_users()
+
+
+def _seed_demo_users() -> None:
+    """Create demo users if none exist in the database."""
+    from phoenix_guardian.models.user import User, UserRole
+    from phoenix_guardian.api.auth.utils import hash_password
+
+    try:
+        with db.session_scope() as session:
+            if session.query(User).first() is not None:
+                print("Users already exist — skipping seed")
+                return
+
+            demo_users = [
+                User(
+                    email="dr.smith@phoenixguardian.health",
+                    password_hash=hash_password("Doctor123!"),
+                    first_name="John",
+                    last_name="Smith",
+                    role=UserRole.PHYSICIAN,
+                    is_active=True,
+                ),
+                User(
+                    email="admin@phoenixguardian.health",
+                    password_hash=hash_password("Admin123!"),
+                    first_name="System",
+                    last_name="Administrator",
+                    role=UserRole.ADMIN,
+                    is_active=True,
+                ),
+                User(
+                    email="nurse.jones@phoenixguardian.health",
+                    password_hash=hash_password("Nurse123!"),
+                    first_name="Sarah",
+                    last_name="Jones",
+                    role=UserRole.NURSE,
+                    is_active=True,
+                ),
+            ]
+            for u in demo_users:
+                session.add(u)
+            print(f"Seeded {len(demo_users)} demo users")
+    except Exception as exc:
+        print(f"Warning: Could not seed demo users: {exc}")
 
 
 @app.on_event("shutdown")
@@ -55,13 +103,21 @@ async def shutdown_event():
 
 
 # CORS middleware (configure for production)
+import os as _os
+_cors_origins = [
+    "http://localhost:3000",  # React dev server
+    "http://localhost:4000",  # Serve (fallback port)
+    "http://localhost:5173",  # Vite dev server
+    "https://phoenixguardian.netlify.app",  # Netlify production
+]
+# Allow custom CORS origin via env var
+_extra_origin = _os.getenv("CORS_ORIGIN")
+if _extra_origin:
+    _cors_origins.append(_extra_origin)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # React dev server
-        "http://localhost:4000",  # Serve (fallback port)
-        "http://localhost:5173",  # Vite dev server
-    ],
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

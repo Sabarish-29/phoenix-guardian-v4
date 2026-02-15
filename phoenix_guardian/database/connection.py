@@ -25,6 +25,8 @@ class DatabaseConfig:
 
     def __init__(self) -> None:
         """Load database configuration from environment."""
+        # Support DATABASE_URL (Render, Railway, etc.) or individual vars
+        self._database_url = os.getenv("DATABASE_URL", "")
         self.host = os.getenv("DB_HOST", "localhost")
         self.port = int(os.getenv("DB_PORT", "5432"))
         self.name = os.getenv("DB_NAME", "phoenix_guardian")
@@ -42,6 +44,13 @@ class DatabaseConfig:
         Returns:
             PostgreSQL connection URL
         """
+        if self._database_url:
+            # Render/Railway provide DATABASE_URL directly
+            url = self._database_url
+            # Fix Render's postgres:// to postgresql:// (SQLAlchemy requires it)
+            if url.startswith("postgres://"):
+                url = url.replace("postgres://", "postgresql://", 1)
+            return url
         return (
             f"postgresql://{self.user}:{self.password}@"
             f"{self.host}:{self.port}/{self.name}"
