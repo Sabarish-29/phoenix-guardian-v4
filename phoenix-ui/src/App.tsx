@@ -78,7 +78,8 @@ const AuthInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) 
     };
     
     validateAuth();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken, isAuthenticated, logout, setLoading]);
   
   return <>{children}</>;
 };

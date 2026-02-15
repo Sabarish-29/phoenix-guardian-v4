@@ -7,7 +7,8 @@
 import React, { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { encounterService, EncounterStatus, Encounter } from '../api/services/encounterService';
+import { encounterService } from '../api/services/encounterService';
+import type { EncounterStatus } from '../api/services/encounterService';
 import { useAuthStore } from '../stores/authStore';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 

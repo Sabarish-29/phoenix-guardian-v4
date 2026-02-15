@@ -65,6 +65,7 @@ export const AttackerFingerprint: React.FC = () => {
     fetch();
     const interval = setInterval(fetch, 15000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const blocked = attackers.filter((a) => a.status === 'BLOCKED').length;

@@ -13,7 +13,7 @@ import { useQuery } from '@tanstack/react-query';
 import { encounterService } from '../api/services/encounterService';
 import { useAuthStore } from '../stores/authStore';
 import { LoadingSpinner } from '../components/LoadingSpinner';
-import type { Encounter, EncounterStatus } from '../api/services/encounterService';
+import type { EncounterStatus } from '../api/services/encounterService';
 
 /**
  * Status badge component
@@ -61,7 +61,7 @@ const StatCard: React.FC<{
 );
 
 export const DashboardPage: React.FC = () => {
-  const { user, getFullName, canCreateEncounters, canSignNotes } = useAuthStore();
+  const { user, canCreateEncounters, canSignNotes } = useAuthStore();
   
   // Fetch recent encounters
   const { data: encountersData, isLoading: isLoadingEncounters } = useQuery({

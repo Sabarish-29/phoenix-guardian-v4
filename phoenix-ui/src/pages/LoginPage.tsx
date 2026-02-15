@@ -5,7 +5,7 @@
  * Uses React Query for API mutation management.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { authService, transformUserResponse } from '../api/services/authService';
@@ -34,7 +34,7 @@ export const LoginPage: React.FC = () => {
    * If the user was trying to reach a specific page, honour that (unless it's a
    * cross-role path). Otherwise redirect admin→/admin, others→/dashboard.
    */
-  const getRedirectPath = (role: string) => {
+  const getRedirectPath = useCallback((role: string) => {
     if (explicitFrom && explicitFrom !== '/') {
       // Don't send admin to clinical routes, or physician to admin routes
       if (role === 'admin' && !explicitFrom.startsWith('/admin')) return '/admin';
@@ -42,14 +42,14 @@ export const LoginPage: React.FC = () => {
       return explicitFrom;
     }
     return role === 'admin' ? '/admin' : '/dashboard';
-  };
+  }, [explicitFrom]);
   
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && currentUser) {
       navigate(getRedirectPath(currentUser.role), { replace: true });
     }
-  }, [isAuthenticated, currentUser, navigate]);
+  }, [isAuthenticated, currentUser, navigate, getRedirectPath]);
   
   // Login mutation
   const loginMutation = useMutation({

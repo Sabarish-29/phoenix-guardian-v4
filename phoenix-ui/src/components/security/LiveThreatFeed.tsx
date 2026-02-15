@@ -7,7 +7,6 @@
  */
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { useAuthStore } from '../../stores/authStore';
 import apiClient from '../../api/client';
 
 interface SecurityEvent {
@@ -43,7 +42,6 @@ export const LiveThreatFeed: React.FC = () => {
   const [simulating, setSimulating] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
-  const { accessToken } = useAuthStore();
 
   // Fetch initial events via REST
   const fetchEvents = useCallback(async () => {

@@ -359,6 +359,8 @@ export function useMedicalTranscription(
     animateWaveform();
 
     setStatus('recording');
+    // stopRecording intentionally omitted (circular dep — defined after startRecording)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     language,
     continuous,

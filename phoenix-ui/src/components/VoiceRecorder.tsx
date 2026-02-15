@@ -41,7 +41,6 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
     transcript,
     interimText,
     segments,
-    duration,
     formattedDuration,
     quality,
     audioBlob,
