@@ -57,7 +57,11 @@ export const LiveThreatFeed: React.FC = () => {
   useEffect(() => {
     fetchEvents();
 
-    const wsUrl = `ws://localhost:8000/api/v1/security-console/ws`;
+    // Derive WS URL from the same API base the rest of the app uses
+    const apiBase = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+    const wsProtocol = apiBase.startsWith('https') ? 'wss' : 'ws';
+    const wsHost = apiBase.replace(/^https?:\/\//, '').replace(/\/api\/v1\/?$/, '');
+    const wsUrl = `${wsProtocol}://${wsHost}/api/v1/security-console/ws`;
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
     setWsStatus('connecting');
