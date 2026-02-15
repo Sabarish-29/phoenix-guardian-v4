@@ -44,7 +44,11 @@ app = FastAPI(
 async def startup_event():
     """Initialize database connection and seed demo users on startup."""
     db.connect()
-    db.create_tables()
+    try:
+        db.create_tables()
+    except Exception as exc:
+        # Safe to ignore if tables/enums already exist (e.g. concurrent workers)
+        print(f"Note: create_tables encountered: {exc}")
     print(f"Database connected: {db.config.host}:{db.config.port}/{db.config.name}")
 
     # Seed demo users if the DB is empty (first deploy)
