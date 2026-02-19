@@ -30,6 +30,7 @@ import {
   AdminReportsPage,
   AdminUsersPage,
   AdminAuditLogsPage,
+  TreatmentShadowPage,
 } from './pages';
 
 // Store
@@ -141,6 +142,9 @@ const App: React.FC = () => {
                 }
               />
               
+              {/* Treatment Shadow Monitor */}
+              <Route path="/treatment-shadow" element={<TreatmentShadowPage />} />
+
               {/* View encounter */}
               <Route path="/encounters/:uuid" element={<ReviewSOAPNotePage />} />
               

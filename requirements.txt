@@ -106,3 +106,11 @@ types-requests==2.32.0.20240914
 # HIPAA Compliance Utilities
 # =============================================================================
 cryptography==43.0.1
+
+# =============================================================================
+# V5 UPGRADE — New agents: ZebraHunter, SilentVoice, TreatmentShadow
+# Added: February 2026
+# =============================================================================
+# NOTE: httpx, numpy, scipy, redis are already pinned above.
+# Only truly new packages are added here to avoid version conflicts.
+aiofiles==23.2.1

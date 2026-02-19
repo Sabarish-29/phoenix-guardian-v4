@@ -79,6 +79,11 @@ export const Header: React.FC = () => {
                 <Link to="/encounters" className="text-gray-600 hover:text-primary-600 font-medium transition-colors">
                   Encounters
                 </Link>
+
+                <Link to="/treatment-shadow" className="text-purple-600 hover:text-purple-500 font-medium transition-colors flex items-center gap-1">
+                  💊 Treatment Shadow
+                  <span className="bg-purple-100 text-purple-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">NEW</span>
+                </Link>
               </>
             )}
           </nav>

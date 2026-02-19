@@ -1,0 +1,42 @@
+{
+  "patient_id": "a1b2c3d4-0004-4000-8000-000000000004",
+  "patient_name": "Rajesh Kumar",
+  "analysis_timestamp": "2026-02-19T12:00:00+00:00",
+  "total_shadows": 1,
+  "fired_count": 1,
+  "active_shadows": [
+    {
+      "shadow_id": "e1000000-0001-4000-8000-000000000001",
+      "drug": "Metformin 1000mg BID",
+      "prescribed_since": "2023-08-01",
+      "shadow_type": "Vitamin B12 Depletion",
+      "watch_lab": "vitamin_b12",
+      "alert_fired": true,
+      "severity": "moderate",
+      "trend": {
+        "slope": -62.57,
+        "pct_change": -50.0,
+        "direction": "declining",
+        "r_squared": 0.9918,
+        "trend_summary": "Declining trend: -50.0% change across 6 readings (R²=0.99)."
+      },
+      "lab_values": [620, 540, 480, 410, 350, 310],
+      "lab_dates": [
+        "2023-08-15",
+        "2023-11-20",
+        "2024-02-14",
+        "2024-06-10",
+        "2024-10-05",
+        "2025-01-18"
+      ],
+      "harm_timeline": {
+        "harm_started_estimate": "~February 2024",
+        "current_stage": "Moderate — reversible now",
+        "projection_90_days": "Peripheral neuropathy — partially irreversible after 12 months",
+        "days_until_irreversible": 206
+      },
+      "clinical_output": "Patient on Metformin 1000mg BID since August 2023. Vitamin B12 has declined 50% over 18 months — a classic depletion pattern now at moderate stage. Fully reversible with B12 supplementation started today; without intervention, peripheral neuropathy risk within 90 days. Recommend starting B12 1000mcg daily immediately and rechecking levels in 3 months.",
+      "recommended_action": "Order stat B12 level. Start B12 1000mcg PO daily or 1000mcg IM monthly. Recheck in 3 months. Consider methylmalonic acid level to assess tissue-level deficiency."
+    }
+  ]
+}

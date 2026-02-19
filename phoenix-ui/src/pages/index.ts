@@ -15,3 +15,4 @@ export { AdminHomePage } from './AdminHomePage';
 export { AdminReportsPage } from './AdminReportsPage';
 export { AdminUsersPage } from './AdminUsersPage';
 export { AdminAuditLogsPage } from './AdminAuditLogsPage';
+export { TreatmentShadowPage } from './TreatmentShadowPage';
