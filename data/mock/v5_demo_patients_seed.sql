@@ -139,12 +139,12 @@ INSERT INTO patient_baselines (
     'd1000000-0001-4000-8000-000000000001',
     'a1b2c3d4-0003-4000-8000-000000000003',
     120,
-    48,
-    72.5, 4.2, 64.0, 82.0,          -- HR baseline
-    128.0, 6.5, 78.0, 4.1,          -- BP baseline
-    97.8, 0.6,                       -- SpO2 baseline
-    16.0, 1.8,                       -- RR baseline
-    45.0, 5.2                        -- HRV baseline
+    9,
+    72.0, 1.22, 64.0, 82.0,           -- HR baseline (from actual vitals)
+    127.33, 2.0, 77.67, 1.32,         -- BP baseline
+    97.89, 0.6,                        -- SpO2 baseline
+    15.78, 0.67,                       -- RR baseline
+    51.89, 1.9                         -- HRV baseline
 ) ON CONFLICT (id) DO NOTHING;
 
 -- Silent voice alert triggered at ICU hour 26

@@ -16,3 +16,4 @@ export { AdminReportsPage } from './AdminReportsPage';
 export { AdminUsersPage } from './AdminUsersPage';
 export { AdminAuditLogsPage } from './AdminAuditLogsPage';
 export { TreatmentShadowPage } from './TreatmentShadowPage';
+export { SilentVoicePage } from './SilentVoicePage';

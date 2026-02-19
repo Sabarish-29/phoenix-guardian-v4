@@ -1,0 +1,76 @@
+{
+    "patient_id": "a1b2c3d4-0003-4000-8000-000000000003",
+    "patient_name": "Lakshmi Devi",
+    "alert_level": "critical",
+    "distress_active": true,
+    "distress_duration_minutes": 35,
+    "signals_detected": [
+        {
+            "vital": "hr",
+            "label": "Heart Rate",
+            "current": 94.0,
+            "baseline_mean": 72.0,
+            "baseline_std": 1.22,
+            "z_score": 18.03,
+            "deviation_pct": 30.6,
+            "direction": "elevated"
+        },
+        {
+            "vital": "bp_dia",
+            "label": "Diastolic BP",
+            "current": 84.0,
+            "baseline_mean": 77.7,
+            "baseline_std": 1.32,
+            "z_score": 4.8,
+            "deviation_pct": 8.1,
+            "direction": "elevated"
+        },
+        {
+            "vital": "rr",
+            "label": "Respiratory Rate",
+            "current": 22.0,
+            "baseline_mean": 15.8,
+            "baseline_std": 0.67,
+            "z_score": 9.28,
+            "deviation_pct": 39.4,
+            "direction": "elevated"
+        },
+        {
+            "vital": "hrv",
+            "label": "Heart Rate Variability",
+            "current": 34.0,
+            "baseline_mean": 51.9,
+            "baseline_std": 1.9,
+            "z_score": -9.42,
+            "deviation_pct": -34.5,
+            "direction": "depressed"
+        }
+    ],
+    "latest_vitals": {
+        "hr": 94.0,
+        "bp_sys": 128.0,
+        "bp_dia": 84.0,
+        "spo2": 97.0,
+        "rr": 22.0,
+        "hrv": 34.0,
+        "recorded_at": "2026-02-19T16:15:00Z"
+    },
+    "baseline": {
+        "patient_id": "a1b2c3d4-0003-4000-8000-000000000003",
+        "established_at": "2026-02-19T10:00:00Z",
+        "vitals_count": 9,
+        "baseline_window_minutes": 120,
+        "baselines": {
+            "hr": {"mean": 72.0, "std": 1.22},
+            "bp_sys": {"mean": 127.33, "std": 2.0},
+            "bp_dia": {"mean": 77.67, "std": 1.32},
+            "spo2": {"mean": 97.89, "std": 0.6},
+            "rr": {"mean": 15.78, "std": 0.67},
+            "hrv": {"mean": 51.89, "std": 1.9}
+        }
+    },
+    "last_analgesic_hours": 6.2,
+    "clinical_output": "Patient Lakshmi Devi (ICU bed 3) shows sustained distress: elevated heart rate (94 bpm vs personal baseline 72, z=+18.0), depressed HRV (34ms vs baseline 52ms, z=-9.4), and elevated respiratory rate (22/min vs baseline 16/min), persisting for 35 minutes. Recommend immediate bedside pain assessment — last analgesic was 6.2 hours ago — consider PRN morphine if pain confirmed and check surgical site for post-operative complication.",
+    "recommended_action": "Perform in-person pain assessment using Wong-Baker FACES scale. Consider PRN analgesic if pain confirmed. Check surgical site for signs of complication.",
+    "timestamp": "2026-02-19T16:15:00Z"
+}

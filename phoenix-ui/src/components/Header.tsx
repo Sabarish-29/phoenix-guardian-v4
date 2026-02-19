@@ -84,6 +84,11 @@ export const Header: React.FC = () => {
                   💊 Treatment Shadow
                   <span className="bg-purple-100 text-purple-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">NEW</span>
                 </Link>
+
+                <Link to="/silent-voice" className="text-blue-600 hover:text-blue-500 font-medium transition-colors flex items-center gap-1">
+                  🔵 Silent Voice
+                  <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">NEW</span>
+                </Link>
               </>
             )}
           </nav>

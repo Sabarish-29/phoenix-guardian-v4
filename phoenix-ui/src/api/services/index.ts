@@ -14,6 +14,7 @@ export type {
 
 export { encounterService, transformEncounterResponse } from './encounterService';
 export { treatmentShadowService } from './treatmentShadowService';
+export { silentVoiceService } from './silentVoiceService';
 export type {
   ShadowTrend,
   HarmTimeline,

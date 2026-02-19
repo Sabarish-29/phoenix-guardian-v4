@@ -31,6 +31,7 @@ import {
   AdminUsersPage,
   AdminAuditLogsPage,
   TreatmentShadowPage,
+  SilentVoicePage,
 } from './pages';
 
 // Store
@@ -144,6 +145,9 @@ const App: React.FC = () => {
               
               {/* Treatment Shadow Monitor */}
               <Route path="/treatment-shadow" element={<TreatmentShadowPage />} />
+
+              {/* Silent Voice Monitor */}
+              <Route path="/silent-voice" element={<SilentVoicePage />} />
 
               {/* View encounter */}
               <Route path="/encounters/:uuid" element={<ReviewSOAPNotePage />} />
