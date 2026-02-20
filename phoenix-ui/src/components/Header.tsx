@@ -66,8 +66,12 @@ export const Header: React.FC = () => {
               </>
             ) : (
               <>
+                <Link to="/v5-dashboard" className="text-emerald-600 hover:text-emerald-500 font-bold transition-colors flex items-center gap-1">
+                  🛡️ V5 Dashboard
+                </Link>
+
                 <Link to="/dashboard" className="text-gray-600 hover:text-primary-600 font-medium transition-colors">
-                  Dashboard
+                  Legacy
                 </Link>
 
                 {canCreateEncounters() && (
@@ -76,18 +80,19 @@ export const Header: React.FC = () => {
                   </Link>
                 )}
 
-                <Link to="/encounters" className="text-gray-600 hover:text-primary-600 font-medium transition-colors">
-                  Encounters
-                </Link>
-
                 <Link to="/treatment-shadow" className="text-purple-600 hover:text-purple-500 font-medium transition-colors flex items-center gap-1">
-                  💊 Treatment Shadow
-                  <span className="bg-purple-100 text-purple-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">NEW</span>
+                  🟣 Shadow
+                  <span className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
                 </Link>
 
                 <Link to="/silent-voice" className="text-blue-600 hover:text-blue-500 font-medium transition-colors flex items-center gap-1">
-                  🔵 Silent Voice
-                  <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">NEW</span>
+                  🔵 Voice
+                  <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                </Link>
+
+                <Link to="/zebra-hunter" className="text-amber-600 hover:text-amber-500 font-medium transition-colors flex items-center gap-1">
+                  🦓 Zebra
+                  <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
                 </Link>
               </>
             )}

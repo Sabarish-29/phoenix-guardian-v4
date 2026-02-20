@@ -8,7 +8,8 @@
  * - Harm projection timeline
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   LineChart,
@@ -337,8 +338,10 @@ const AnalysisSkeleton: React.FC = () => (
 
 export const TreatmentShadowPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const [selectedPatientId, setSelectedPatientId] = useState<string>(DEMO_PATIENTS[0].id);
-  const [analysisTriggered, setAnalysisTriggered] = useState(false);
+  const [searchParams] = useSearchParams();
+  const preselectedPatient = searchParams.get('patient');
+  const [selectedPatientId, setSelectedPatientId] = useState<string>(preselectedPatient || DEMO_PATIENTS[0].id);
+  const [analysisTriggered, setAnalysisTriggered] = useState(!!preselectedPatient);
 
   // Fetch patient analysis (only when triggered)
   const {

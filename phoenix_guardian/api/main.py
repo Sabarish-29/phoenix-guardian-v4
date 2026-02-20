@@ -28,6 +28,8 @@ from phoenix_guardian.api.routes import orchestration as orchestration_routes
 from phoenix_guardian.api.routes import security_console as security_console_routes
 from phoenix_guardian.api.routes import treatment_shadow as treatment_shadow_routes
 from phoenix_guardian.api.routes import silent_voice as silent_voice_routes
+from phoenix_guardian.api.routes import zebra_hunter as zebra_hunter_routes
+from phoenix_guardian.api.routes import v5_dashboard as v5_dashboard_routes
 from phoenix_guardian.api.utils.orchestrator import OrchestrationError
 from phoenix_guardian.database.connection import db
 
@@ -279,6 +281,18 @@ app.include_router(
     silent_voice_routes.router,
     prefix="/api/v1/silent-voice",
     tags=["silent-voice"],
+)
+
+app.include_router(
+    zebra_hunter_routes.router,
+    prefix="/api/v1/zebra-hunter",
+    tags=["zebra-hunter"],
+)
+
+app.include_router(
+    v5_dashboard_routes.router,
+    prefix="/api/v1/v5",
+    tags=["v5-dashboard"],
 )
 
 

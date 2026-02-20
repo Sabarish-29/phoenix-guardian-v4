@@ -12,6 +12,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useSilentVoiceStream } from '../hooks/useSilentVoiceStream';
 import { silentVoiceService } from '../api/services/silentVoiceService';
 import type { MonitorResult, SignalData } from '../api/services/silentVoiceService';
@@ -336,8 +337,11 @@ const LoadingSkeleton: React.FC = () => (
 // ═══════════════════════════════════════════════════════════════════════════
 
 export const SilentVoicePage: React.FC = () => {
-  const { data, connected, error, mode } = useSilentVoiceStream(PATIENT_C_ID);
-  const [baselineMode, setBaselineMode] = useState<BaselineMode>('population');
+  const [searchParams] = useSearchParams();
+  const preselectedPatient = searchParams.get('patient');
+  const patientId = preselectedPatient || PATIENT_C_ID;
+  const { data, connected, error, mode } = useSilentVoiceStream(patientId);
+  const [baselineMode, setBaselineMode] = useState<BaselineMode>(preselectedPatient ? 'personal' : 'population');
   const [acknowledged, setAcknowledged] = useState(false);
   const [minutesSinceCheck, setMinutesSinceCheck] = useState(127);
   const [vitalsHistory, setVitalsHistory] = useState<Record<string, number[]>>({});

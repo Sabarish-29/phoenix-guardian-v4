@@ -15,6 +15,23 @@ export type {
 export { encounterService, transformEncounterResponse } from './encounterService';
 export { treatmentShadowService } from './treatmentShadowService';
 export { silentVoiceService } from './silentVoiceService';
+export { zebraHunterService } from './zebraHunterService';
+export { v5DashboardService } from './v5DashboardService';
+export type {
+  V5StatusResponse, ActiveAlert as V5ActiveAlert, AgentStatuses,
+  ImpactSummary, ShadowAgentStatus, SilentVoiceAgentStatus,
+  ZebraHunterAgentStatus,
+} from './v5DashboardService';
+export type {
+  AnalyzeResponse as ZebraAnalyzeResponse,
+  MatchResponse as ZebraMatchResponse,
+  TimelineEntry as ZebraTimelineEntry,
+  GhostProtocolResult,
+  GhostCaseResponse,
+  GhostCasesListResponse,
+  ReportGhostResponse,
+  ZebraHunterHealth,
+} from './zebraHunterService';
 export type {
   ShadowTrend,
   HarmTimeline,

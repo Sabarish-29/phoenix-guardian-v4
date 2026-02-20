@@ -1,0 +1,33 @@
+{
+  "status": "ghost_protocol",
+  "patient_id": "a1b2c3d4-0002-4000-8000-000000000002",
+  "patient_name": "Arjun Nair",
+  "total_visits": 4,
+  "symptoms_found": [
+    "episodic facial flushing", "spontaneous bruising",
+    "unexplained hypertension", "joint laxity", "paresthesias",
+    "rash", "fatigue", "muscle weakness", "hypermobility",
+    "bruising", "dizziness"
+  ],
+  "analysis_timestamp": "2025-07-21T10:35:00Z",
+  "top_matches": [],
+  "missed_clue_timeline": [],
+  "years_lost": 0,
+  "first_diagnosable_visit": null,
+  "recommendation": "",
+  "ghost_protocol": {
+    "activated": true,
+    "ghost_id": "GHOST-2025-0042",
+    "patient_count": 3,
+    "symptom_signature": [
+      "episodic facial flushing", "spontaneous bruising",
+      "unexplained hypertension", "joint laxity", "paresthesias",
+      "rash", "fatigue", "muscle weakness", "hypermobility",
+      "bruising", "dizziness"
+    ],
+    "symptom_hash": "a7f3c9d1e2b4",
+    "first_case_seen": "2025-01-10T08:30:00+00:00",
+    "message": "Novel disease pattern detected across 3 patients. Ghost Case GHOST-2025-0042 elevated to ICMR research alert."
+  },
+  "analysis_time_seconds": 3.2
+}

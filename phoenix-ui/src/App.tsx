@@ -32,6 +32,8 @@ import {
   AdminAuditLogsPage,
   TreatmentShadowPage,
   SilentVoicePage,
+  ZebraHunterPage,
+  V5DashboardPage,
 } from './pages';
 
 // Store
@@ -94,7 +96,7 @@ const RootRedirect: React.FC = () => {
   const { user, isAuthenticated } = useAuthStore();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (user?.role === 'admin') return <Navigate to="/admin" replace />;
-  return <Navigate to="/dashboard" replace />;
+  return <Navigate to="/v5-dashboard" replace />;
 };
 
 /**
@@ -117,7 +119,10 @@ const App: React.FC = () => {
                 </ProtectedRoute>
               }
             >
-              {/* Dashboard - clinical users only */}
+              {/* V5 Dashboard - unified agent overview */}
+              <Route path="/v5-dashboard" element={<V5DashboardPage />} />
+              
+              {/* Dashboard - clinical users only (legacy) */}
               <Route path="/dashboard" element={<DashboardPage />} />
               
               {/* SOAP Generator - physicians only */}
@@ -148,6 +153,9 @@ const App: React.FC = () => {
 
               {/* Silent Voice Monitor */}
               <Route path="/silent-voice" element={<SilentVoicePage />} />
+
+              {/* Zebra Hunter — Rare Disease Detector */}
+              <Route path="/zebra-hunter" element={<ZebraHunterPage />} />
 
               {/* View encounter */}
               <Route path="/encounters/:uuid" element={<ReviewSOAPNotePage />} />

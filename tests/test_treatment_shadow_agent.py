@@ -36,6 +36,8 @@ def agent():
         )
         mock_ai_factory.return_value = mock_ai
         a = TreatmentShadowAgent()
+        # Disable demo mode so tests use the mock DB session
+        a.demo_config.enabled = False
         yield a
 
 

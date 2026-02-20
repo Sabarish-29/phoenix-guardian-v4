@@ -1,0 +1,146 @@
+{
+  "status": "zebra_found",
+  "patient_id": "a1b2c3d4-0001-4000-8000-000000000001",
+  "patient_name": "Priya Sharma",
+  "total_visits": 6,
+  "symptoms_found": [
+    "fatigue", "chronic pain", "joint hypermobility", "subluxation",
+    "translucent skin", "easy bruising", "orthostatic intolerance",
+    "dizziness", "brain fog", "GI dysfunction", "IBS-like symptoms",
+    "Beighton score 7/9", "high-arched palate", "skin hyperextensibility",
+    "muscle weakness", "headache", "anxiety", "insomnia"
+  ],
+  "analysis_timestamp": "2025-07-21T10:30:00Z",
+  "top_matches": [
+    {
+      "disease": "Hypermobile Ehlers-Danlos Syndrome",
+      "orphacode": "ORPHA:285",
+      "confidence": 81,
+      "matching_symptoms": [
+        "joint hypermobility", "subluxation", "translucent skin",
+        "easy bruising", "chronic pain", "fatigue", "Beighton score 7/9",
+        "skin hyperextensibility", "high-arched palate"
+      ],
+      "total_patient_symptoms": 18,
+      "url": "https://www.orpha.net/en/disease/detail/285"
+    },
+    {
+      "disease": "Postural Orthostatic Tachycardia Syndrome",
+      "orphacode": "ORPHA:90340",
+      "confidence": 67,
+      "matching_symptoms": [
+        "orthostatic intolerance", "dizziness", "fatigue",
+        "brain fog", "headache", "GI dysfunction"
+      ],
+      "total_patient_symptoms": 18,
+      "url": "https://www.orpha.net/en/disease/detail/90340"
+    },
+    {
+      "disease": "Marfan Syndrome",
+      "orphacode": "ORPHA:558",
+      "confidence": 34,
+      "matching_symptoms": [
+        "joint hypermobility", "high-arched palate",
+        "translucent skin", "fatigue"
+      ],
+      "total_patient_symptoms": 18,
+      "url": "https://www.orpha.net/en/disease/detail/558"
+    }
+  ],
+  "missed_clue_timeline": [
+    {
+      "visit_number": 1,
+      "visit_date": "2022-01-15",
+      "diagnosis_given": "Stress / Anxiety",
+      "was_diagnosable": true,
+      "missed_clues": [
+        "Joint hypermobility noted but not investigated",
+        "Beighton score not performed despite flexible joints",
+        "Chronic fatigue attributed solely to stress"
+      ],
+      "confidence": 45,
+      "reason": "Hypermobility and fatigue present but not connected to a connective tissue pattern.",
+      "is_first_diagnosable": true
+    },
+    {
+      "visit_number": 2,
+      "visit_date": "2022-08-20",
+      "diagnosis_given": "IBS",
+      "was_diagnosable": true,
+      "missed_clues": [
+        "GI symptoms + joint complaints not linked to systemic disorder",
+        "Translucent skin quality documented but not flagged"
+      ],
+      "confidence": 55,
+      "reason": "GI dysfunction plus joint hypermobility should have triggered EDS screening.",
+      "is_first_diagnosable": false
+    },
+    {
+      "visit_number": 3,
+      "visit_date": "2023-03-10",
+      "diagnosis_given": "Anxiety disorder",
+      "was_diagnosable": true,
+      "missed_clues": [
+        "Brain fog and dizziness attributed to anxiety",
+        "Orthostatic symptoms not tested with tilt-table"
+      ],
+      "confidence": 62,
+      "reason": "Orthostatic intolerance with hypermobility is a classic EDS-POTS presentation.",
+      "is_first_diagnosable": false
+    },
+    {
+      "visit_number": 4,
+      "visit_date": "2023-11-05",
+      "diagnosis_given": "Chronic pain syndrome",
+      "was_diagnosable": true,
+      "missed_clues": [
+        "Recurrent subluxations documented but not connected",
+        "Pain pattern consistent with connective tissue disorder"
+      ],
+      "confidence": 74,
+      "reason": "Subluxations plus chronic pain and hypermobility strongly suggest hEDS.",
+      "is_first_diagnosable": false
+    },
+    {
+      "visit_number": 5,
+      "visit_date": "2024-06-18",
+      "diagnosis_given": "Fibromyalgia",
+      "was_diagnosable": true,
+      "missed_clues": [
+        "Easy bruising and translucent skin overlooked",
+        "High-arched palate not checked"
+      ],
+      "confidence": 82,
+      "reason": "Multiple EDS criteria present. Fibromyalgia diagnosis may be masking hEDS.",
+      "is_first_diagnosable": false
+    },
+    {
+      "visit_number": 6,
+      "visit_date": "2026-02-01",
+      "diagnosis_given": "PENDING",
+      "was_diagnosable": true,
+      "missed_clues": [],
+      "confidence": 95,
+      "reason": "Current visit — full EDS evaluation recommended.",
+      "is_first_diagnosable": false
+    }
+  ],
+  "years_lost": 3.0,
+  "first_diagnosable_visit": {
+    "visit_number": 1,
+    "visit_date": "2022-01-15",
+    "diagnosis_given": "Stress / Anxiety",
+    "was_diagnosable": true,
+    "missed_clues": [
+      "Joint hypermobility noted but not investigated",
+      "Beighton score not performed despite flexible joints",
+      "Chronic fatigue attributed solely to stress"
+    ],
+    "confidence": 45,
+    "reason": "Hypermobility and fatigue present but not connected to a connective tissue pattern.",
+    "is_first_diagnosable": true
+  },
+  "recommendation": "Refer to Geneticist or Rheumatologist specializing in connective tissue disorders. Perform formal Beighton score assessment and apply 2017 hEDS diagnostic criteria. Order echocardiogram to rule out vascular involvement. Consider tilt-table test for concurrent POTS evaluation. Initiate physical therapy focused on joint stabilization rather than hypermobility stretching.",
+  "ghost_protocol": null,
+  "analysis_time_seconds": 4.8
+}

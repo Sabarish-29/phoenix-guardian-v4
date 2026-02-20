@@ -17,3 +17,5 @@ export { AdminUsersPage } from './AdminUsersPage';
 export { AdminAuditLogsPage } from './AdminAuditLogsPage';
 export { TreatmentShadowPage } from './TreatmentShadowPage';
 export { SilentVoicePage } from './SilentVoicePage';
+export { ZebraHunterPage } from './ZebraHunterPage';
+export { V5DashboardPage } from './V5DashboardPage';
