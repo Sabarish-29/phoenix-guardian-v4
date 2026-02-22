@@ -124,6 +124,7 @@ class DismissResponse(BaseModel):
 )
 async def analyze_patient(
     patient_id: str,
+    language: str = "en",
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
@@ -134,13 +135,13 @@ async def analyze_patient(
     """
     agent = _get_agent()
 
-    # Optional Redis cache
-    cached = _redis_get(f"treatment_shadow:patient:{patient_id}")
+    # Optional Redis cache (include language in key)
+    cached = _redis_get(f"treatment_shadow:patient:{patient_id}:{language}")
     if cached:
         return cached
 
     try:
-        result = await agent.analyze_patient(patient_id, db)
+        result = await agent.analyze_patient(patient_id, db, language=language)
     except Exception as exc:
         logger.error("TreatmentShadow analysis failed: %s", exc, exc_info=True)
         raise HTTPException(
@@ -148,8 +149,8 @@ async def analyze_patient(
             detail=f"Analysis failed: {str(exc)}",
         )
 
-    # Cache for 5 minutes
-    _redis_set(f"treatment_shadow:patient:{patient_id}", result, ex=300)
+    # Cache for 5 minutes (include language in key)
+    _redis_set(f"treatment_shadow:patient:{patient_id}:{language}", result, ex=300)
 
     return result
 

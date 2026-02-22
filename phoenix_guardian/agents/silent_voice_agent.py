@@ -362,6 +362,7 @@ class SilentVoiceAgent(BaseAgent):
         hours_since_analgesic: Optional[float],
         distress_minutes: int,
         patient_name: str,
+        language: str = "en",
     ) -> str:
         """Generate a clinical alert via the unified AI service.
 
@@ -370,6 +371,7 @@ class SilentVoiceAgent(BaseAgent):
             hours_since_analgesic: Hours since last pain medication.
             distress_minutes: Minutes of active distress.
             patient_name: Patient name for the alert.
+            language: Language code ('en' or 'hi').
 
         Returns:
             2-sentence clinical alert string.
@@ -397,8 +399,17 @@ class SilentVoiceAgent(BaseAgent):
             f"2 sentences maximum.\n"
             f"Sentence 1: What signals are present and for how long.\n"
             f"Sentence 2: Actionable recommendation including pain medication timing.\n"
-            f"Plain clinical English. No bullet points. No hedging."
+            f"No bullet points. No hedging."
         )
+
+        if language == "hi":
+            prompt += (
+                "\n\nIMPORTANT: Write your ENTIRE clinical assessment in Hindi (Devanagari script). "
+                "Keep medical terms, drug names, lab values, numbers, and units in English. "
+                "Write ONLY in Hindi. Do NOT write in English first then translate."
+            )
+        else:
+            prompt += "\nPlain clinical English."
 
         system = (
             "You are a clinical ICU monitoring AI assistant in a hospital. "
@@ -412,6 +423,13 @@ class SilentVoiceAgent(BaseAgent):
         except Exception as exc:
             logger.warning("AI service unavailable for clinical output: %s", exc)
             # Deterministic fallback
+            if language == "hi":
+                return (
+                    f"\u0930\u094b\u0917\u0940 {patient_name} \u092e\u0947\u0902 {len(signals)} distress signals "
+                    f"({signal_summary}) {distress_minutes} \u092e\u093f\u0928\u091f \u0938\u0947 active \u0939\u0948\u0902\u0964 "
+                    f"\u0905\u0902\u0924\u093f\u092e analgesic {analgesic_str} \u2014 \u0924\u0941\u0930\u0902\u0924 "
+                    f"bedside pain assessment (Wong-Baker FACES scale) \u0915\u0940 \u0938\u093f\u092b\u093e\u0930\u093f\u0936 \u0939\u0948\u0964"
+                )
             return (
                 f"Patient {patient_name} shows {len(signals)} distress signals "
                 f"({signal_summary}) active for {distress_minutes} minutes. "
@@ -425,6 +443,7 @@ class SilentVoiceAgent(BaseAgent):
         self,
         patient_id: str,
         db_session: Optional[Any] = None,
+        language: str = "en",
     ) -> Dict[str, Any]:
         """Monitor a single patient for non-verbal distress.
 
@@ -445,19 +464,31 @@ class SilentVoiceAgent(BaseAgent):
         """
         # Demo mode bypass
         if self.demo_config.enabled:
-            return self._load_demo_response(patient_id)
+            demo = self._load_demo_response(patient_id)
+            if language != "en":
+                # Regenerate clinical text in requested language
+                signals = demo.get("signals_detected", [])
+                demo["clinical_output"] = await self.generate_clinical_output(
+                    signals,
+                    demo.get("last_analgesic_hours"),
+                    demo.get("distress_duration_minutes", 0),
+                    demo.get("patient_name", "Unknown"),
+                    language=language,
+                )
+            return demo
 
         if db_session is None:
             from phoenix_guardian.database.connection import db as _db
             with _db.session_scope() as sess:
-                return await self._monitor_with_session(patient_id, sess)
+                return await self._monitor_with_session(patient_id, sess, language)
 
-        return await self._monitor_with_session(patient_id, db_session)
+        return await self._monitor_with_session(patient_id, db_session, language)
 
     async def _monitor_with_session(
         self,
         patient_id: str,
         session: Any,
+        language: str = "en",
     ) -> Dict[str, Any]:
         """Core monitor logic with a provided DB session."""
         from sqlalchemy import text
@@ -562,6 +593,7 @@ class SilentVoiceAgent(BaseAgent):
         if signals_detected:
             clinical_output = await self.generate_clinical_output(
                 signals_detected, last_analgesic_hours, distress_minutes, patient_name,
+                language=language,
             )
             recommended_action = (
                 "Perform in-person pain assessment using Wong-Baker FACES scale. "

@@ -57,35 +57,40 @@ export const LiveThreatFeed: React.FC = () => {
   useEffect(() => {
     fetchEvents();
 
-    // Derive WS URL from the same API base the rest of the app uses
-    const apiBase = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
-    const wsProtocol = apiBase.startsWith('https') ? 'wss' : 'ws';
-    const wsHost = apiBase.replace(/^https?:\/\//, '').replace(/\/api\/v1\/?$/, '');
-    const wsUrl = `${wsProtocol}://${wsHost}/api/v1/security-console/ws`;
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
-    setWsStatus('connecting');
+    // Derive WS URL from the page's own origin so it works behind Codespaces / HTTPS proxies
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProtocol}//${window.location.host}/api/v1/security-console/ws`;
+    let ws: WebSocket | null = null;
+    try {
+      ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
+      setWsStatus('connecting');
 
-    ws.onopen = () => setWsStatus('connected');
-    ws.onmessage = (msg) => {
-      try {
-        const event: SecurityEvent = JSON.parse(msg.data);
-        setEvents((prev) => [event, ...prev].slice(0, 200));
-      } catch { /* ignore malformed */ }
-    };
-    ws.onclose = () => setWsStatus('disconnected');
-    ws.onerror = () => setWsStatus('disconnected');
+      ws.onopen = () => setWsStatus('connected');
+      ws.onmessage = (msg) => {
+        try {
+          const event: SecurityEvent = JSON.parse(msg.data);
+          setEvents((prev) => [event, ...prev].slice(0, 200));
+        } catch { /* ignore malformed */ }
+      };
+      ws.onclose = () => setWsStatus('disconnected');
+      ws.onerror = () => setWsStatus('disconnected');
+    } catch {
+      // WebSocket construction can fail in some environments (e.g. mixed content)
+      console.warn('WebSocket connection failed, falling back to polling');
+      setWsStatus('disconnected');
+    }
 
     // Fallback polling if WS fails
     const poller = setInterval(() => {
-      if (ws.readyState !== WebSocket.OPEN) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
         fetchEvents();
       }
     }, 10000);
 
     return () => {
       clearInterval(poller);
-      ws.close();
+      if (ws) ws.close();
     };
   }, [fetchEvents]);
 

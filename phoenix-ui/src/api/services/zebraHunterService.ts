@@ -89,9 +89,11 @@ export interface ZebraHunterHealth {
 // ─── Service ──────────────────────────────────────────────────────────────
 
 export const zebraHunterService = {
-  analyzePatient: async (patientId: string): Promise<AnalyzeResponse> => {
+  analyzePatient: async (patientId: string, language: string = 'en'): Promise<AnalyzeResponse> => {
     const response = await apiClient.post<AnalyzeResponse>(
-      `/zebra-hunter/analyze/${patientId}`
+      `/zebra-hunter/analyze/${patientId}`,
+      null,
+      { params: { language } }
     );
     return response.data;
   },

@@ -65,67 +65,67 @@
     {
       "visit_number": 2,
       "visit_date": "2022-08-20",
-      "diagnosis_given": "IBS",
+      "diagnosis_given": "Irritable Bowel Syndrome (IBS)",
       "was_diagnosable": true,
       "missed_clues": [
-        "GI symptoms + joint complaints not linked to systemic disorder",
-        "Translucent skin quality documented but not flagged"
+        "GI dysfunction + joint pain + fatigue = EDS triad",
+        "Orthostatic symptoms noted but not connected"
       ],
-      "confidence": 55,
-      "reason": "GI dysfunction plus joint hypermobility should have triggered EDS screening.",
+      "confidence": 62,
+      "reason": "GI dysfunction plus joint hypermobility should have triggered EDS screening. Three cardinal symptoms now documented.",
       "is_first_diagnosable": false
     },
     {
       "visit_number": 3,
       "visit_date": "2023-03-10",
-      "diagnosis_given": "Anxiety disorder",
+      "diagnosis_given": "Generalized Anxiety Disorder",
       "was_diagnosable": true,
       "missed_clues": [
-        "Brain fog and dizziness attributed to anxiety",
-        "Orthostatic symptoms not tested with tilt-table"
+        "Brain fog attributed to anxiety — EDS neurological feature",
+        "All 4 diagnostic criteria now met"
       ],
-      "confidence": 62,
-      "reason": "Orthostatic intolerance with hypermobility is a classic EDS-POTS presentation.",
+      "confidence": 78,
+      "reason": "Orthostatic intolerance with hypermobility is a classic EDS-POTS presentation. Anxiety diagnosis masked the connective tissue picture.",
       "is_first_diagnosable": false
     },
     {
       "visit_number": 4,
-      "visit_date": "2023-11-05",
-      "diagnosis_given": "Chronic pain syndrome",
+      "visit_date": "2023-09-22",
+      "diagnosis_given": "Chronic Pain Syndrome",
       "was_diagnosable": true,
       "missed_clues": [
-        "Recurrent subluxations documented but not connected",
-        "Pain pattern consistent with connective tissue disorder"
+        "Chronic pain is a symptom of EDS, not a standalone diagnosis",
+        "Subluxation history not followed up"
       ],
-      "confidence": 74,
-      "reason": "Subluxations plus chronic pain and hypermobility strongly suggest hEDS.",
+      "confidence": 88,
+      "reason": "Subluxations plus chronic pain and hypermobility strongly suggest hEDS. Diagnosis should have been made here.",
       "is_first_diagnosable": false
     },
     {
       "visit_number": 5,
-      "visit_date": "2024-06-18",
+      "visit_date": "2024-02-14",
       "diagnosis_given": "Fibromyalgia",
       "was_diagnosable": true,
       "missed_clues": [
-        "Easy bruising and translucent skin overlooked",
-        "High-arched palate not checked"
+        "Fibromyalgia and hEDS overlap — should have triggered genetic referral",
+        "Hyperextensibility documented but not acted on"
       ],
-      "confidence": 82,
-      "reason": "Multiple EDS criteria present. Fibromyalgia diagnosis may be masking hEDS.",
+      "confidence": 94,
+      "reason": "Multiple EDS criteria present. Fibromyalgia in a young woman with joint hypermobility is a classic missed EDS presentation.",
       "is_first_diagnosable": false
     },
     {
       "visit_number": 6,
-      "visit_date": "2026-02-01",
-      "diagnosis_given": "PENDING",
+      "visit_date": "2026-02-19",
+      "diagnosis_given": "PENDING — Phoenix Guardian Analysis",
       "was_diagnosable": true,
       "missed_clues": [],
-      "confidence": 95,
-      "reason": "Current visit — full EDS evaluation recommended.",
+      "confidence": 81,
+      "reason": "Hypermobile EDS detected by Phoenix Guardian ZebraHunter in 0.2 seconds.",
       "is_first_diagnosable": false
     }
   ],
-  "years_lost": 3.0,
+  "years_lost": 3.1,
   "first_diagnosable_visit": {
     "visit_number": 1,
     "visit_date": "2022-01-15",

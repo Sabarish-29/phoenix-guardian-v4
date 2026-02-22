@@ -14,6 +14,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Components
 import { Layout, ProtectedRoute } from './components';
+import { LanguageProvider } from './context/LanguageContext';
 
 // Pages
 import {
@@ -104,6 +105,7 @@ const RootRedirect: React.FC = () => {
  */
 const App: React.FC = () => {
   return (
+    <LanguageProvider>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthInitializer>
@@ -240,6 +242,7 @@ const App: React.FC = () => {
         </AuthInitializer>
       </BrowserRouter>
     </QueryClientProvider>
+    </LanguageProvider>
   );
 };
 

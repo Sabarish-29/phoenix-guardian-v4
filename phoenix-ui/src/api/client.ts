@@ -12,8 +12,8 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '../stores/authStore';
 
-// API base URL from environment variable
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+// API base URL — use relative path so requests go through the dev-server proxy
+const API_BASE_URL = process.env.REACT_APP_API_URL || '/api/v1';
 
 // Create axios instance with default configuration
 const apiClient: AxiosInstance = axios.create({

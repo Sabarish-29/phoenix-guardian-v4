@@ -137,6 +137,7 @@ class HealthResponse(BaseModel):
 @router.post("/analyze/{patient_id}", response_model=AnalyzeResponse)
 async def analyze_patient(
     patient_id: str,
+    language: str = "en",
     db: Session = Depends(get_db),
     user: User = Depends(get_current_active_user),
 ) -> Dict[str, Any]:
@@ -148,7 +149,7 @@ async def analyze_patient(
     """
     agent = _get_agent()
     try:
-        result = await agent.analyze(patient_id, db)
+        result = await agent.analyze(patient_id, db, language=language)
         return result
     except Exception as exc:
         logger.error("ZebraHunter analysis failed: %s", exc, exc_info=True)

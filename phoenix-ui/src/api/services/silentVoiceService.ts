@@ -80,26 +80,26 @@ export interface SilentVoiceHealth {
 
 export const silentVoiceService = {
   /** Monitor a patient for non-verbal distress */
-  monitor: (patientId: string) =>
-    apiClient.get<MonitorResult>(`/api/v1/silent-voice/monitor/${patientId}`),
+  monitor: (patientId: string, language: string = 'en') =>
+    apiClient.get<MonitorResult>(`/silent-voice/monitor/${patientId}`, { params: { language } }),
 
   /** Force baseline recalculation */
   establishBaseline: (patientId: string) =>
-    apiClient.post<BaselineData>(`/api/v1/silent-voice/baseline/${patientId}`),
+    apiClient.post<BaselineData>(`/silent-voice/baseline/${patientId}`),
 
   /** Acknowledge a distress alert */
   acknowledgeAlert: (alertId: string) =>
     apiClient.post<{ success: boolean; acknowledged_by: string; at: string }>(
-      `/api/v1/silent-voice/acknowledge/${alertId}`
+      `/silent-voice/acknowledge/${alertId}`
     ),
 
   /** Get ICU-wide overview of all patients with alerts */
   getIcuOverview: () =>
-    apiClient.get<ICUOverview>('/api/v1/silent-voice/icu-overview'),
+    apiClient.get<ICUOverview>('/silent-voice/icu-overview'),
 
   /** Health check (no auth required) */
   checkHealth: () =>
-    apiClient.get<SilentVoiceHealth>('/api/v1/silent-voice/health'),
+    apiClient.get<SilentVoiceHealth>('/silent-voice/health'),
 };
 
 export default silentVoiceService;

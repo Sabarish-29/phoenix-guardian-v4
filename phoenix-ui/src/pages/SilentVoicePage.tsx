@@ -15,7 +15,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useSilentVoiceStream } from '../hooks/useSilentVoiceStream';
 import { silentVoiceService } from '../api/services/silentVoiceService';
-import type { MonitorResult, SignalData } from '../api/services/silentVoiceService';
+import type { MonitorResult } from '../api/services/silentVoiceService';
+import { useLanguage } from '../context/LanguageContext';
 
 // ─── Constants ────────────────────────────────────────────────────────────
 
@@ -49,47 +50,41 @@ function calcZ(current: number, mean: number, std: number): number {
   return (current - mean) / std;
 }
 
-function getVitalColor(z: number): string {
+function getVitalStatus(z: number): 'critical' | 'warning' | 'normal' {
   const absZ = Math.abs(z);
-  if (absZ > 2.5) return 'red';
-  if (absZ > 1.5) return 'yellow';
-  return 'green';
-}
-
-function getVitalBg(color: string): string {
-  if (color === 'red') return 'bg-red-50 border-red-300';
-  if (color === 'yellow') return 'bg-yellow-50 border-yellow-300';
-  return 'bg-green-50 border-green-300';
-}
-
-function getVitalTextColor(color: string): string {
-  if (color === 'red') return 'text-red-700';
-  if (color === 'yellow') return 'text-yellow-700';
-  return 'text-green-700';
-}
-
-function getVitalIndicator(color: string): string {
-  if (color === 'red') return '🔴';
-  if (color === 'yellow') return '🟡';
-  return '✅';
+  if (absZ > 2.5) return 'critical';
+  if (absZ > 1.5) return 'warning';
+  return 'normal';
 }
 
 // ─── Alert Score Bar ──────────────────────────────────────────────────────
 
 const AlertScoreBar: React.FC<{ score: number; maxScore?: number }> = ({ score, maxScore = 10 }) => {
   const pct = Math.min((score / maxScore) * 100, 100);
-  const barColor = score > 8 ? 'bg-red-500' : score > 4 ? 'bg-yellow-500' : 'bg-green-500';
-  const label = score > 8 ? 'CRITICAL' : score > 4 ? 'WARNING' : 'CLEAR';
+  const isCritical = score > 8;
+  const isWarning = score > 4;
+  const barColor = isCritical ? 'var(--critical-text)' : isWarning ? 'var(--warning-text)' : 'var(--success-text)';
+  const label = isCritical ? 'CRITICAL' : isWarning ? 'WARNING' : 'CLEAR';
 
   return (
-    <div className="bg-white border rounded-lg p-4 flex flex-col items-center">
-      <span className="text-xs font-bold text-gray-500 mb-1">ALERT SCORE</span>
-      <span className="text-2xl font-bold">{score.toFixed(1)}</span>
-      <span className="text-xs text-gray-400">/ {maxScore}</span>
-      <div className="w-full bg-gray-200 rounded-full h-3 mt-2">
-        <div className={`${barColor} h-3 rounded-full transition-all duration-500`} style={{ width: `${pct}%` }} />
+    <div style={{
+      background: isCritical ? 'var(--critical-bg)' : isWarning ? 'var(--warning-bg)' : 'var(--bg-surface)',
+      border: `1px solid ${isCritical ? 'var(--critical-border)' : isWarning ? 'var(--warning-border)' : 'var(--border-subtle)'}`,
+      borderRadius: 'var(--radius-md)',
+      padding: 16,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+    }}>
+      <div className="label-caps">ALERT SCORE</div>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 700, color: barColor, lineHeight: 1, marginTop: 6 }}>
+        {score.toFixed(1)}
       </div>
-      <span className={`text-xs font-bold mt-1 ${score > 8 ? 'text-red-600' : score > 4 ? 'text-yellow-600' : 'text-green-600'}`}>
+      <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginBottom: 8 }}>/ {maxScore}</div>
+      <div className="progress-bar-track" style={{ width: '100%' }}>
+        <div className="progress-bar-fill" style={{ width: `${pct}%`, background: barColor }} />
+      </div>
+      <span className="badge" style={{ marginTop: 8, background: 'transparent', color: barColor, border: 'none', padding: '0', fontSize: '0.65rem', fontWeight: 700 }}>
         {label}
       </span>
     </div>
@@ -115,13 +110,12 @@ const VitalCard: React.FC<VitalCardProps> = ({ field, current, mode, personalBas
     : POPULATION_AVERAGES[field];
 
   const z = calcZ(current, baseline.mean, baseline.std);
-  const color = getVitalColor(z);
+  const status = getVitalStatus(z);
   const deviationPct = baseline.mean !== 0 ? ((current - baseline.mean) / baseline.mean) * 100 : 0;
-  const isNormal = Math.abs(z) <= 1.5;
 
   // Mini sparkline using block characters
   const sparkline = history.length > 1
-    ? history.map((v, i) => {
+    ? history.map((v) => {
         const min = Math.min(...history);
         const max = Math.max(...history);
         const range = max - min || 1;
@@ -131,25 +125,57 @@ const VitalCard: React.FC<VitalCardProps> = ({ field, current, mode, personalBas
       }).join('')
     : '▄▄▄▄▄';
 
+  const accentColor = status === 'critical' ? 'var(--critical-text)' : status === 'warning' ? 'var(--warning-text)' : 'var(--success-text)';
+  const cardBg = status === 'critical' ? 'var(--critical-bg)' : status === 'warning' ? 'var(--warning-bg)' : 'var(--bg-surface)';
+  const cardBorder = status === 'critical' ? 'var(--critical-border)' : status === 'warning' ? 'var(--warning-border)' : 'var(--border-subtle)';
+
   return (
-    <div className={`border-2 rounded-lg p-4 transition-all duration-500 ${getVitalBg(color)}`}>
-      <div className="flex justify-between items-start mb-2">
-        <span className="text-xs font-bold text-gray-600">{config.icon} {config.label}</span>
-        <span className="text-sm">{getVitalIndicator(color)}</span>
+    <div style={{
+      background: cardBg,
+      border: `1px solid ${cardBorder}`,
+      borderRadius: 'var(--radius-md)',
+      padding: 16,
+      transition: 'all 0.4s ease',
+      boxShadow: 'none',
+    }}>
+      {/* Top row: label + status indicator */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, alignItems: 'center' }}>
+        <span style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-label)' }}>
+          {config.icon} {config.label}
+        </span>
+        <span className={status === 'critical' ? 'dot-critical' : status === 'warning' ? 'dot-polling' : 'dot-live'} />
       </div>
-      <div className={`text-3xl font-bold mb-1 ${getVitalTextColor(color)}`}>
-        {typeof current === 'number' ? (Number.isInteger(current) ? current : current.toFixed(1)) : current}
-        <span className="text-sm font-normal text-gray-500 ml-1">{config.unit}</span>
+
+      {/* Big number */}
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 4 }}>
+        <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.9rem', fontWeight: 700, color: accentColor, lineHeight: 1 }}>
+          {typeof current === 'number' ? (Number.isInteger(current) ? current : current.toFixed(1)) : current}
+        </span>
+        <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{config.unit}</span>
       </div>
-      <div className="text-lg font-mono tracking-wider text-gray-500 mb-2">{sparkline}</div>
-      <div className="text-xs text-gray-500">
-        {mode === 'personal' ? '👤 Personal' : '👥 Population'} baseline: {baseline.mean.toFixed(0)}
+
+      {/* Sparkline */}
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.95rem', letterSpacing: '0.05em', color: accentColor, opacity: 0.6, marginBottom: 8 }}>
+        {sparkline}
       </div>
-      {!isNormal && (
-        <div className={`text-xs font-semibold mt-1 ${getVitalTextColor(color)}`}>
-          {deviationPct > 0 ? '+' : ''}{deviationPct.toFixed(0)}% {deviationPct > 0 ? '⬆' : '⬇'}
+
+      {/* Baseline comparison */}
+      <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 8 }}>
+        <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+          {mode === 'personal' ? '👤 Personal' : '👥 Population'} baseline: {baseline.mean.toFixed(0)}
         </div>
-      )}
+        {Math.abs(deviationPct) > 5 && (
+          <div style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.72rem',
+            fontWeight: 600,
+            color: accentColor,
+            marginTop: 2,
+          }}>
+            {deviationPct > 0 ? '+' : ''}{deviationPct.toFixed(0)}% {deviationPct > 0 ? '↑' : '↓'}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -170,72 +196,69 @@ const DistressTimeline: React.FC<TimelineProps> = ({
   minutesSinceCheck,
 }) => {
   const totalMinutes = admissionHoursAgo * 60;
-  const baselineEnd = Math.min(120, totalMinutes); // 2-hour baseline window
+  const baselineEnd = Math.min(120, totalMinutes);
   const distressStart = totalMinutes - distressMinutes;
 
-  // Percentage positions on timeline
   const baselinePct = totalMinutes > 0 ? (baselineEnd / totalMinutes) * 100 : 33;
   const distressPct = totalMinutes > 0 ? (distressStart / totalMinutes) * 100 : 80;
 
   return (
-    <div className="bg-white border rounded-lg p-6">
-      <h3 className="text-sm font-bold text-gray-700 mb-4">📈 Distress Timeline</h3>
+    <div className="pg-card">
+      <div className="section-header">
+        <span style={{ fontSize: '0.9rem' }}>📈</span>
+        <span className="section-header-title">Distress Timeline</span>
+      </div>
 
-      <div className="relative h-8 mb-2">
+      <div style={{ position: 'relative', height: 32, marginBottom: 8 }}>
         {/* Green baseline zone */}
-        <div
-          className="absolute h-full bg-green-200 rounded-l"
-          style={{ left: '0%', width: `${baselinePct}%` }}
-        />
+        <div style={{ position: 'absolute', height: '100%', left: '0%', width: `${baselinePct}%`, background: 'rgba(16,185,129,0.25)', borderRadius: '6px 0 0 6px' }} />
         {/* Gray stable zone */}
-        <div
-          className="absolute h-full bg-gray-100"
-          style={{ left: `${baselinePct}%`, width: `${Math.max(0, distressPct - baselinePct)}%` }}
-        />
+        <div style={{ position: 'absolute', height: '100%', left: `${baselinePct}%`, width: `${Math.max(0, distressPct - baselinePct)}%`, background: 'var(--bg-elevated)' }} />
         {/* Red distress zone */}
         {distressMinutes > 0 && (
-          <div
-            className="absolute h-full bg-red-200 rounded-r animate-pulse"
-            style={{ left: `${distressPct}%`, width: `${100 - distressPct}%` }}
-          />
+          <div style={{
+            position: 'absolute', height: '100%',
+            left: `${distressPct}%`, width: `${100 - distressPct}%`,
+            background: 'rgba(239,68,68,0.3)',
+            borderRadius: '0 6px 6px 0',
+          }} />
         )}
-
         {/* Markers */}
-        <div className="absolute top-0 left-0 w-3 h-full bg-green-500 rounded-sm" />
+        <div style={{ position: 'absolute', top: 0, left: 0, width: 3, height: '100%', background: 'var(--success-text)', borderRadius: 2 }} />
         {baselineEstablished && (
-          <div
-            className="absolute top-0 w-3 h-full bg-blue-500 rounded-sm"
-            style={{ left: `${baselinePct}%` }}
-          />
+          <div style={{ position: 'absolute', top: 0, width: 3, height: '100%', background: 'var(--voice-primary)', borderRadius: 2, left: `${baselinePct}%` }} />
         )}
         {distressMinutes > 0 && (
-          <div
-            className="absolute top-0 w-3 h-full bg-red-500 rounded-sm"
-            style={{ left: `${distressPct}%` }}
-          />
+          <div style={{ position: 'absolute', top: 0, width: 3, height: '100%', background: 'var(--critical-text)', borderRadius: 2, left: `${distressPct}%` }} />
         )}
-        <div className="absolute top-0 right-0 w-3 h-full bg-gray-800 rounded-sm" />
+        <div style={{ position: 'absolute', top: 0, right: 0, width: 3, height: '100%', background: 'var(--text-muted)', borderRadius: 2 }} />
       </div>
 
       {/* Labels */}
-      <div className="flex justify-between text-xs text-gray-500 mb-4">
-        <span>Admission<br />{admissionHoursAgo.toFixed(0)}h ago</span>
-        <span className="text-blue-600">Baseline<br />Established</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+        <span style={{ fontSize: '0.68rem', color: 'var(--success-text)' }}>Admission<br />{admissionHoursAgo.toFixed(0)}h ago</span>
+        <span style={{ fontSize: '0.68rem', color: 'var(--voice-primary)' }}>Baseline<br />Established</span>
         {distressMinutes > 0 && (
-          <span className="text-red-600 font-semibold">
+          <span style={{ fontSize: '0.68rem', color: 'var(--critical-text)', fontWeight: 600 }}>
             Distress<br />{distressMinutes} min ago
           </span>
         )}
-        <span>NOW</span>
+        <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>NOW</span>
       </div>
 
       {/* Nurse check counter */}
-      <div className="bg-red-50 border border-red-200 rounded p-3 text-center">
-        <span className="text-red-700 font-semibold text-sm">
+      <div style={{
+        background: 'var(--critical-bg)',
+        border: '1px solid var(--critical-border)',
+        borderRadius: 'var(--radius-md)',
+        padding: '10px 14px',
+        textAlign: 'center',
+      }}>
+        <span style={{ color: 'var(--critical-text)', fontWeight: 700, fontSize: '0.85rem' }}>
           ⏱️ {minutesSinceCheck} minutes since last nurse check
         </span>
         {distressMinutes > 0 && (
-          <p className="text-red-500 text-xs mt-1">
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', margin: '4px 0 0' }}>
             Patient has been in distress {distressMinutes} minutes with no response
           </p>
         )}
@@ -253,66 +276,121 @@ interface AlertCardProps {
 }
 
 const ClinicalAlertCard: React.FC<AlertCardProps> = ({ data, onAcknowledge, acknowledged }) => {
-  const signalSummary = data.signals_detected
-    .map(s => `${s.label} ${s.deviation_pct > 0 ? '+' : ''}${s.deviation_pct.toFixed(0)}%`)
-    .join(' | ');
-
-  const bgColor = data.alert_level === 'critical' ? 'bg-red-50 border-red-400' : 'bg-yellow-50 border-yellow-400';
-  const headerColor = data.alert_level === 'critical' ? 'text-red-700' : 'text-yellow-700';
-  const icon = data.alert_level === 'critical' ? '🔴' : '🟡';
-
   return (
-    <div className={`border-2 rounded-lg p-5 ${bgColor}`}>
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-lg">{icon}</span>
-        <h3 className={`text-lg font-bold ${headerColor}`}>
+    <div className="alert-critical" style={{
+      padding: '20px 24px',
+      borderLeft: '4px solid var(--critical-text)',
+      animation: 'fade-in-up 0.5s ease both',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
+        <span className="dot-critical" />
+        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--critical-text)', fontSize: '0.95rem' }}>
           SilentVoice Alert — Pain Indicators Detected
-        </h3>
+        </span>
         {acknowledged && (
-          <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full ml-auto">
-            ✓ ACKNOWLEDGED
+          <span className="badge badge-success" style={{ marginLeft: 'auto' }}>✓ ACKNOWLEDGED</span>
+        )}
+      </div>
+
+      {/* Signal pills */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+        {data.signals_detected.map(s => (
+          <span key={s.label} className="badge badge-critical" style={{ fontFamily: 'var(--font-mono)', fontWeight: 500 }}>
+            {s.label.toUpperCase()} {s.deviation_pct > 0 ? '+' : ''}{s.deviation_pct.toFixed(0)}%
           </span>
-        )}
+        ))}
       </div>
 
-      <div className="border-t border-gray-200 pt-3 space-y-2">
-        <p className="text-sm text-gray-700">
-          <span className="font-semibold">Signals:</span> {signalSummary}
-        </p>
-        <p className="text-sm text-gray-700">
-          <span className="font-semibold">Active for:</span> {data.distress_duration_minutes} minutes undetected
-        </p>
-        <p className="text-sm text-gray-700">
-          <span className="font-semibold">Last analgesic:</span>{' '}
-          {data.last_analgesic_hours !== null ? `${data.last_analgesic_hours} hours ago` : 'None on record'}
-        </p>
+      {/* Key stats in a row */}
+      <div style={{
+        display: 'flex',
+        gap: 32,
+        marginBottom: 14,
+        padding: '10px 0',
+        borderTop: '1px solid var(--critical-border)',
+        borderBottom: '1px solid var(--critical-border)',
+        flexWrap: 'wrap',
+      }}>
+        <div>
+          <div className="label-caps">UNDETECTED FOR</div>
+          <div style={{ color: 'var(--critical-text)', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.3rem' }}>
+            {data.distress_duration_minutes} min
+          </div>
+        </div>
+        <div>
+          <div className="label-caps">LAST ANALGESIC</div>
+          <div style={{ color: 'var(--critical-text)', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.3rem' }}>
+            {data.last_analgesic_hours !== null ? `${data.last_analgesic_hours}h ago` : 'None on record'}
+          </div>
+        </div>
+      </div>
 
-        {data.clinical_output && (
-          <blockquote className="mt-3 border-l-4 border-blue-400 pl-3 py-2 bg-blue-50 rounded-r text-sm italic text-gray-800">
+      {/* Clinical output */}
+      {data.clinical_output && (
+        <div style={{
+          padding: '12px 16px',
+          background: 'rgba(239,68,68,0.06)',
+          border: '1px solid var(--critical-border)',
+          borderLeft: '3px solid var(--critical-text)',
+          borderRadius: 'var(--radius-md)',
+          marginBottom: 14,
+        }}>
+          <div className="label-caps" style={{ color: 'var(--critical-text)', marginBottom: 6 }}>🤖 AI CLINICAL OUTPUT</div>
+          <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.82rem', lineHeight: 1.7, margin: 0 }}>
             "{data.clinical_output}"
-          </blockquote>
-        )}
-      </div>
+          </p>
+        </div>
+      )}
 
       {!acknowledged && (
-        <div className="flex flex-wrap gap-2 mt-4">
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
           <button
             onClick={onAcknowledge}
-            className="px-4 py-2 bg-green-600 text-white rounded font-semibold hover:bg-green-700 transition-colors text-sm"
+            style={{
+              padding: '9px 18px',
+              borderRadius: 'var(--radius-md)',
+              background: 'rgba(16,185,129,0.15)',
+              color: 'var(--success-text)',
+              border: '1px solid rgba(16,185,129,0.4)',
+              fontWeight: 600,
+              fontSize: '0.78rem',
+              cursor: 'pointer',
+            }}
           >
             ✅ Acknowledge Alert
           </button>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700 transition-colors text-sm">
-            📋 Order Pain Assessment
-          </button>
-          <button className="px-4 py-2 bg-purple-600 text-white rounded font-semibold hover:bg-purple-700 transition-colors text-sm">
-            💉 Administer Analgesic
-          </button>
-          <button className="px-4 py-2 bg-gray-600 text-white rounded font-semibold hover:bg-gray-700 transition-colors text-sm">
-            📞 Call Attending
-          </button>
+          <button className="btn-ghost" style={{ fontSize: '0.78rem' }}>📋 Order Pain Assessment</button>
+          <button className="btn-ghost" style={{ fontSize: '0.78rem' }}>💉 Administer Analgesic</button>
+          <button className="btn-ghost" style={{ fontSize: '0.78rem' }}>📞 Call Attending</button>
         </div>
       )}
+
+      {/* Research Citations */}
+      <div style={{
+        marginTop: 14,
+        paddingTop: 12,
+        borderTop: '1px solid rgba(255,255,255,0.06)',
+        fontSize: '0.68rem',
+        color: '#4a5568',
+        lineHeight: 1.6
+      }}>
+        <div style={{
+          fontSize: '0.65rem',
+          fontWeight: 700,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: '#374151',
+          marginBottom: 6
+        }}>
+          Research Basis
+        </div>
+        <div>› Chanques G et al. (2007): Non-verbal ICU patients experience pain
+        during 63% of care procedures with no documented pain assessment. <em>JAMA.</em></div>
+        <div style={{ marginTop: 3 }}>
+          › Gélinas C et al. (2006): HR and HRV correlate with pain in
+        non-verbal patients (r=0.71). <em>Am J Crit Care.</em>
+        </div>
+      </div>
     </div>
   );
 };
@@ -320,15 +398,15 @@ const ClinicalAlertCard: React.FC<AlertCardProps> = ({ data, onAcknowledge, ackn
 // ─── Loading skeleton ────────────────────────────────────────────────────
 
 const LoadingSkeleton: React.FC = () => (
-  <div className="p-8 space-y-6 animate-pulse">
-    <div className="h-24 bg-gray-200 rounded-lg" />
-    <div className="grid grid-cols-3 gap-4">
+  <div style={{ background: 'var(--bg-deep)', minHeight: '100vh', margin: '-32px -16px', padding: '32px' }}>
+    <div className="skeleton" style={{ height: 96, borderRadius: 'var(--radius-lg)', marginBottom: 16 }} />
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
       {[...Array(6)].map((_, i) => (
-        <div key={i} className="h-36 bg-gray-200 rounded-lg" />
+        <div key={i} className="skeleton" style={{ height: 140, borderRadius: 'var(--radius-md)' }} />
       ))}
     </div>
-    <div className="h-40 bg-gray-200 rounded-lg" />
-    <div className="h-32 bg-gray-200 rounded-lg" />
+    <div className="skeleton" style={{ height: 160, borderRadius: 'var(--radius-lg)', marginBottom: 16 }} />
+    <div className="skeleton" style={{ height: 120, borderRadius: 'var(--radius-lg)' }} />
   </div>
 );
 
@@ -340,7 +418,8 @@ export const SilentVoicePage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const preselectedPatient = searchParams.get('patient');
   const patientId = preselectedPatient || PATIENT_C_ID;
-  const { data, connected, error, mode } = useSilentVoiceStream(patientId);
+  const { language } = useLanguage();
+  const { data, connected, error, mode } = useSilentVoiceStream(patientId, language);
   const [baselineMode, setBaselineMode] = useState<BaselineMode>(preselectedPatient ? 'personal' : 'population');
   const [acknowledged, setAcknowledged] = useState(false);
   const [minutesSinceCheck, setMinutesSinceCheck] = useState(127);
@@ -363,7 +442,7 @@ export const SilentVoicePage: React.FC = () => {
           const val = (data.latest_vitals as any)[field];
           if (val !== null && val !== undefined) {
             const arr = [...(prev[field] || []), val];
-            next[field] = arr.slice(-8); // keep last 8
+            next[field] = arr.slice(-8);
           }
         }
         return next;
@@ -383,11 +462,9 @@ export const SilentVoicePage: React.FC = () => {
     for (const field of Object.keys(VITAL_CONFIG)) {
       const current = (data.latest_vitals as any)[field];
       if (current === null || current === undefined) continue;
-
       const bl = baselineMode === 'personal' && personalBaselines[field]
         ? personalBaselines[field]
         : POPULATION_AVERAGES[field];
-
       const z = Math.abs(calcZ(current, bl.mean, bl.std));
       if (z > 2.5) score += z;
     }
@@ -401,11 +478,9 @@ export const SilentVoicePage: React.FC = () => {
     for (const field of Object.keys(VITAL_CONFIG)) {
       const current = (data.latest_vitals as any)[field];
       if (current === null || current === undefined) continue;
-
       const bl = baselineMode === 'personal' && personalBaselines[field]
         ? personalBaselines[field]
         : POPULATION_AVERAGES[field];
-
       const z = Math.abs(calcZ(current, bl.mean, bl.std));
       if (z > 2.5) signals.push(field);
     }
@@ -413,129 +488,170 @@ export const SilentVoicePage: React.FC = () => {
   }, [data, baselineMode, personalBaselines]);
 
   const handleAcknowledge = async () => {
-    // Get the latest alert ID from the data
     try {
-      // We'll acknowledge the most recent alert
-      const overview = await silentVoiceService.getIcuOverview();
-      // For demo, just mark as acknowledged visually
+      await silentVoiceService.getIcuOverview();
       setAcknowledged(true);
     } catch {
-      setAcknowledged(true); // Still show UI change
+      setAcknowledged(true);
     }
   };
 
-  // Header color
-  const alertLevel = data?.alert_level || 'clear';
   const showAlert = baselineMode === 'personal' && currentModeSignals.length > 0;
+  const distressActive = showAlert && data?.distress_active;
 
   if (!data) return <LoadingSkeleton />;
 
-  const admissionHoursAgo = 6; // Hardcoded for demo — Patient C admitted 6h ago
+  const admissionHoursAgo = 6;
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+    <div style={{ background: 'var(--bg-deep)', minHeight: '100vh', margin: '-32px -16px', padding: '0 0 40px' }}>
+
+      {/* ── Agent Identity Stripe ── */}
+      <div style={{ height: 3, background: 'linear-gradient(90deg, var(--voice-primary), transparent)' }} />
+
       {/* ═══ SECTION 1: Patient Status Header ═══ */}
-      <div
-        className={`rounded-lg p-5 transition-all duration-500 ${
-          showAlert && alertLevel === 'critical'
-            ? 'bg-red-600 text-white'
-            : showAlert && alertLevel === 'warning'
-            ? 'bg-yellow-500 text-gray-900'
-            : 'bg-green-600 text-white'
-        }`}
-      >
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      <div style={{
+        background: distressActive
+          ? 'linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05))'
+          : 'linear-gradient(135deg, rgba(6,182,212,0.1), transparent)',
+        borderBottom: `1px solid ${distressActive ? 'var(--critical-border)' : 'var(--border-subtle)'}`,
+        padding: '20px 32px',
+        transition: 'all 0.6s ease',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">🔵</span>
-              <h1 className="text-xl font-bold">SilentVoice Monitor</h1>
-              {showAlert && (
-                <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-                  alertLevel === 'critical' ? 'bg-red-800 text-red-100' : 'bg-yellow-700 text-yellow-100'
-                }`}>
-                  {alertLevel === 'critical' ? '🔴 DISTRESS ACTIVE' : '🟡 DISTRESS ACTIVE'}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '1.1rem' }}>🔵</span>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                SilentVoice Monitor
+              </span>
+              {distressActive && (
+                <span className="badge badge-critical">
+                  ● DISTRESS ACTIVE
                 </span>
               )}
             </div>
-            <p className={`text-sm mt-1 ${showAlert ? 'opacity-90' : 'opacity-80'}`}>
-              Patient: {data.patient_name} — ICU Bed 3
-            </p>
-            {data.distress_active && (
-              <p className={`text-sm ${showAlert ? 'opacity-90' : 'opacity-80'}`}>
-                Active for: {data.distress_duration_minutes} minutes | Last nurse check: {minutesSinceCheck} min ago
-              </p>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5">
-              <span className={`w-2.5 h-2.5 rounded-full ${connected ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`} />
-              <span className="text-sm font-medium">
-                {connected ? (mode === 'websocket' ? '● LIVE' : '● POLLING') : '○ DISCONNECTED'}
-              </span>
+            <div style={{ marginTop: 6, color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+              Patient: <strong style={{ color: 'var(--text-primary)' }}>{data.patient_name}</strong> — ICU Bed 3
+              {distressActive && (
+                <>
+                  {' '}· Active: <span style={{ color: 'var(--critical-text)', fontWeight: 600 }}>{data.distress_duration_minutes} min</span>
+                  {' '}· Last check: <span style={{ color: 'var(--critical-text)', fontWeight: 600 }}>{minutesSinceCheck} min ago</span>
+                </>
+              )}
             </div>
           </div>
+          {/* Connection indicator */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.72rem', fontFamily: 'var(--font-mono)' }}>
+            <span className={connected ? (mode === 'websocket' ? 'dot-live' : 'dot-polling') : 'dot-critical'} />
+            <span style={{ color: connected ? (mode === 'websocket' ? 'var(--success-text)' : 'var(--warning-text)') : 'var(--critical-text)' }}>
+              {connected ? (mode === 'websocket' ? 'LIVE' : 'POLLING') : 'DISCONNECTED'}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* ═══ TOGGLE: Population vs Personal Baseline ═══ */}
-      <div className="flex items-center gap-3 bg-white border rounded-lg p-4">
-        <span className="text-sm text-gray-500">Comparing against:</span>
-        <button
-          onClick={() => setBaselineMode(m => m === 'personal' ? 'population' : 'personal')}
-          className={`px-5 py-2.5 rounded-full font-semibold transition-all duration-300 text-sm ${
-            baselineMode === 'personal'
-              ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          {baselineMode === 'personal' ? '👤 Personal Baseline' : '👥 Population Average'}
-        </button>
-        <span className="text-xs text-gray-400 ml-2">
-          {baselineMode === 'personal'
-            ? 'Comparing to HER first 2 hours in this bed'
-            : 'Comparing to average 72-year-old woman'}
-        </span>
-      </div>
+      {/* ── Page Content ── */}
+      <div style={{ padding: '20px 32px' }}>
 
-      {/* ═══ SECTION 2: Live Vitals Grid ═══ */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {Object.keys(VITAL_CONFIG).map(field => (
-          <VitalCard
-            key={field}
-            field={field}
-            current={(data.latest_vitals as any)?.[field]}
-            mode={baselineMode}
-            personalBaseline={personalBaselines[field]}
-            history={vitalsHistory[field] || []}
-          />
-        ))}
-        {/* Alert Score Card */}
-        <AlertScoreBar score={alertScore} />
-      </div>
+        {/* ═══ TOGGLE: Population vs Personal Baseline ═══ */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '14px 20px',
+          background: 'var(--bg-surface)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: 'var(--radius-lg)',
+          marginBottom: 20,
+          flexWrap: 'wrap',
+        }}>
+          <span className="label-caps" style={{ color: 'var(--text-muted)', flexShrink: 0 }}>Comparing against:</span>
 
-      {/* ═══ SECTION 3: Clinical Alert Card ═══ */}
-      {showAlert && data.distress_active && data.clinical_output && (
-        <ClinicalAlertCard
-          data={data}
-          onAcknowledge={handleAcknowledge}
-          acknowledged={acknowledged}
+          <div style={{ display: 'flex', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', padding: 3, gap: 2 }}>
+            {(['population', 'personal'] as BaselineMode[]).map(m => (
+              <button
+                key={m}
+                onClick={() => setBaselineMode(m)}
+                style={{
+                  padding: '7px 18px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: 'none',
+                  fontWeight: 600,
+                  fontSize: '0.78rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.25s ease',
+                  background: baselineMode === m
+                    ? (m === 'personal' ? 'var(--voice-primary)' : 'var(--bg-highlight)')
+                    : 'transparent',
+                  color: baselineMode === m
+                    ? (m === 'personal' ? '#000' : 'var(--text-primary)')
+                    : 'var(--text-muted)',
+                  transform: baselineMode === m ? 'scale(1.02)' : 'scale(1)',
+                }}
+              >
+                {m === 'population' ? '👥 Population Average' : '👤 Personal Baseline'}
+              </button>
+            ))}
+          </div>
+
+          <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontStyle: 'italic' }}>
+            {baselineMode === 'personal'
+              ? 'Comparing to HER first 2 hours in this bed'
+              : 'Comparing to average 72-year-old woman'}
+          </span>
+        </div>
+
+        {/* ═══ SECTION 2: Live Vitals Grid ═══ */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 20 }}>
+          {Object.keys(VITAL_CONFIG).map(field => (
+            <VitalCard
+              key={field}
+              field={field}
+              current={(data.latest_vitals as any)?.[field]}
+              mode={baselineMode}
+              personalBaseline={personalBaselines[field]}
+              history={vitalsHistory[field] || []}
+            />
+          ))}
+          {/* Alert Score Card */}
+          <AlertScoreBar score={alertScore} />
+        </div>
+
+        {/* ═══ SECTION 3: Clinical Alert Card ═══ */}
+        {showAlert && data.distress_active && data.clinical_output && (
+          <div style={{ marginBottom: 20 }}>
+            <ClinicalAlertCard
+              data={data}
+              onAcknowledge={handleAcknowledge}
+              acknowledged={acknowledged}
+            />
+          </div>
+        )}
+
+        {/* ═══ SECTION 4: Distress Timeline ═══ */}
+        <DistressTimeline
+          admissionHoursAgo={admissionHoursAgo}
+          baselineEstablished={!!data.baseline?.established_at}
+          distressMinutes={showAlert ? data.distress_duration_minutes : 0}
+          minutesSinceCheck={minutesSinceCheck}
         />
-      )}
 
-      {/* ═══ SECTION 4: Distress Timeline ═══ */}
-      <DistressTimeline
-        admissionHoursAgo={admissionHoursAgo}
-        baselineEstablished={!!data.baseline?.established_at}
-        distressMinutes={showAlert ? data.distress_duration_minutes : 0}
-        minutesSinceCheck={minutesSinceCheck}
-      />
-
-      {/* Error display */}
-      {error && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-yellow-700">
-          ⚠️ {error}
-        </div>
-      )}
+        {/* Error display */}
+        {error && (
+          <div style={{
+            marginTop: 16,
+            padding: '10px 14px',
+            background: 'var(--warning-bg)',
+            border: '1px solid var(--warning-border)',
+            borderRadius: 'var(--radius-md)',
+            fontSize: '0.82rem',
+            color: 'var(--warning-text)',
+          }}>
+            ⚠️ {error}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

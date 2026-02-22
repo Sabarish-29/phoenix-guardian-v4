@@ -347,6 +347,7 @@ class TreatmentShadowAgent(BaseAgent):
         trend: Dict[str, Any],
         timeline: Dict[str, Any],
         last_prescription_date: str,
+        language: str = "en",
     ) -> str:
         """Generate a clinical alert via the unified AI service.
 
@@ -356,10 +357,21 @@ class TreatmentShadowAgent(BaseAgent):
             trend: Output of calculate_trend().
             timeline: Output of estimate_harm_timeline().
             last_prescription_date: When the drug was first prescribed.
+            language: Language code ('en' or 'hi').
 
         Returns:
             3-sentence clinical alert string.
         """
+        language_instruction = "\nWrite in plain clinical English."
+        if language == "hi":
+            language_instruction = (
+                "\n\nIMPORTANT: Write your ENTIRE clinical assessment in Hindi (Devanagari script). "
+                "Keep drug names, lab values, numbers, units, and medical abbreviations in English. "
+                "Example: 'रोगी को Metformin 1000mg दी जा रही है। Vitamin B12 का स्तर "
+                "620 से घटकर 310 pg/mL हो गया है।' "
+                "Write ONLY in Hindi. Do NOT write in English first then translate."
+            )
+
         prompt = (
             f"Drug: {drug}\n"
             f"Shadow: {shadow_type}\n"
@@ -372,7 +384,8 @@ class TreatmentShadowAgent(BaseAgent):
             f"Sentence 1: What is happening and for how long.\n"
             f"Sentence 2: Current reversibility status — be specific about the window.\n"
             f"Sentence 3: Recommended action with urgency level.\n"
-            f"Do not use bullet points. Write in plain clinical English."
+            f"Do not use bullet points."
+            + language_instruction
         )
 
         system = (
@@ -387,6 +400,13 @@ class TreatmentShadowAgent(BaseAgent):
         except Exception as exc:
             logger.warning("AI service unavailable for clinical output: %s", exc)
             # Deterministic fallback — never leave clinical_output blank
+            if language == "hi":
+                return (
+                    f"\u0930\u094b\u0917\u0940 \u0915\u094b {drug} {last_prescription_date} \u0938\u0947 \u0926\u0940 \u091c\u093e \u0930\u0939\u0940 \u0939\u0948\u0964 "
+                    f"{shadow_type} \u0915\u093e \u092a\u0924\u093e \u091a\u0932\u093e \u0939\u0948 \u2014 {trend['pct_change']}% \u092a\u0930\u093f\u0935\u0930\u094d\u0924\u0928 \u2014 "
+                    f"{timeline['current_stage']}\u0964 "
+                    f"\u0924\u0941\u0930\u0902\u0924 lab review \u0914\u0930 intervention \u0915\u0940 \u0938\u093f\u092b\u093e\u0930\u093f\u0936 \u0915\u0940 \u091c\u093e\u0924\u0940 \u0939\u0948\u0964"
+                )
             return (
                 f"Patient on {drug} since {last_prescription_date}. "
                 f"{shadow_type} detected with {trend['pct_change']}% change — "
@@ -400,6 +420,7 @@ class TreatmentShadowAgent(BaseAgent):
         self,
         patient_id: str,
         db_session: Optional[Any] = None,
+        language: str = "en",
     ) -> Dict[str, Any]:
         """Analyze all active medications for a patient and detect shadows.
 
@@ -421,7 +442,22 @@ class TreatmentShadowAgent(BaseAgent):
 
         # ── Demo mode bypass ──────────────────────────────────────────────
         if self.demo_config.enabled:
-            return self._load_demo_response(patient_id)
+            demo = self._load_demo_response(patient_id)
+            if language != "en":
+                # Regenerate clinical text in requested language
+                for shadow in demo.get("active_shadows", []):
+                    if shadow.get("alert_fired"):
+                        trend = shadow.get("trend", {})
+                        timeline = shadow.get("harm_timeline", {})
+                        shadow["clinical_output"] = await self.generate_clinical_output(
+                            shadow.get("drug", ""),
+                            shadow.get("shadow_type", ""),
+                            trend,
+                            timeline,
+                            shadow.get("prescribed_since", "Unknown"),
+                            language=language,
+                        )
+            return demo
 
         now = datetime.now(timezone.utc)
         active_shadows: List[Dict[str, Any]] = []
@@ -432,14 +468,15 @@ class TreatmentShadowAgent(BaseAgent):
             # Standalone usage — create own session
             from phoenix_guardian.database.connection import db as _db
             with _db.session_scope() as sess:
-                return await self._analyze_with_session(patient_id, sess)
+                return await self._analyze_with_session(patient_id, sess, language)
 
-        return await self._analyze_with_session(patient_id, db_session)
+        return await self._analyze_with_session(patient_id, db_session, language)
 
     async def _analyze_with_session(
         self,
         patient_id: str,
         session: Any,
+        language: str = "en",
     ) -> Dict[str, Any]:
         """Core analysis logic with a provided DB session."""
         from sqlalchemy import text
@@ -505,27 +542,30 @@ class TreatmentShadowAgent(BaseAgent):
                 )
 
                 # Generate clinical output if alert fired and no existing output
+                # Also regenerate when language is not English (DB stores English)
                 clinical_output = row[13] or ""
-                if alert_fired and not clinical_output:
+                if alert_fired and (not clinical_output or language != "en"):
                     prescribed_since = str(row[18]) if row[18] else "Unknown"
                     clinical_output = await self.generate_clinical_output(
                         drug_name, shadow_type, trend, timeline, prescribed_since,
+                        language=language,
                     )
 
-                    # Update the row with generated clinical output
-                    try:
-                        session.execute(
-                            text("""
-                                UPDATE treatment_shadows
-                                SET clinical_output = :output, updated_at = :now
-                                WHERE id = :tid
-                            """),
-                            {"output": clinical_output, "now": now, "tid": str(row[0])},
-                        )
-                        session.commit()
-                    except Exception as exc:
-                        logger.warning("Failed to update clinical output: %s", exc)
-                        session.rollback()
+                    # Only persist English output to DB (Hindi is generated on-the-fly)
+                    if language == "en":
+                        try:
+                            session.execute(
+                                text("""
+                                    UPDATE treatment_shadows
+                                    SET clinical_output = :output, updated_at = :now
+                                    WHERE id = :tid
+                                """),
+                                {"output": clinical_output, "now": now, "tid": str(row[0])},
+                            )
+                            session.commit()
+                        except Exception as exc:
+                            logger.warning("Failed to update clinical output: %s", exc)
+                            session.rollback()
 
                 if alert_fired:
                     fired_count += 1

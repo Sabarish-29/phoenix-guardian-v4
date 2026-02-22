@@ -28,6 +28,7 @@ export interface HarmTimeline {
 }
 
 export interface ActiveShadow {
+  shadow_id: string;
   drug: string;
   prescribed_since: string;
   shadow_type: string;
@@ -78,9 +79,10 @@ export const treatmentShadowService = {
   /**
    * Analyze a patient for treatment shadows.
    */
-  getPatientAnalysis: async (patientId: string): Promise<PatientAnalysis> => {
+  getPatientAnalysis: async (patientId: string, language: string = 'en'): Promise<PatientAnalysis> => {
     const response = await apiClient.get<PatientAnalysis>(
-      `/treatment-shadow/patient/${patientId}`
+      `/treatment-shadow/patient/${patientId}`,
+      { params: { language } }
     );
     return response.data;
   },

@@ -20,9 +20,12 @@ import type {
   V5StatusResponse,
   ActiveAlert,
 } from '../api/services/v5DashboardService';
-import { getAlertColors } from '../constants/alertColors';
 import { DashboardSkeleton } from '../components/shared/SkeletonCard';
 import { useCountUp } from '../hooks/useCountUp';
+import CrossAgentAlert, { DEMO_CORRELATIONS } from '../components/CrossAgentAlert';
+import ImpactCalculator from '../components/ImpactCalculator';
+import ConnectivityBadge from '../components/ConnectivityBadge';
+import { useConnectivity } from '../hooks/useConnectivity';
 
 // ─── Animated Counter Component ──────────────────────────────────────────
 
@@ -40,36 +43,78 @@ const CountUp: React.FC<{
 
 // ─── Alert Row ───────────────────────────────────────────────────────────
 
-const AlertRow: React.FC<{ alert: ActiveAlert }> = ({ alert }) => {
+const agentAccentColor = (agent: string): string => {
+  const a = agent.toLowerCase();
+  if (a.includes('shadow') || a.includes('treatment')) return 'var(--shadow-primary)';
+  if (a.includes('voice') || a.includes('silent'))     return 'var(--voice-primary)';
+  if (a.includes('zebra') || a.includes('ghost'))      return 'var(--ghost-text)';
+  return 'var(--critical-text)';
+};
+
+const AlertRow: React.FC<{ alert: ActiveAlert; index: number }> = ({ alert, index }) => {
   const navigate = useNavigate();
-  const colors = getAlertColors(alert.severity);
+  const accentColor = agentAccentColor(alert.agent);
+  const isCritical = alert.severity === 'critical';
 
   return (
     <div
-      className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer
-        hover:brightness-125 transition-all ${colors.bg} ${colors.border} animate-fadeIn`}
       onClick={() => navigate(alert.link)}
       role="button"
       tabIndex={0}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 16,
+        padding: '14px 18px',
+        background: isCritical ? 'var(--critical-bg)' : 'var(--bg-elevated)',
+        border: `1px solid ${isCritical ? 'var(--critical-border)' : 'var(--border-subtle)'}`,
+        borderLeft: `4px solid ${accentColor}`,
+        borderRadius: 'var(--radius-md)',
+        marginBottom: 8,
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+        animation: `fade-in-up 0.4s ease both`,
+        animationDelay: `${index * 0.08}s`,
+      }}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLDivElement).style.background = isCritical
+          ? 'rgba(239,68,68,0.14)'
+          : 'var(--bg-highlight)';
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLDivElement).style.background = isCritical ? 'var(--critical-bg)' : 'var(--bg-elevated)';
+      }}
     >
-      <div className="flex items-center gap-3">
-        <span className={`h-3 w-3 rounded-full ${colors.dot}`} />
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-              {alert.agent_icon} {alert.agent}
-            </span>
-            <span className={`font-semibold ${colors.text}`}>{alert.patient_name}</span>
-            {alert.location && (
-              <span className="text-xs text-gray-500">— {alert.location}</span>
-            )}
-          </div>
-          <p className="text-sm text-gray-300 mt-0.5">{alert.summary}</p>
+      <span className={isCritical ? 'dot-critical' : 'dot-live'} />
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="label-caps" style={{ color: accentColor, marginBottom: 2 }}>
+          {alert.agent_icon} {alert.agent.toUpperCase()}
+          {alert.location && ` — ${alert.location}`}
+        </div>
+        <div style={{
+          fontFamily: 'var(--font-display)',
+          fontWeight: 600,
+          fontSize: '0.95rem',
+          color: 'var(--text-primary)',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}>
+          {alert.patient_name}
+        </div>
+        <div style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', marginTop: 2 }}>
+          {alert.summary}
         </div>
       </div>
-      <span className={`text-xs font-medium px-2 py-1 rounded ${colors.badge} text-white whitespace-nowrap`}>
+
+      <button
+        className="btn-ghost"
+        style={{ borderColor: accentColor, color: accentColor, flexShrink: 0, fontSize: '0.78rem' }}
+        onClick={e => { e.stopPropagation(); navigate(alert.link); }}
+      >
         View →
-      </span>
+      </button>
     </div>
   );
 };
@@ -79,42 +124,75 @@ const AlertRow: React.FC<{ alert: ActiveAlert }> = ({ alert }) => {
 interface AgentCardProps {
   icon: string;
   name: string;
-  borderColor: string;
+  accentColor: string;
   stats: { label: string; value: React.ReactNode }[];
   link: string;
 }
 
-const AgentCard: React.FC<AgentCardProps> = ({ icon, name, borderColor, stats, link }) => {
+const AgentCard: React.FC<AgentCardProps> = ({ icon, name, accentColor, stats, link }) => {
   const navigate = useNavigate();
 
   return (
     <div
-      className={`bg-gray-800/80 rounded-xl border-2 ${borderColor} p-5 
-        hover:border-opacity-100 transition-all cursor-pointer animate-slideUp
-        hover:shadow-lg`}
+      className="pg-card animate-entry"
       onClick={() => navigate(link)}
       role="button"
       tabIndex={0}
+      style={{
+        borderTop: `2px solid ${accentColor}`,
+        cursor: 'pointer',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
     >
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <span className="text-2xl mr-2">{icon}</span>
-          <span className="text-lg font-bold text-white uppercase tracking-wider">{name}</span>
+      {/* Subtle gradient overlay matching agent color */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: 60,
+        background: `linear-gradient(180deg, ${accentColor}08 0%, transparent 100%)`,
+        pointerEvents: 'none',
+      }} />
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: '1.4rem' }}>{icon}</span>
+          <span style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 700,
+            fontSize: '0.9rem',
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            color: accentColor,
+          }}>
+            {name}
+          </span>
         </div>
-        <span className="h-3 w-3 rounded-full bg-green-500 animate-pulse" title="Healthy" />
+        <span className="dot-live" title="Healthy" />
       </div>
 
-      <div className="space-y-3">
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '12px 20px',
+        position: 'relative',
+      }}>
         {stats.map((stat, i) => (
-          <div key={i} className="flex items-center justify-between">
-            <span className="text-sm text-gray-400">{stat.label}</span>
-            <span className="text-sm font-bold text-white">{stat.value}</span>
+          <div key={i}>
+            <div className="label-caps">{stat.label}</div>
+            <div style={{ marginTop: 4, fontSize: '1.3rem', fontFamily: 'var(--font-display)', fontWeight: 700 }}>
+              {stat.value}
+            </div>
           </div>
         ))}
       </div>
 
-      <div className="mt-4 pt-3 border-t border-gray-700">
-        <span className="text-sm font-medium text-blue-400 hover:text-blue-300">
+      <div style={{
+        marginTop: 16,
+        paddingTop: 12,
+        borderTop: '1px solid var(--border-subtle)',
+        display: 'flex',
+        justifyContent: 'flex-end',
+      }}>
+        <span style={{ fontSize: '0.78rem', color: accentColor, fontWeight: 600 }}>
           Open →
         </span>
       </div>
@@ -122,15 +200,54 @@ const AgentCard: React.FC<AgentCardProps> = ({ icon, name, borderColor, stats, l
   );
 };
 
-// ─── Impact Row ──────────────────────────────────────────────────────────
+// ─── Impact Grid ─────────────────────────────────────────────────────────
 
-const ImpactRow: React.FC<{ label: string; value: React.ReactNode; note?: string }> = ({ label, value, note }) => (
-  <div className="flex items-center justify-between py-2 border-b border-gray-800 last:border-b-0">
-    <span className="text-sm text-gray-300">{label}</span>
-    <div className="text-right">
-      <span className="text-lg font-bold text-white">{value}</span>
-      {note && <span className="text-xs text-gray-500 ml-2">({note})</span>}
-    </div>
+interface ImpactItem {
+  label: string;
+  value: React.ReactNode;
+  sub?: string;
+  color: string;
+}
+
+const ImpactGrid: React.FC<{ items: ImpactItem[] }> = ({ items }) => (
+  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 1 }}>
+    {items.map((item, i) => (
+      <div
+        key={i}
+        className="animate-entry"
+        style={{
+          textAlign: 'center',
+          padding: '20px 12px',
+          background: 'var(--bg-surface)',
+          borderRight: i < items.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+        }}
+      >
+        <div style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: '2.4rem',
+          fontWeight: 700,
+          color: item.color,
+          lineHeight: 1,
+        }}>
+          {item.value}
+        </div>
+        <div style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: '0.78rem',
+          color: 'var(--text-primary)',
+          fontWeight: 500,
+          marginTop: 6,
+          lineHeight: 1.3,
+        }}>
+          {item.label}
+        </div>
+        {item.sub && (
+          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: 4, fontStyle: 'italic' }}>
+            {item.sub}
+          </div>
+        )}
+      </div>
+    ))}
   </div>
 );
 
@@ -143,26 +260,33 @@ const EXISTING_AGENTS = [
 ];
 
 const ExistingAgentsBanner: React.FC = () => (
-  <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-    <div className="flex items-center gap-2 mb-3">
-      <span className="text-lg">🛡️</span>
-      <span className="font-bold text-gray-200 uppercase tracking-wider text-sm">
-        Existing 10 Agents — All Operational
-      </span>
+  <div className="pg-card">
+    <div className="section-header">
+      <span style={{ fontSize: '1rem' }}>🛡️</span>
+      <span className="section-header-title">Existing 10 Agents — All Operational</span>
+      <span className="badge badge-success" style={{ marginLeft: 'auto' }}>100% Block Rate</span>
     </div>
-    <div className="flex flex-wrap gap-2">
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
       {EXISTING_AGENTS.map((agent) => (
         <span
           key={agent}
-          className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-gray-700/60 text-xs text-gray-300"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '4px 10px',
+            borderRadius: 'var(--radius-sm)',
+            background: 'var(--bg-elevated)',
+            border: '1px solid var(--border-subtle)',
+            fontSize: '0.72rem',
+            color: 'var(--text-secondary)',
+            fontFamily: 'var(--font-mono)',
+          }}
         >
-          <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+          <span className="dot-live" style={{ width: 5, height: 5 }} />
           {agent}
         </span>
       ))}
-      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-green-900/40 text-xs text-green-400 font-medium">
-        Security: 100% block rate
-      </span>
     </div>
   </div>
 );
@@ -180,10 +304,12 @@ export const V5DashboardPage: React.FC = () => {
     retry: 1,
   });
 
+  const connectivity = useConnectivity();
+
   // ── Loading state ──────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-900 p-6">
+      <div className="min-h-screen" style={{ background: 'var(--bg-deep)', padding: 24 }}>
         <DashboardSkeleton />
       </div>
     );
@@ -192,12 +318,14 @@ export const V5DashboardPage: React.FC = () => {
   // ── Error fallback ─────────────────────────────────────────────────────
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-gray-900 p-6">
-        <div className="bg-red-900/20 border border-red-500 rounded-xl p-6 text-center">
-          <p className="text-red-400 font-bold text-lg mb-2">Dashboard Unavailable</p>
-          <p className="text-gray-400 text-sm">
+      <div className="min-h-screen" style={{ background: 'var(--bg-deep)', padding: 24 }}>
+        <div className="alert-critical" style={{ padding: 24, maxWidth: 600, margin: '60px auto', textAlign: 'center' }}>
+          <p style={{ color: 'var(--critical-text)', fontWeight: 700, fontSize: '1.1rem', marginBottom: 8 }}>
+            Dashboard Unavailable
+          </p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
             Backend may not be running. Start with:{' '}
-            <code className="bg-gray-800 px-2 py-1 rounded text-xs">
+            <code style={{ background: 'var(--bg-elevated)', padding: '2px 8px', borderRadius: 'var(--radius-sm)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
               uvicorn phoenix_guardian.api.main:app --reload
             </code>
           </p>
@@ -212,173 +340,260 @@ export const V5DashboardPage: React.FC = () => {
   const zebra = agents.zebra_hunter;
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-4 md:p-6 space-y-6 animate-fadeIn">
+    <div className="min-h-screen" style={{ background: 'var(--bg-deep)' }}>
 
       {/* ═══ HERO HEADER ═══════════════════════════════════════════════ */}
-      <div className="bg-gradient-to-r from-gray-800 via-gray-800 to-gray-900 rounded-xl p-6 border border-gray-700">
-        <div className="flex items-center justify-between flex-wrap gap-4">
+      <div style={{
+        borderBottom: '1px solid var(--border-subtle)',
+        padding: '20px 32px 18px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '1.5rem' }}>🛡️</span>
           <div>
-            <h1 className="text-3xl font-black tracking-tight">
-              🛡️ PHOENIX GUARDIAN <span className="text-emerald-400">V5</span>
+            <h1 style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '1.3rem',
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+              margin: 0,
+              letterSpacing: '-0.01em',
+            }}>
+              PHOENIX GUARDIAN <span style={{ color: '#60a5fa' }}>V5</span>
             </h1>
-            <p className="text-gray-400 mt-1 italic">
-              "Save Time. Save Lives. Stay Secure."
-            </p>
           </div>
-          <div className="flex items-center gap-6 text-sm text-gray-400">
-            <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-              {data.demo_patients_loaded} demo patients loaded
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-              All agents healthy
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-              3 NEW agents
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* ═══ ACTIVE ALERTS ═════════════════════════════════════════════ */}
-      <div className="bg-gray-800/60 rounded-xl p-5 border border-gray-700">
-        <h2 className="text-lg font-bold text-red-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-          <span className="h-3 w-3 rounded-full bg-red-500 animate-pulse" />
-          Active Alerts — Requires Attention Now
-        </h2>
-
-        {active_alerts.length > 0 ? (
-          <div className="space-y-2">
-            {active_alerts.map((alert, i) => (
-              <AlertRow key={i} alert={alert} />
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <ConnectivityBadge mode={connectivity.mode} />
+            {[
+              `${data.demo_patients_loaded} demo patients`,
+              'All agents healthy',
+              '3 V5 AGENTS',
+            ].map((s, i) => (
+              <span key={i} className="badge" style={{
+                background: 'rgba(16,185,129,0.1)',
+                color: '#34d399',
+                border: '1px solid rgba(16,185,129,0.3)',
+                fontFamily: 'var(--font-mono)',
+              }}>
+                ● {s}
+              </span>
             ))}
           </div>
-        ) : (
-          <div className="text-center py-6 text-gray-500">
-            <p className="text-lg">All patients stable — no alerts.</p>
-          </div>
-        )}
-      </div>
-
-      {/* ═══ AGENT CARDS ═══════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Zebra Hunter Card */}
-        <AgentCard
-          icon="🦓"
-          name="Zebra Hunter"
-          borderColor="border-amber-600/50"
-          link="/zebra-hunter"
-          stats={[
-            {
-              label: 'ZEBRA FOUND',
-              value: <CountUp target={zebra.zebra_count} className="text-amber-400 text-lg font-black" />,
-            },
-            {
-              label: '👻 GHOST PROTOCOL',
-              value: <CountUp target={zebra.ghost_count} className="text-purple-400 text-lg font-black" />,
-            },
-            {
-              label: 'YEARS LOST',
-              value: <CountUp target={zebra.years_lost} decimals={1} suffix=" yrs" className="text-red-400 font-bold" />,
-            },
-            {
-              label: 'TOP MATCH',
-              value: <span className="text-xs">{zebra.top_disease || 'N/A'} ({zebra.top_confidence}%)</span>,
-            },
-          ]}
-        />
-
-        {/* Silent Voice Card */}
-        <AgentCard
-          icon="🔵"
-          name="Silent Voice"
-          borderColor="border-blue-600/50"
-          link="/silent-voice"
-          stats={[
-            {
-              label: '🔴 CRITICAL ALERT',
-              value: <CountUp target={silent.active_alerts} className="text-red-400 text-lg font-black" />,
-            },
-            {
-              label: 'SIGNALS DETECTED',
-              value: <CountUp target={silent.signals_detected} className="text-blue-400 font-bold" />,
-            },
-            {
-              label: 'UNDETECTED',
-              value: <CountUp target={silent.distress_duration_minutes} suffix=" min" className="text-red-400 font-bold" />,
-            },
-            {
-              label: 'LAST ANALGESIC',
-              value: <span className="text-yellow-400">{silent.last_analgesic_hours.toFixed(1)} hrs</span>,
-            },
-          ]}
-        />
-
-        {/* Treatment Shadow Card */}
-        <AgentCard
-          icon="🟣"
-          name="Shadow Agent"
-          borderColor="border-purple-600/50"
-          link="/treatment-shadow"
-          stats={[
-            {
-              label: 'SHADOW FIRED',
-              value: <CountUp target={shadow.fired_count} className="text-purple-400 text-lg font-black" />,
-            },
-            {
-              label: 'WATCHING',
-              value: <CountUp target={shadow.watching_count} className="text-blue-400 font-bold" />,
-            },
-            {
-              label: 'B12 DECLINING',
-              value: <CountUp target={shadow.b12_pct_change} suffix="%" className="text-red-400 font-bold" />,
-            },
-            {
-              label: 'DAYS TO HARM',
-              value: <CountUp target={shadow.days_to_harm} suffix=" days" className="text-yellow-400 font-bold" />,
-            },
-          ]}
-        />
-      </div>
-
-      {/* ═══ IMPACT SUMMARY ════════════════════════════════════════════ */}
-      <div className="bg-gray-800/60 rounded-xl p-5 border border-gray-700">
-        <h2 className="text-lg font-bold text-emerald-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-          📊 V5 Impact Summary
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
-          <ImpactRow
-            label="Rare diseases detected"
-            value={<CountUp target={impact.rare_diseases_detected} />}
-            note="avg 4-8 years by human"
-          />
-          <ImpactRow
-            label="Silent distress caught"
-            value={<CountUp target={impact.silent_distress_caught} />}
-            note={`${silent.distress_duration_minutes} min undetected`}
-          />
-          <ImpactRow
-            label="Treatment harms prevented"
-            value={<CountUp target={impact.treatment_harms_prevented} />}
-            note={`${shadow.days_to_harm} days to neuropathy`}
-          />
-          <ImpactRow
-            label="Ghost cases created"
-            value={<CountUp target={impact.ghost_cases_created} />}
-            note="potential novel disease"
-          />
-          <ImpactRow
-            label="Years of suffering prevented"
-            value={<CountUp target={impact.years_suffering_prevented} decimals={1} suffix=" yrs" />}
-            note="EDS missed clues"
-          />
         </div>
       </div>
 
-      {/* ═══ EXISTING AGENTS ═══════════════════════════════════════════ */}
-      <ExistingAgentsBanner />
+      {/* ═══ PAGE CONTENT ════════════════════════════════════════════ */}
+      <div style={{ padding: '24px 32px', maxWidth: 1400, margin: '0 auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+          {/* ═══ ACTIVE ALERTS ═════════════════════════════════════════ */}
+          <div className="pg-card">
+            <div className="section-header">
+              <span className="dot-critical" />
+              <span className="section-header-title" style={{ color: 'var(--critical-text)' }}>
+                Active Alerts — Requires Attention Now
+              </span>
+              {active_alerts.length > 0 && (
+                <span className="badge badge-critical" style={{ marginLeft: 'auto' }}>
+                  {active_alerts.length} Active
+                </span>
+              )}
+            </div>
+
+            {active_alerts.length > 0 ? (
+              <div>
+                {active_alerts.map((alert, i) => (
+                  <AlertRow key={i} alert={alert} index={i} />
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-muted)' }}>
+                <span style={{ fontSize: '1.5rem', display: 'block', marginBottom: 8 }}>✅</span>
+                All patients stable — no alerts.
+              </div>
+            )}
+          </div>
+
+          {/* ═══ CROSS-AGENT CORRELATIONS ══════════════════════════ */}
+          <CrossAgentAlert
+            patientName="Priya Sharma"
+            patientId="PT-1001"
+            correlations={DEMO_CORRELATIONS}
+          />
+
+          {/* ═══ AGENT CARDS ═══════════════════════════════════════════ */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+            {/* Zebra Hunter Card */}
+            <AgentCard
+              icon="🦓"
+              name="Zebra Hunter"
+              accentColor="var(--zebra-primary)"
+              link="/zebra-hunter"
+              stats={[
+                {
+                  label: 'ZEBRA FOUND',
+                  value: <CountUp target={zebra.zebra_count} className="" />,
+                },
+                {
+                  label: '👻 GHOST PROTOCOL',
+                  value: <CountUp target={zebra.ghost_count} className="" />,
+                },
+                {
+                  label: 'YEARS LOST',
+                  value: (
+                    <span style={{ color: 'var(--critical-text)' }}>
+                      <CountUp target={zebra.years_lost} decimals={1} /> <span className="stat-unit">yrs</span>
+                    </span>
+                  ),
+                },
+                {
+                  label: 'TOP MATCH',
+                  value: (
+                    <span style={{ color: 'var(--zebra-primary)', fontSize: '0.85rem' }}>
+                      {zebra.top_disease || 'N/A'}
+                      <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginLeft: 4 }}>
+                        {zebra.top_confidence}%
+                      </span>
+                    </span>
+                  ),
+                },
+              ]}
+            />
+
+            {/* Silent Voice Card */}
+            <AgentCard
+              icon="🔵"
+              name="Silent Voice"
+              accentColor="var(--voice-primary)"
+              link="/silent-voice"
+              stats={[
+                {
+                  label: '🔴 CRITICAL ALERT',
+                  value: (
+                    <span style={{ color: 'var(--critical-text)' }}>
+                      <CountUp target={silent.active_alerts} />
+                    </span>
+                  ),
+                },
+                {
+                  label: 'SIGNALS DETECTED',
+                  value: (
+                    <span style={{ color: 'var(--voice-primary)' }}>
+                      <CountUp target={silent.signals_detected} />
+                    </span>
+                  ),
+                },
+                {
+                  label: 'UNDETECTED FOR',
+                  value: (
+                    <span style={{ color: 'var(--critical-text)' }}>
+                      <CountUp target={silent.distress_duration_minutes} /> <span className="stat-unit">min</span>
+                    </span>
+                  ),
+                },
+                {
+                  label: 'LAST ANALGESIC',
+                  value: (
+                    <span style={{ color: 'var(--warning-text)' }}>
+                      {silent.last_analgesic_hours.toFixed(1)} <span className="stat-unit">hrs</span>
+                    </span>
+                  ),
+                },
+              ]}
+            />
+
+            {/* Treatment Shadow Card */}
+            <AgentCard
+              icon="🟣"
+              name="Shadow Agent"
+              accentColor="var(--shadow-primary)"
+              link="/treatment-shadow"
+              stats={[
+                {
+                  label: 'SHADOW FIRED',
+                  value: (
+                    <span style={{ color: 'var(--shadow-primary)' }}>
+                      <CountUp target={shadow.fired_count} />
+                    </span>
+                  ),
+                },
+                {
+                  label: 'WATCHING',
+                  value: (
+                    <span style={{ color: 'var(--watching-text)' }}>
+                      <CountUp target={shadow.watching_count} />
+                    </span>
+                  ),
+                },
+                {
+                  label: 'B12 DECLINING',
+                  value: (
+                    <span style={{ color: 'var(--critical-text)' }}>
+                      <CountUp target={shadow.b12_pct_change} /> <span className="stat-unit">%</span>
+                    </span>
+                  ),
+                },
+                {
+                  label: 'DAYS TO HARM',
+                  value: (
+                    <span style={{ color: 'var(--warning-text)' }}>
+                      <CountUp target={shadow.days_to_harm} /> <span className="stat-unit">days</span>
+                    </span>
+                  ),
+                },
+              ]}
+            />
+          </div>
+
+          {/* ═══ IMPACT SUMMARY ════════════════════════════════════════ */}
+          <div className="pg-card" style={{ padding: 0, overflow: 'hidden' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)' }}>
+              <div className="section-header" style={{ marginBottom: 0, paddingBottom: 0, border: 'none' }}>
+                <span style={{ fontSize: '1rem' }}>📊</span>
+                <span className="section-header-title">V5 Impact Summary</span>
+              </div>
+            </div>
+            <ImpactGrid items={[
+              {
+                label: 'Rare Diseases Detected',
+                value: <CountUp target={impact.rare_diseases_detected} />,
+                sub: 'avg 4-8 years by human',
+                color: 'var(--zebra-primary)',
+              },
+              {
+                label: 'Silent Distress Caught',
+                value: <CountUp target={impact.silent_distress_caught} />,
+                sub: `${silent.distress_duration_minutes} min undetected`,
+                color: 'var(--voice-primary)',
+              },
+              {
+                label: 'Treatment Harms Prevented',
+                value: <CountUp target={impact.treatment_harms_prevented} />,
+                sub: `${shadow.days_to_harm} days to neuropathy`,
+                color: 'var(--shadow-primary)',
+              },
+              {
+                label: 'Ghost Cases Created',
+                value: <CountUp target={impact.ghost_cases_created} />,
+                sub: 'potential novel disease',
+                color: 'var(--ghost-text)',
+              },
+              {
+                label: 'Years Suffering Prevented',
+                value: <CountUp target={impact.years_suffering_prevented} decimals={1} />,
+                sub: 'EDS missed clues',
+                color: 'var(--critical-text)',
+              },
+            ]} />
+          </div>
+
+          {/* ═══ IMPACT CALCULATOR ═════════════════════════════════ */}
+          <ImpactCalculator />
+
+          {/* ═══ EXISTING AGENTS ═══════════════════════════════════════ */}
+          <ExistingAgentsBanner />
+
+        </div>
+      </div>
     </div>
   );
 };

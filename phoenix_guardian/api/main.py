@@ -3,6 +3,7 @@
 Central API server for Phoenix Guardian medical AI documentation system.
 """
 
+import os
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -30,6 +31,7 @@ from phoenix_guardian.api.routes import treatment_shadow as treatment_shadow_rou
 from phoenix_guardian.api.routes import silent_voice as silent_voice_routes
 from phoenix_guardian.api.routes import zebra_hunter as zebra_hunter_routes
 from phoenix_guardian.api.routes import v5_dashboard as v5_dashboard_routes
+from phoenix_guardian.api.routes import correlations as correlations_routes
 from phoenix_guardian.api.utils.orchestrator import OrchestrationError
 from phoenix_guardian.database.connection import db
 
@@ -295,6 +297,12 @@ app.include_router(
     tags=["v5-dashboard"],
 )
 
+app.include_router(
+    correlations_routes.router,
+    prefix="/api/v1",
+    tags=["cross-agent-correlations"],
+)
+
 
 # Root endpoint
 @app.get("/")
@@ -311,6 +319,60 @@ async def root() -> dict:
         "docs": "/api/docs",
         "health": "/api/v1/health",
     }
+
+
+@app.get("/api/v1/system/connectivity")
+async def check_connectivity():
+    """Check connectivity to external services (Groq, Orphadata, OpenFDA)."""
+    try:
+        import httpx
+    except ImportError:
+        return {"groq_api": False, "orphadata": False, "open_fda": False, "mode": "offline"}
+
+    results: dict = {
+        "groq_api": False,
+        "orphadata": False,
+        "open_fda": False,
+        "mode": "offline",
+    }
+
+    async with httpx.AsyncClient(timeout=3.0) as client:
+        # Check Groq
+        try:
+            r = await client.get(
+                "https://api.groq.com/openai/v1/models",
+                headers={"Authorization": f"Bearer {os.getenv('GROQ_API_KEY', '')}"},
+            )
+            results["groq_api"] = r.status_code in (200, 401)
+        except Exception:
+            pass
+
+        # Check Orphadata
+        try:
+            r = await client.get("https://api.orphadata.com/rd-phenotypes")
+            results["orphadata"] = r.status_code < 500
+        except Exception:
+            pass
+
+        # Check OpenFDA
+        try:
+            r = await client.get("https://api.fda.gov/drug/label.json?limit=1")
+            results["open_fda"] = r.status_code == 200
+        except Exception:
+            pass
+
+    # Determine mode
+    demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
+    if results["groq_api"] and (results["orphadata"] or results["open_fda"]):
+        results["mode"] = "online"
+    elif results["groq_api"]:
+        results["mode"] = "degraded"
+    elif demo_mode:
+        results["mode"] = "demo"
+    else:
+        results["mode"] = "offline"
+
+    return results
 
 
 if __name__ == "__main__":

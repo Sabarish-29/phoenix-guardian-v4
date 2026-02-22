@@ -17,59 +17,68 @@ interface UseSilentVoiceStreamReturn {
   mode: 'websocket' | 'polling';
 }
 
-export const useSilentVoiceStream = (patientId: string): UseSilentVoiceStreamReturn => {
+export const useSilentVoiceStream = (patientId: string, language: string = 'en'): UseSilentVoiceStreamReturn => {
   const [data, setData] = useState<MonitorResult | null>(null);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<'websocket' | 'polling'>('websocket');
+  const [mode, setMode] = useState<'websocket' | 'polling'>('polling');
   const wsRef = useRef<WebSocket | null>(null);
-  const failCountRef = useRef(0);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const mountedRef = useRef(true);
+  const wsUpgraded = useRef(false);
 
-  // ── REST polling fallback ────────────────────────────────────────────
+  // ── REST polling (starts immediately for fast first paint) ───────────
+  const poll = useCallback(async () => {
+    try {
+      const response = await silentVoiceService.monitor(patientId, language);
+      if (mountedRef.current) {
+        setData(response.data);
+        setConnected(true);
+        setError(null);
+      }
+    } catch (e: any) {
+      if (mountedRef.current) {
+        setError('Polling error: ' + (e?.message || 'unknown'));
+      }
+    }
+  }, [patientId, language]);
+
   const startPolling = useCallback(() => {
     if (pollingRef.current) return;
-    setMode('polling');
-    setConnected(true);
-
-    const poll = async () => {
-      try {
-        const response = await silentVoiceService.monitor(patientId);
-        if (mountedRef.current) {
-          setData(response.data);
-          setError(null);
-        }
-      } catch (e: any) {
-        if (mountedRef.current) {
-          setError('Polling error: ' + (e?.message || 'unknown'));
-        }
-      }
-    };
-
-    poll(); // Initial fetch
     pollingRef.current = setInterval(poll, 10000);
-  }, [patientId]);
+  }, [poll]);
 
-  // ── WebSocket connect ────────────────────────────────────────────────
-  const connect = useCallback(() => {
-    if (failCountRef.current >= 3) {
-      startPolling();
-      return;
+  const stopPolling = useCallback(() => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
     }
+  }, []);
+
+  // ── WebSocket upgrade (optional — tried once after initial data loads) ─
+  const tryWebSocket = useCallback(() => {
+    if (wsUpgraded.current) return;
+    wsUpgraded.current = true;
 
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsHost = window.location.hostname || 'localhost';
-    const wsUrl = `${wsProtocol}//${wsHost}:8000/api/v1/silent-voice/stream/${patientId}`;
+    const wsUrl = `${wsProtocol}//${window.location.host}/api/v1/silent-voice/stream/${patientId}`;
 
     try {
       const ws = new WebSocket(wsUrl);
+      const timeout = setTimeout(() => {
+        // If WS hasn't opened in 3 seconds, abandon it
+        if (ws.readyState !== WebSocket.OPEN) {
+          ws.close();
+        }
+      }, 3000);
 
       ws.onopen = () => {
+        clearTimeout(timeout);
         if (mountedRef.current) {
+          setMode('websocket');
           setConnected(true);
           setError(null);
-          failCountRef.current = 0;
+          stopPolling(); // WS is live, stop REST polling
         }
       };
 
@@ -84,48 +93,45 @@ export const useSilentVoiceStream = (patientId: string): UseSilentVoiceStreamRet
       };
 
       ws.onerror = () => {
-        if (mountedRef.current) {
-          failCountRef.current += 1;
-          setError(`WebSocket error (attempt ${failCountRef.current}/3)`);
-        }
+        clearTimeout(timeout);
+        // WS failed — keep polling, no retry
       };
 
       ws.onclose = () => {
+        clearTimeout(timeout);
         if (mountedRef.current) {
-          setConnected(false);
-          if (failCountRef.current >= 3) {
-            startPolling();
-          } else {
-            // Reconnect after 5 seconds
-            setTimeout(connect, 5000);
-          }
+          // Fell back from WS — restart polling
+          setMode('polling');
+          startPolling();
         }
       };
 
       wsRef.current = ws;
     } catch {
-      failCountRef.current += 1;
-      if (failCountRef.current >= 3) {
-        startPolling();
-      }
+      // WS not available — keep polling
     }
-  }, [patientId, startPolling]);
+  }, [patientId, startPolling, stopPolling]);
 
   useEffect(() => {
     mountedRef.current = true;
-    failCountRef.current = 0;
-    connect();
+    wsUpgraded.current = false;
+
+    // Immediately fetch data via REST (fast first paint)
+    poll().then(() => {
+      if (mountedRef.current) {
+        startPolling();
+        // After first data arrives, try upgrading to WebSocket
+        tryWebSocket();
+      }
+    });
 
     return () => {
       mountedRef.current = false;
       wsRef.current?.close();
       wsRef.current = null;
-      if (pollingRef.current) {
-        clearInterval(pollingRef.current);
-        pollingRef.current = null;
-      }
+      stopPolling();
     };
-  }, [connect]);
+  }, [poll, startPolling, stopPolling, tryWebSocket]);
 
   return { data, connected, error, mode };
 };

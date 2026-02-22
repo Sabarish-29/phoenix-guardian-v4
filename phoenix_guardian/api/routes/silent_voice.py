@@ -160,6 +160,7 @@ class HealthResponse(BaseModel):
 )
 async def monitor_patient(
     patient_id: str,
+    language: str = "en",
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
@@ -171,12 +172,12 @@ async def monitor_patient(
     agent = _get_agent()
 
     # Optional Redis cache (short TTL — 30s for near-real-time)
-    cached = _redis_get(f"silent_voice:monitor:{patient_id}")
+    cached = _redis_get(f"silent_voice:monitor:{patient_id}:{language}")
     if cached:
         return cached
 
     try:
-        result = await agent.monitor(patient_id, db)
+        result = await agent.monitor(patient_id, db, language=language)
     except Exception as exc:
         logger.error("SilentVoice monitoring failed: %s", exc, exc_info=True)
         raise HTTPException(
@@ -184,7 +185,7 @@ async def monitor_patient(
             detail=f"Monitoring failed: {str(exc)}",
         )
 
-    _redis_set(f"silent_voice:monitor:{patient_id}", result, ex=30)
+    _redis_set(f"silent_voice:monitor:{patient_id}:{language}", result, ex=30)
     return result
 
 
