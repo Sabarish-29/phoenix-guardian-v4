@@ -189,7 +189,7 @@ export const Header: React.FC = () => {
                     transition: 'all 0.15s ease',
                   })}
                 >
-                  + Encounter
+                  New Encounter
                 </NavLink>
               )}
 

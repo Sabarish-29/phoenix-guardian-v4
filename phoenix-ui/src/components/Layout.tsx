@@ -25,8 +25,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         left: 0,
         right: 0,
         height: 28,
-        background: 'rgba(5,10,18,0.95)',
-        borderTop: '1px solid rgba(255,255,255,0.06)',
+        background: 'var(--bg-base)',
+        borderTop: '1px solid var(--border-subtle)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -45,7 +45,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             alignItems: 'center',
             gap: 5,
             fontSize: '0.65rem',
-            color: '#4a5568',
+            color: 'var(--text-muted)',
             whiteSpace: 'nowrap'
           }}>
             <span style={{ fontSize: '0.65rem' }}>{item.icon}</span>
@@ -53,7 +53,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             {i < 3 && (
               <span style={{
                 marginLeft: 24,
-                color: 'rgba(255,255,255,0.08)'
+                color: 'var(--border-subtle)'
               }}>|</span>
             )}
           </div>

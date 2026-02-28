@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 
+const API_BASE = process.env.REACT_APP_API_URL || '/api/v1';
+
 interface ConnectivityStatus {
   mode: 'online' | 'degraded' | 'demo' | 'offline' | 'checking';
   groqApi: boolean;
@@ -18,7 +20,7 @@ export const useConnectivity = (): ConnectivityStatus => {
   useEffect(() => {
     const check = async () => {
       try {
-        const resp = await fetch('/api/v1/system/connectivity');
+        const resp = await fetch(`${API_BASE}/system/connectivity`);
         if (!resp.ok) throw new Error('Not reachable');
         const data = await resp.json();
         setStatus({

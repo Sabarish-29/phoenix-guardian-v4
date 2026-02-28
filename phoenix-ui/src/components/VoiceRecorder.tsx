@@ -1,15 +1,15 @@
 /**
- * VoiceRecorder — Medical-grade voice recorder with real-time transcription.
+ * VoiceRecorder — Medical-grade voice recorder with AI transcription.
  *
  * Features:
  *  • High-quality audio capture (48 kHz, mono, noise suppression)
  *  • Live waveform & volume meter
- *  • Real-time speech-to-text via Web Speech API
+ *  • AI-powered transcription via Groq Whisper
  *  • Pause / resume / stop controls
  *  • Audio quality scoring with live warnings
  *  • Speaker toggle (Doctor / Patient)
- *  • Medical term highlighting in live transcript
- *  • Error recovery with clear user guidance
+ *  • Medical term highlighting in transcript
+ *  • Works offline with demo transcript fallback
  */
 
 import React, { useCallback, useMemo } from 'react';
@@ -114,7 +114,7 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
       const clean = token.toLowerCase().replace(/[^a-z0-9-]/g, '');
       if (isMedicalTerm(clean)) {
         return (
-          <span key={i} className="bg-blue-100 text-blue-800 rounded px-0.5 font-medium" title="Medical term">
+          <span key={i} className="rounded px-0.5 font-medium" style={{ background: 'var(--watching-bg)', color: 'var(--watching-text)' }} title="Medical term">
             {token}
           </span>
         );
@@ -127,20 +127,37 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
 
   /* Error State */
   if (error) {
+    const isNetworkError = error.code === 'NETWORK_ERROR';
     return (
-      <div className="border-2 border-red-200 rounded-xl p-6 bg-red-50">
+      <div
+        className="rounded-xl p-6"
+        style={{
+          background: 'var(--critical-bg)',
+          border: '2px solid var(--critical-border)',
+        }}
+      >
         <div className="flex items-start gap-3">
           <span className="text-2xl">🚫</span>
           <div className="flex-1">
-            <h3 className="font-semibold text-red-800">{error.code.replace(/_/g, ' ')}</h3>
-            <p className="text-red-700 text-sm mt-1">{error.message}</p>
+            <h3 className="font-semibold" style={{ color: 'var(--critical-text)' }}>
+              {error.code.replace(/_/g, ' ')}
+            </h3>
+            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+              {isNetworkError
+                ? 'Could not reach the transcription server. Please check your connection and try again.'
+                : error.message}
+            </p>
             {error.details && (
-              <p className="text-red-500 text-xs mt-1">{error.details}</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{error.details}</p>
             )}
             {error.recoverable && (
               <button
                 onClick={handleReset}
-                className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition"
+                className="mt-3 px-4 py-2 rounded-lg text-sm font-medium transition"
+                style={{
+                  background: 'var(--critical-border)',
+                  color: '#fff',
+                }}
               >
                 Try Again
               </button>
@@ -154,19 +171,24 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   /* Idle State */
   if (status === 'idle') {
     return (
-      <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 transition">
+      <div
+        className="rounded-xl p-8 text-center transition"
+        style={{
+          border: '2px dashed var(--border-muted)',
+          background: 'var(--bg-surface)',
+        }}
+      >
         <div className="text-5xl mb-4">🎤</div>
-        <h3 className="text-lg font-semibold text-gray-800 mb-2">Voice Recording</h3>
-        <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
-          Record the doctor-patient conversation. Speech will be transcribed in real-time
-          using medical-grade recognition.
+        <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Voice Recording</h3>
+        <p className="text-sm mb-6 max-w-md mx-auto" style={{ color: 'var(--text-muted)' }}>
+          Record the doctor-patient conversation. Your audio will be transcribed
+          using AI (Groq Whisper) after you stop recording.
         </p>
         <button
           onClick={handleStart}
           disabled={disabled}
-          className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium
-                     hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
-                     transition shadow-lg shadow-blue-600/25 flex items-center gap-2 mx-auto"
+          className="btn-primary px-6 py-3 rounded-xl font-medium flex items-center gap-2 mx-auto
+                     disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
@@ -174,8 +196,8 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
           </svg>
           Start Recording
         </button>
-        <p className="text-xs text-gray-400 mt-3">
-          Requires microphone permission • Works best in Chrome or Edge
+        <p className="text-xs mt-3" style={{ color: 'var(--text-muted)' }}>
+          Requires microphone permission • Audio transcribed via Groq Whisper AI
         </p>
       </div>
     );
@@ -186,11 +208,24 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   const isRecording = status === 'recording';
 
   return (
-    <div className="border-2 border-blue-200 rounded-xl overflow-hidden bg-white shadow-sm">
+    <div
+      className="rounded-xl overflow-hidden"
+      style={{
+        border: '2px solid var(--border-muted)',
+        background: 'var(--bg-surface)',
+      }}
+    >
       {/* ── Header Bar ── */}
-      <div className={`px-4 py-3 flex items-center justify-between ${
-        isRecording ? 'bg-red-50' : status === 'paused' ? 'bg-yellow-50' : 'bg-blue-50'
-      }`}>
+      <div
+        className="px-4 py-3 flex items-center justify-between"
+        style={{
+          background: isRecording
+            ? 'var(--critical-bg)'
+            : status === 'paused'
+              ? 'var(--warning-bg)'
+              : 'var(--watching-bg)',
+        }}
+      >
         <div className="flex items-center gap-3">
           {/* Pulsing recording dot */}
           {isRecording && (
@@ -206,10 +241,10 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
             <span className="h-3 w-3 rounded-full bg-green-500"></span>
           )}
 
-          <span className="font-semibold text-sm">
+          <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
             {isRecording ? 'Recording' : status === 'paused' ? 'Paused' : status === 'processing' ? 'Processing…' : 'Complete'}
           </span>
-          <span className="text-sm font-mono text-gray-600">{formattedDuration}</span>
+          <span className="text-sm font-mono" style={{ color: 'var(--text-secondary)' }}>{formattedDuration}</span>
         </div>
 
         {/* Quality badge */}
@@ -230,15 +265,17 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
 
       {/* ── Waveform ── */}
       {isActive && (
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
+        <div
+          className="px-4 py-3"
+          style={{ background: 'var(--bg-elevated)', borderBottom: '1px solid var(--border-subtle)' }}
+        >
           <div className="flex items-end justify-center gap-[2px] h-12">
             {(waveformData.length > 0 ? waveformData : new Array(48).fill(0)).map((v, i) => (
               <div
                 key={i}
-                className={`w-1 rounded-full transition-all duration-75 ${
-                  isRecording ? 'bg-blue-500' : 'bg-gray-300'
-                }`}
+                className="w-1 rounded-full transition-all duration-75"
                 style={{
+                  background: isRecording ? 'var(--voice-primary)' : 'var(--border-muted)',
                   height: `${Math.max(2, v * 48)}px`,
                   opacity: isRecording ? 0.6 + v * 0.4 : 0.4,
                 }}
@@ -250,9 +287,12 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
 
       {/* ── Quality Warnings ── */}
       {quality && quality.issues.length > 0 && isActive && (
-        <div className="px-4 py-2 bg-yellow-50 border-b border-yellow-100">
+        <div
+          className="px-4 py-2"
+          style={{ background: 'var(--warning-bg)', borderBottom: '1px solid var(--warning-border)' }}
+        >
           {quality.issues.map((issue, i) => (
-            <p key={i} className="text-xs text-yellow-700 flex items-center gap-1">
+            <p key={i} className="text-xs flex items-center gap-1" style={{ color: 'var(--warning-text)' }}>
               <span>⚠️</span> {issue}
             </p>
           ))}
@@ -261,17 +301,21 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
 
       {/* ── Speaker Toggle ── */}
       {isActive && (
-        <div className="px-4 py-2 border-b border-gray-100 flex items-center gap-2">
-          <span className="text-xs text-gray-500 mr-1">Speaker:</span>
+        <div
+          className="px-4 py-2 flex items-center gap-2"
+          style={{ borderBottom: '1px solid var(--border-subtle)' }}
+        >
+          <span className="text-xs mr-1" style={{ color: 'var(--text-muted)' }}>Speaker:</span>
           {(['doctor', 'patient'] as SpeakerLabel[]).map((s) => (
             <button
               key={s}
               onClick={() => setSpeaker(s)}
-              className={`px-3 py-1 text-xs rounded-full font-medium transition ${
-                s === 'doctor'
-                  ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                  : 'bg-green-100 text-green-700 hover:bg-green-200'
-              }`}
+              className="px-3 py-1 text-xs rounded-full font-medium transition"
+              style={{
+                background: s === 'doctor' ? 'var(--watching-bg)' : 'var(--success-bg)',
+                color: s === 'doctor' ? 'var(--watching-text)' : 'var(--success-text)',
+                border: `1px solid ${s === 'doctor' ? 'var(--watching-border)' : 'var(--success-border)'}`,
+              }}
             >
               {s === 'doctor' ? '🩺 Doctor' : '🧑 Patient'}
             </button>
@@ -281,29 +325,39 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
 
       {/* ── Live Transcript ── */}
       <div className="px-4 py-4">
-        <div className="text-xs text-gray-500 mb-2 flex items-center justify-between">
+        <div className="text-xs mb-2 flex items-center justify-between" style={{ color: 'var(--text-muted)' }}>
           <span>Live Transcript</span>
           {segments.length > 0 && (
             <span>{segments.length} segment{segments.length !== 1 ? 's' : ''}</span>
           )}
         </div>
         <div
-          className="min-h-[120px] max-h-[250px] overflow-y-auto text-sm leading-relaxed
-                     bg-gray-50 rounded-lg p-3 border border-gray-200"
+          className="min-h-[120px] max-h-[250px] overflow-y-auto text-sm leading-relaxed rounded-lg p-3"
+          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}
         >
           {highlightedTranscript ? (
             <div className="whitespace-pre-wrap">
               {highlightedTranscript}
               {interimText && (
-                <span className="text-gray-400 italic"> {interimText}</span>
+                <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}> {interimText}</span>
               )}
             </div>
+          ) : status === 'processing' ? (
+            <div className="flex flex-col items-center justify-center h-full py-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 mb-3" style={{ borderColor: 'var(--accent-primary)' }}></div>
+              <p style={{ color: 'var(--accent-primary)', fontWeight: 500, fontSize: '0.875rem' }}>
+                Refining transcription with AI…
+              </p>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                Using Groq Whisper for accurate medical transcription
+              </p>
+            </div>
           ) : (
-            <p className="text-gray-400 italic">
+            <p style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>
               {isRecording
-                ? 'Listening… start speaking and your words will appear here.'
+                ? 'Listening… your words will appear in a few seconds.'
                 : status === 'paused'
-                  ? 'Recording paused. Resume to continue transcription.'
+                  ? 'Recording paused. Resume to continue or stop to finalize.'
                   : 'No transcript yet.'}
             </p>
           )}
@@ -311,7 +365,10 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
       </div>
 
       {/* ── Controls ── */}
-      <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+      <div
+        className="px-4 py-3 flex items-center justify-between"
+        style={{ background: 'var(--bg-elevated)', borderTop: '1px solid var(--border-subtle)' }}
+      >
         <div className="flex items-center gap-2">
           {isRecording && (
             <button
@@ -355,15 +412,14 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
         {(status === 'completed' || status === 'processing') && (
           <button
             onClick={handleReset}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium
-                       hover:bg-gray-300 transition"
+            className="btn-ghost px-4 py-2 rounded-lg text-sm font-medium transition"
           >
             New Recording
           </button>
         )}
 
         {/* Word count */}
-        <div className="text-xs text-gray-500">
+        <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
           {transcript.split(/\s+/).filter(Boolean).length} words
         </div>
       </div>

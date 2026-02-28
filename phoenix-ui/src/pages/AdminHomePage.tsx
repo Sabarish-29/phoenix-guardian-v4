@@ -4,6 +4,8 @@
  * Shows security overview metrics, recent events, and quick action cards.
  * Admins are explicitly separated from clinical workflows per HIPAA
  * minimum necessary principle — no patient encounters or SOAP generation.
+ *
+ * Uses CSS custom-property design tokens so both dark and light themes render correctly.
  */
 
 import React, { useEffect, useState } from 'react';
@@ -30,12 +32,21 @@ interface SecurityEvent {
   agent: string;
 }
 
-const SEVERITY_BADGE: Record<string, string> = {
-  CRITICAL: 'bg-red-100 text-red-700',
-  HIGH: 'bg-amber-100 text-amber-700',
-  MEDIUM: 'bg-yellow-100 text-yellow-700',
-  LOW: 'bg-green-100 text-green-700',
+/* ── Severity palette using design-system tokens ── */
+const SEVERITY_STYLE: Record<string, React.CSSProperties> = {
+  CRITICAL: { background: 'var(--critical-bg)', color: 'var(--critical-text)', border: '1px solid var(--critical-border)' },
+  HIGH:     { background: 'var(--warning-bg)',  color: 'var(--warning-text)',  border: '1px solid var(--warning-border)' },
+  MEDIUM:   { background: 'var(--watching-bg)', color: 'var(--watching-text)', border: '1px solid var(--watching-border)' },
+  LOW:      { background: 'var(--success-bg)',  color: 'var(--success-text)',  border: '1px solid var(--success-border)' },
 };
+
+/* ── Quick-action card definitions ── */
+const QUICK_ACTIONS = [
+  { to: '/admin/security',    icon: '🛡️', title: 'Security Console',   desc: 'Real-time threat monitoring & PQC status',        accent: 'var(--voice-primary)' },
+  { to: '/admin/reports',     icon: '📊', title: 'Security Reports',   desc: 'Export audit logs & compliance reports',            accent: 'var(--shadow-primary)' },
+  { to: '/admin/users',       icon: '👥', title: 'User Management',    desc: 'Manage roles & permissions',                       accent: 'var(--zebra-primary)' },
+  { to: '/admin/audit-logs',  icon: '📋', title: 'Audit Logs',         desc: 'HIPAA-compliant audit trail',                      accent: 'var(--watching-text)' },
+];
 
 export const AdminHomePage: React.FC = () => {
   const { getFullName } = useAuthStore();
@@ -75,114 +86,149 @@ export const AdminHomePage: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+        <h1
+          className="text-2xl font-bold flex items-center gap-2"
+          style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}
+        >
           🛡️ Admin Control Center
         </h1>
-        <p className="text-gray-500 mt-1 text-sm">
+        <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
           Welcome back, {getFullName()}. Security monitoring and system administration.
         </p>
       </div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Link
-          to="/admin/security"
-          className="p-5 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:shadow-md transition-all group"
-        >
-          <div className="text-3xl mb-2">🛡️</div>
-          <h3 className="font-semibold text-gray-900 group-hover:text-blue-700">Security Console</h3>
-          <p className="text-xs text-gray-500 mt-1">Real-time threat monitoring &amp; PQC status</p>
-        </Link>
-
-        <Link
-          to="/admin/reports"
-          className="p-5 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 hover:shadow-md transition-all group"
-        >
-          <div className="text-3xl mb-2">📊</div>
-          <h3 className="font-semibold text-gray-900 group-hover:text-green-700">Security Reports</h3>
-          <p className="text-xs text-gray-500 mt-1">Export audit logs &amp; compliance reports</p>
-        </Link>
-
-        <Link
-          to="/admin/users"
-          className="p-5 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 hover:shadow-md transition-all group"
-        >
-          <div className="text-3xl mb-2">👥</div>
-          <h3 className="font-semibold text-gray-900 group-hover:text-purple-700">User Management</h3>
-          <p className="text-xs text-gray-500 mt-1">Manage roles &amp; permissions</p>
-        </Link>
-
-        <Link
-          to="/admin/audit-logs"
-          className="p-5 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 hover:shadow-md transition-all group"
-        >
-          <div className="text-3xl mb-2">📋</div>
-          <h3 className="font-semibold text-gray-900 group-hover:text-amber-700">Audit Logs</h3>
-          <p className="text-xs text-gray-500 mt-1">HIPAA-compliant audit trail</p>
-        </Link>
+        {QUICK_ACTIONS.map((a) => (
+          <Link
+            key={a.to}
+            to={a.to}
+            className="p-5 rounded-lg transition-all"
+            style={{
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-subtle)',
+              borderLeft: `3px solid ${a.accent}`,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--bg-elevated)';
+              e.currentTarget.style.borderColor = 'var(--border-muted)';
+              e.currentTarget.style.borderLeftColor = a.accent;
+              e.currentTarget.style.boxShadow = 'var(--shadow-card)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'var(--bg-surface)';
+              e.currentTarget.style.borderColor = 'var(--border-subtle)';
+              e.currentTarget.style.borderLeftColor = a.accent;
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          >
+            <div className="text-3xl mb-2">{a.icon}</div>
+            <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>{a.title}</h3>
+            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{a.desc}</p>
+          </Link>
+        ))}
       </div>
 
       {/* System Overview */}
-      <div className="card">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">System Overview</h2>
+      <div className="pg-card" style={{ padding: '20px' }}>
+        <h2
+          className="text-lg font-semibold mb-4"
+          style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}
+        >
+          System Overview
+        </h2>
         {loading ? (
-          <p className="text-gray-400 text-sm">Loading metrics…</p>
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading metrics…</p>
         ) : metrics ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <MetricTile icon="🚨" label="Threats Detected" value={metrics.total_events} color="red" />
-            <MetricTile icon="🛡️" label="Blocked" value={metrics.blocked} color="green" />
-            <MetricTile icon="📈" label="Block Rate" value={`${metrics.block_rate.toFixed(1)}%`} color="green" />
-            <MetricTile icon="👤" label="Attackers Tracked" value={metrics.active_attackers} color="amber" />
-            <MetricTile icon="🍯" label="Honeytoken Hits" value={metrics.honeytoken_triggers} color="yellow" />
-            <MetricTile icon="⚡" label="Avg Detection" value={`${metrics.avg_detection_time_ms.toFixed(0)}ms`} color="cyan" />
+            <MetricTile icon="🚨" label="Threats Detected" value={metrics.total_events} accent="var(--critical-text)" />
+            <MetricTile icon="🛡️" label="Blocked" value={metrics.blocked} accent="var(--voice-primary)" />
+            <MetricTile icon="📈" label="Block Rate" value={`${metrics.block_rate.toFixed(1)}%`} accent="var(--success-text)" />
+            <MetricTile icon="👤" label="Attackers Tracked" value={metrics.active_attackers} accent="var(--shadow-primary)" />
+            <MetricTile icon="🍯" label="Honeytoken Hits" value={metrics.honeytoken_triggers} accent="var(--zebra-primary)" />
+            <MetricTile icon="⚡" label="Avg Detection" value={`${metrics.avg_detection_time_ms.toFixed(0)}ms`} accent="var(--watching-text)" />
           </div>
         ) : (
-          <p className="text-gray-400 text-sm">Metrics unavailable</p>
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Metrics unavailable</p>
         )}
       </div>
 
       {/* Recent Security Events */}
-      <div className="card">
+      <div className="pg-card" style={{ padding: '20px' }}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Recent Security Events</h2>
-          <Link to="/admin/security" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+          <h2
+            className="text-lg font-semibold"
+            style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}
+          >
+            Recent Security Events
+          </h2>
+          <Link
+            to="/admin/security"
+            className="text-sm font-medium"
+            style={{ color: 'var(--voice-primary)' }}
+          >
             View All →
           </Link>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 text-left text-gray-500 text-xs uppercase">
-                <th className="pb-2 pr-4">Time</th>
-                <th className="pb-2 pr-4">Severity</th>
-                <th className="pb-2 pr-4">Threat Type</th>
-                <th className="pb-2 pr-4">Agent</th>
-                <th className="pb-2 pr-4">Status</th>
-                <th className="pb-2 text-right">Detection</th>
+              <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                {['Time', 'Severity', 'Threat Type', 'Agent', 'Status', ''].map((h, i) => (
+                  <th
+                    key={h || 'det'}
+                    className={`pb-2 ${i < 5 ? 'pr-4 text-left' : 'text-right'} text-xs uppercase`}
+                    style={{ color: 'var(--text-label)', letterSpacing: '0.08em', fontWeight: 600 }}
+                  >
+                    {h || 'Detection'}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {recentEvents.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center text-gray-400 py-6">No events recorded</td>
+                  <td colSpan={6} className="text-center py-6" style={{ color: 'var(--text-muted)' }}>
+                    No events recorded
+                  </td>
                 </tr>
               ) : (
-                recentEvents.map((e) => (
-                  <tr key={e.id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-2 pr-4 text-gray-600 font-mono text-xs">{formatTime(e.timestamp)}</td>
+                recentEvents.map((ev) => (
+                  <tr
+                    key={ev.id}
+                    className="transition-colors"
+                    style={{ borderBottom: '1px solid var(--border-subtle)' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-elevated)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <td className="py-2 pr-4 font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      {formatTime(ev.timestamp)}
+                    </td>
                     <td className="py-2 pr-4">
-                      <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${SEVERITY_BADGE[e.severity] || SEVERITY_BADGE.LOW}`}>
-                        {e.severity}
+                      <span
+                        className="inline-block px-2 py-0.5 rounded text-xs font-semibold"
+                        style={SEVERITY_STYLE[ev.severity] || SEVERITY_STYLE.LOW}
+                      >
+                        {ev.severity}
                       </span>
                     </td>
-                    <td className="py-2 pr-4 text-gray-800 font-mono text-xs">{e.threat_type}</td>
-                    <td className="py-2 pr-4 text-gray-500 text-xs">{e.agent}</td>
+                    <td className="py-2 pr-4 font-mono text-xs" style={{ color: 'var(--text-primary)' }}>
+                      {ev.threat_type}
+                    </td>
+                    <td className="py-2 pr-4 text-xs" style={{ color: 'var(--text-muted)' }}>
+                      {ev.agent}
+                    </td>
                     <td className="py-2 pr-4">
-                      <span className="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700">
-                        {e.status}
+                      <span
+                        className="inline-block px-2 py-0.5 rounded text-xs font-semibold"
+                        style={SEVERITY_STYLE.CRITICAL}
+                      >
+                        {ev.status}
                       </span>
                     </td>
-                    <td className="py-2 text-right text-gray-600 font-mono text-xs">{e.detection_time_ms.toFixed(1)}ms</td>
+                    <td className="py-2 text-right font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      {ev.detection_time_ms.toFixed(1)}ms
+                    </td>
                   </tr>
                 ))
               )}
@@ -192,11 +238,19 @@ export const AdminHomePage: React.FC = () => {
       </div>
 
       {/* Admin Role Notice */}
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+      <div
+        className="rounded-lg p-4 flex items-start gap-3"
+        style={{
+          background: 'var(--warning-bg)',
+          border: '1px solid var(--warning-border)',
+        }}
+      >
         <span className="text-xl mt-0.5">⚠️</span>
         <div>
-          <h3 className="font-semibold text-amber-900 text-sm">Admin Role Notice</h3>
-          <p className="text-xs text-amber-800 mt-1 leading-relaxed">
+          <h3 className="font-semibold text-sm" style={{ color: 'var(--warning-text)' }}>
+            Admin Role Notice
+          </h3>
+          <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
             Your role is limited to security monitoring and system administration.
             Clinical operations (patient encounters, SOAP generation, prescriptions)
             are restricted to physician and nurse roles per HIPAA minimum necessary principle
@@ -209,14 +263,27 @@ export const AdminHomePage: React.FC = () => {
 };
 
 /**
- * Small metric tile for system overview.
+ * Small metric tile for system overview — theme-aware via CSS variables.
  */
-const MetricTile: React.FC<{ icon: string; label: string; value: string | number; color: string }> = ({
-  icon, label, value, color,
+const MetricTile: React.FC<{ icon: string; label: string; value: string | number; accent: string }> = ({
+  icon, label, value, accent,
 }) => (
-  <div className={`p-3 bg-${color}-50 rounded-lg border border-${color}-100`}>
-    <div className="text-xl font-bold text-gray-900">{value}</div>
-    <div className="text-xs text-gray-500 mt-0.5">{icon} {label}</div>
+  <div
+    className="p-3 rounded-lg"
+    style={{
+      background: 'var(--bg-elevated)',
+      border: '1px solid var(--border-subtle)',
+    }}
+  >
+    <div
+      className="text-xl font-bold"
+      style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}
+    >
+      {value}
+    </div>
+    <div className="text-xs mt-0.5" style={{ color: accent }}>
+      {icon} {label}
+    </div>
   </div>
 );
 

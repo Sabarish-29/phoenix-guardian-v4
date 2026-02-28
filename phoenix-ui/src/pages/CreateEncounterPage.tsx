@@ -165,8 +165,8 @@ export const CreateEncounterPage: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Create New Encounter</h1>
-        <p className="mt-1 text-gray-500">
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>Create New Encounter</h1>
+        <p className="mt-1" style={{ color: 'var(--text-secondary)' }}>
           Enter patient information and paste the encounter transcript for AI processing.
         </p>
       </div>
@@ -174,19 +174,19 @@ export const CreateEncounterPage: React.FC = () => {
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Error Alert */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="px-4 py-3 rounded-lg" style={{ background: 'var(--critical-bg)', border: '1px solid var(--critical-border)', color: 'var(--critical-text)' }}>
             {error}
           </div>
         )}
         
         {/* Patient Information Section */}
-        <div className="card">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Patient Information</h2>
+        <div className="pg-card" style={{ padding: '20px' }}>
+          <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>Patient Information</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                First Name <span className="text-red-500">*</span>
+              <label htmlFor="firstName" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                First Name <span style={{ color: 'var(--critical-text)' }}>*</span>
               </label>
               <input
                 id="firstName"
@@ -201,8 +201,8 @@ export const CreateEncounterPage: React.FC = () => {
             </div>
             
             <div>
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                Last Name <span className="text-red-500">*</span>
+              <label htmlFor="lastName" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                Last Name <span style={{ color: 'var(--critical-text)' }}>*</span>
               </label>
               <input
                 id="lastName"
@@ -217,7 +217,7 @@ export const CreateEncounterPage: React.FC = () => {
             </div>
             
             <div>
-              <label htmlFor="dob" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="dob" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                 Date of Birth
               </label>
               <input
@@ -231,8 +231,8 @@ export const CreateEncounterPage: React.FC = () => {
             </div>
             
             <div>
-              <label htmlFor="mrn" className="block text-sm font-medium text-gray-700 mb-1">
-                Medical Record Number (MRN) <span className="text-red-500">*</span>
+              <label htmlFor="mrn" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                Medical Record Number (MRN) <span style={{ color: 'var(--critical-text)' }}>*</span>
               </label>
               <input
                 id="mrn"
@@ -247,7 +247,7 @@ export const CreateEncounterPage: React.FC = () => {
             </div>
             
             <div>
-              <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="gender" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                 Gender
               </label>
               <select
@@ -268,13 +268,13 @@ export const CreateEncounterPage: React.FC = () => {
         </div>
         
         {/* Encounter Details Section */}
-        <div className="card">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Encounter Details</h2>
+        <div className="pg-card" style={{ padding: '20px' }}>
+          <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>Encounter Details</h2>
           
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="encounterType" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="encounterType" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                   Encounter Type
                 </label>
                 <select
@@ -293,7 +293,7 @@ export const CreateEncounterPage: React.FC = () => {
               </div>
               
               <div>
-                <label htmlFor="chiefComplaint" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="chiefComplaint" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                   Chief Complaint
                 </label>
                 <input
@@ -311,13 +311,13 @@ export const CreateEncounterPage: React.FC = () => {
         </div>
         
         {/* Transcript Section */}
-        <div className="card">
+        <div className="pg-card" style={{ padding: '20px' }}>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Encounter Transcript <span className="text-red-500">*</span>
+              <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>
+                Encounter Transcript <span style={{ color: 'var(--critical-text)' }}>*</span>
               </h2>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
                 {inputMode === 'type'
                   ? 'Paste the patient-physician conversation transcript below.'
                   : 'Use your microphone to transcribe the conversation in real time.'}
@@ -325,15 +325,16 @@ export const CreateEncounterPage: React.FC = () => {
             </div>
 
             {/* Type / Record toggle */}
-            <div className="flex bg-gray-100 rounded-lg p-1">
+            <div className="flex rounded-lg p-1" style={{ background: 'var(--bg-elevated)' }}>
               <button
                 type="button"
                 onClick={() => setInputMode('type')}
-                className={`px-4 py-1.5 text-sm font-medium rounded-md transition ${
-                  inputMode === 'type'
-                    ? 'bg-white shadow text-blue-700'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
+                className="px-4 py-1.5 text-sm font-medium rounded-md transition"
+                style={{
+                  background: inputMode === 'type' ? 'var(--bg-surface)' : 'transparent',
+                  color: inputMode === 'type' ? 'var(--voice-primary)' : 'var(--text-muted)',
+                  boxShadow: inputMode === 'type' ? 'var(--shadow-card)' : 'none',
+                }}
                 disabled={isSubmitting}
               >
                 ⌨️ Type
@@ -341,11 +342,12 @@ export const CreateEncounterPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setInputMode('record')}
-                className={`px-4 py-1.5 text-sm font-medium rounded-md transition ${
-                  inputMode === 'record'
-                    ? 'bg-white shadow text-blue-700'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
+                className="px-4 py-1.5 text-sm font-medium rounded-md transition"
+                style={{
+                  background: inputMode === 'record' ? 'var(--bg-surface)' : 'transparent',
+                  color: inputMode === 'record' ? 'var(--voice-primary)' : 'var(--text-muted)',
+                  boxShadow: inputMode === 'record' ? 'var(--shadow-card)' : 'none',
+                }}
                 disabled={isSubmitting}
               >
                 🎙️ Record
@@ -378,7 +380,7 @@ Patient: Some shortness of breath, but no dizziness or nausea.
                 required={inputMode === 'type' && !transcriptText}
               />
               
-              <div className="mt-2 flex items-center justify-between text-sm text-gray-500">
+              <div className="mt-2 flex items-center justify-between text-sm" style={{ color: 'var(--text-muted)' }}>
                 <span>{transcriptText.length} characters</span>
                 <span>{transcriptText.split(/\s+/).filter(Boolean).length} words</span>
               </div>
@@ -406,22 +408,22 @@ Patient: Some shortness of breath, but no dizziness or nausea.
 
           {/* Show transcript preview when in record mode (after text is captured) */}
           {inputMode === 'record' && transcriptText && !showEditor && (
-            <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="mt-4 p-3 rounded-lg" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-gray-500">
+                <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
                   Captured transcript ({transcriptText.split(/\s+/).filter(Boolean).length} words)
                 </span>
                 {recordingSegments.length > 0 && (
                   <button
                     type="button"
                     onClick={() => setShowEditor(true)}
-                    className="text-xs text-blue-600 hover:text-blue-800"
+                    className="text-xs" style={{ color: 'var(--voice-primary)' }}
                   >
                     Review & Edit
                   </button>
                 )}
               </div>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-4">
+              <p className="text-sm whitespace-pre-wrap line-clamp-4" style={{ color: 'var(--text-secondary)' }}>
                 {transcriptText}
               </p>
             </div>
