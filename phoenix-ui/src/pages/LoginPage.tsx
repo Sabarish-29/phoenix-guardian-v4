@@ -59,7 +59,18 @@ export const LoginPage: React.FC = () => {
       login(data.access_token, data.refresh_token, user);
       navigate(getRedirectPath(user.role), { replace: true });
     },
-    onError: (err: Error & { response?: { data?: { detail?: string | Array<{msg: string}> } } }) => {
+    onError: (err: Error & { response?: { data?: { detail?: string | Array<{msg: string}> } }; code?: string; message?: string }) => {
+      // Network / CORS / timeout errors have no response object
+      if (!err.response) {
+        const msg = err.code === 'ECONNABORTED'
+          ? 'Server is waking up — please wait 30 seconds and try again.'
+          : err.message?.includes('Network Error')
+            ? 'Cannot reach the server. It may be starting up — please retry in 30 seconds.'
+            : `Connection error: ${err.message || 'unknown'}`;
+        setError(msg);
+        return;
+      }
+
       const detail = err.response?.data?.detail;
       let message = 'Invalid email or password';
       if (typeof detail === 'string') {

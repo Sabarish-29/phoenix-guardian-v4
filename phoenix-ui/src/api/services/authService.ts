@@ -96,10 +96,11 @@ export const authService = {
    */
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     // Backend expects JSON with email and password
+    // Use longer timeout (90s) to survive Render free-tier cold starts
     const response = await apiClient.post<LoginResponse>('/auth/login', {
       email: credentials.username,  // Frontend uses 'username' but backend expects 'email'
       password: credentials.password,
-    });
+    }, { timeout: 90000 });
     
     return response.data;
   },

@@ -13,6 +13,8 @@
   PYTHON_VERSION = "3.11"
   PIP_NO_CACHE_DIR = "1"
   NODE_VERSION = "18"
+  # Point frontend to the Render-hosted FastAPI backend
+  REACT_APP_API_URL = "https://phoenix-guardian-api-fuq0.onrender.com/api/v1"
 
 # SPA routing — send all paths to index.html for React Router
 [[redirects]]
