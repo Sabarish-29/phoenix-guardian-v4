@@ -160,7 +160,7 @@ const ImpactCalculator: React.FC = () => {
       zebraSaving, voiceSaving, shadowSaving,
       totalSaving,
     };
-  }, [beds, patientsPerMonth]);
+  }, [patientsPerMonth]);
 
   return (
     <div className="pg-card animate-entry">
